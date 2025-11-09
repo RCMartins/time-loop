@@ -15,6 +15,7 @@ case class GameState(
     visibleNextActions: Seq[ActiveActionData],
     selectedNextAction: Option[Long],
     deckActions: Seq[ActiveActionData],
+    actionsHistory: Seq[ActiveActionData],
 )
 
 object GameState {
@@ -29,10 +30,11 @@ object GameState {
     stats = Stats.initial,
     skills = SkillsState.initial,
     inventory = InventoryState.initial,
-    currentAction = None, // Some(Area1.Data.WakeUp.toActiveAction), // None
-    visibleNextActions = Seq(Area1.Data.WakeUp.toActiveAction),
+    currentAction = None,
+    visibleNextActions = Area1.Data.InitialActionData.map(_.toActiveAction),
     selectedNextAction = None,
     deckActions = Seq(),
+    actionsHistory = Seq(),
   )
 
   def save(): Unit = {}

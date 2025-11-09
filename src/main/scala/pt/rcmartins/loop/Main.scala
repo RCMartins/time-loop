@@ -3,7 +3,7 @@ package pt.rcmartins.loop
 import com.raquo.laminar.api.L._
 import com.raquo.laminar.nodes.ReactiveHtmlElement
 import org.scalajs.dom
-import org.scalajs.dom.{html, window, HTMLDivElement}
+import org.scalajs.dom.{HTMLDivElement, HTMLUListElement, html, window}
 import pt.rcmartins.loop.GameData._
 import pt.rcmartins.loop.Util._
 import pt.rcmartins.loop.model._
@@ -13,25 +13,14 @@ import scala.scalajs.js.timers.{setInterval, setTimeout}
 object Main {
 
   // Example skills list (use your real skillsPanelRows or skillsPanelGrid)
-  val skillsView =
+  private val skillsView =
     div(
       cls := "space-y-2",
-//      div(
-//        cls := "rounded-xl p-3 bg-slate-800/60 ring-1 ring-slate-700",
-//        "Gardening — Lv 2 (15/40)"
-//      ),
-//      div(cls := "rounded-xl p-3 bg-slate-800/60 ring-1 ring-slate-700", "Cooking — Lv 1 (8/20)"),
-//      div(cls := "rounded-xl p-3 bg-slate-800/60 ring-1 ring-slate-700", "Writing — Lv 3 (22/60)")
-//      children <--
-//        skills.map(_.allSeq.map { skill =>
-//          skillRow(skill)
-//        })
-
       children <-- skills.map(_.allSeq).split(_.kind) { case (_, _, s) => skillRow(s) }
     )
 
   // Current action sample
-  val currentActionView: ReactiveHtmlElement[HTMLDivElement] =
+  private val currentActionView: ReactiveHtmlElement[HTMLDivElement] =
     div(
       cls := "flex items-start gap-3",
       child.maybe <--
@@ -44,7 +33,7 @@ object Main {
     )
 
   // Next actions grid (your actionCard components here)
-  val nextActionsView: ReactiveHtmlElement[HTMLDivElement] =
+  private val nextActionsView: ReactiveHtmlElement[HTMLDivElement] =
     div(
       cls := "grid gap-3 sm:grid-cols-2",
       children <--
@@ -54,13 +43,13 @@ object Main {
     )
 
   // Inventory list
-  val inventoryView =
+  private val inventoryView: ReactiveHtmlElement[HTMLUListElement] =
     ul(
       cls := "space-y-2",
-      children <-- inventory.map(_.allItems).map {
-        _.map { case (item, qty) =>
+      children <-- inventory.map(_.items).map {
+        _.sortBy(_._1.inventoryOrder).map { case (item, qty) =>
           li(
-            cls := "rounded-lg p-2 bg-slate-800/60 ring-1 ring-slate-700 flex justify-between items-center",
+            cls := "rounded-lg p-2 bg-slate-800/60 ring-1 ring-slate-700 flex justify-between items-center m-1",
             span(cls := "font-mono", s"$qty "),
             span(item.name),
           )
@@ -69,7 +58,7 @@ object Main {
     )
 
   // Misc info (stats / timers)
-  val miscView =
+  private val miscView: ReactiveHtmlElement[HTMLDivElement] =
     div(
       cls := "space-y-2 text-sm",
       div(
@@ -102,41 +91,6 @@ object Main {
     val ui = appLayout(skillsView, currentActionView, nextActionsView, inventoryView, miscView)
     render(dom.document.getElementById("main-div"), ui)
   }
-
-//  private def mainDiv(): ReactiveHtmlElement[html.Div] = {
-////    div("Hello, Time Loop Scala!")
-//    div(
-//      skillsPanelRows(
-//        Val(
-//          List(
-//            SkillState("cooking", "Cooking", 2, 30, 100),
-//            SkillState("gardening", "Gardening", 1, 10, 50),
-//            SkillState("crafting", "Crafting", 3, 80, 150),
-//          )
-//        )
-//      ),
-////      actionCard(
-////        ActionData(
-////          title = "Gardening",
-////          subtitle = "Grow some plants",
-////          baseTimeSec = 300,
-////          energy = 20,
-////          kind = ActionKind.Gardening,
-////          progress01 = Some(0.5),
-////        )
-////      )(() => println("Gardening action selected")),
-////      actionCard(
-////        ActionData(
-////          title = "Crafting",
-////          subtitle = "Make some soap",
-////          baseTimeSec = 300,
-////          energy = 20,
-////          kind = ActionKind.Crafting,
-////          progress01 = Some(0.5),
-////        )
-////      )(() => println("Crafting action selected"))
-//    )
-//  }
 
   /** Reusable section shells */
   def panelCard(title: String, mods: Mod[HtmlElement]*): HtmlElement =
