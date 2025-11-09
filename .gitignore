@@ -1,0 +1,6 @@
+.bsp/
+.idea/
+target/
+
+/public/js/time-loop-scala.js
+/public/js/time-loop-fastopt.js.map
