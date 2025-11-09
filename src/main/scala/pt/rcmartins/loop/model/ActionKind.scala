@@ -20,14 +20,14 @@ object ActionKind {
 }
 
 final case class ActionData(
-    actionDataType: ActionDataType,
-    title: String,
-    subtitle: String,
-    kind: ActionKind,
-    baseTimeSec: Long,
-    unlocksActions: Seq[ActionData] = Seq.empty,
-    //    enable: Signal[Boolean] = Val(true)
-    isValid: GameState => Boolean = _ => true,
+                             actionDataType: ActionDataType,
+                             title: String,
+                             effectLabel: EffectLabel,
+                             kind: ActionKind,
+                             baseTimeSec: Long,
+                             unlocksActions: Seq[ActionData] = Seq.empty,
+                             invalidReason: GameState => Option[ReasonLabel] = _ => None,
+                             changeInventory: InventoryState => InventoryState = identity,
 ) {
 
   def baseTimeMicro: Long = baseTimeSec * 1_000_000L
@@ -63,5 +63,8 @@ class ActiveActionData(
 
   val progressRatio: Signal[Double] =
     microSoFar.signal.map(_.toDouble / data.baseTimeMicro.toDouble)
+
+  override def toString: String =
+    s"ActiveActionData(id=$id, data=${data.title}, microSoFar=${microSoFar.now()})"
 
 }

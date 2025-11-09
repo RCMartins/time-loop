@@ -125,7 +125,7 @@ object Util {
             cls := "flex items-start justify-between gap-3",
             div(
               h3(cls := "text-base font-semibold tracking-tight", vm.data.title),
-              p(cls := "text-xs text-slate-300/90", vm.data.subtitle)
+              p(cls := "text-xs text-slate-300/90", vm.data.effectLabel.label)
             ),
           ),
 
@@ -167,7 +167,7 @@ object Util {
     val base =
       "rounded-2xl p-4 bg-slate-800/60 ring-1 ring-slate-700 shadow transition " +
         "hover:ring-emerald-400/60 hover:shadow-md focus:outline-none " +
-        "focus:ring-2 focus:ring-emerald-400 m-1"
+        "focus:ring-2 focus:ring-emerald-400 m-1 mt-4"
 
     val selectedCls =
       " ring-2 ring-emerald-500 shadow-lg"
@@ -175,14 +175,26 @@ object Util {
     val disabledCls =
       " opacity-50 grayscale pointer-events-none"
 
+    val isDisabled =
+      vm.map(_.data.invalidReason).combineWith(GameData.gameState).map {
+        case (invalidReasonF, gameState) =>
+          invalidReasonF(gameState).isDefined
+      }
+
     isSelected.signal
-      .withCurrentValueOf(vm)
+      .withCurrentValueOf(vm, isDisabled)
       .foreach {
-        case (true, action) =>
+        case (true, action, false) =>
           println(s"Action selected: ${action.data.title}")
           GameData.selectNextAction(action.id)
         case _ =>
       }(owner)
+
+    val tooltipText =
+      vm.map(_.data.invalidReason).combineWith(GameData.gameState).map {
+        case (invalidReasonF, gameState) =>
+          invalidReasonF(gameState).map(_.label).getOrElse("")
+      }
 
     div(
       role := "button",
@@ -191,6 +203,8 @@ object Util {
       cls(selectedCls) <-- selectedNextAction.combineWith(vm.map(_.id)).map {
         case (optId, actionId) => optId.contains(actionId)
       },
+      cls(disabledCls) <-- isDisabled,
+//      disabled <-- isDisabled,
 
 //      // Interactions: click / Enter / Space toggle select and fire onSelect
       onClick --> { _ =>
@@ -199,6 +213,7 @@ object Util {
 
       // Content
       div(
+        cls := "relative inline-block",
         cls := "flex items-start gap-3",
         // Icon + kind accent
         div(
@@ -216,7 +231,7 @@ object Util {
                 cls := "text-base font-semibold tracking-tight",
                 child.text <-- vm.map(_.data.title)
               ),
-              p(cls := "text-xs text-slate-300/90", child.text <-- vm.map(_.data.subtitle))
+              p(cls := "text-xs text-slate-300/90", child.text <-- vm.map(_.data.effectLabel.label))
             ),
           ),
 
@@ -227,11 +242,17 @@ object Util {
               cls := "px-2 py-0.5 text-xs rounded-full bg-slate-700/70 ring-1 ring-slate-600",
               child.text <-- vm.map(_.data.baseTimeSec.toString)
             ),
-//            span(
-//              cls := "px-2 py-0.5 text-xs rounded-full bg-amber-700/40 ring-1 ring-amber-600/50",
-//              child.text <-- Val(s"${vm.energy}⚡")
-//            )
           ),
+        ),
+
+        // Tooltip — visibility controlled by Signal
+        div(
+          cls := "absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-2 py-1 " +
+            "text-xs text-slate-100 bg-slate-700 rounded-md whitespace-nowrap shadow-lg " +
+            "transition-opacity duration-150 opacity-0 pointer-events-none",
+          child.text <-- tooltipText,
+          // Toggle visibility via opacity
+          cls("opacity-100") <-- isDisabled
         )
       )
     )

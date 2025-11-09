@@ -1,8 +1,7 @@
 package pt.rcmartins.loop.data
 
-import com.raquo.airstream.state.Val
-import pt.rcmartins.loop.model.{ActionData, ActionDataType, ActionKind}
 import pt.rcmartins.loop.model.ActionDataType.Area1DataType
+import pt.rcmartins.loop.model._
 
 object Area1 {
 
@@ -26,20 +25,25 @@ object Area1 {
 
   object Data {
 
+    val InitialActionData: Seq[ActionData] = Seq(
+      WakeUp,
+//      PickupCoins,
+//      GoToBackyard,
+    )
+
     def WakeUp: ActionData = ActionData(
       actionDataType = Types.WakeUp,
       title = "Wake Up from bed",
-      subtitle = "",
+      effectLabel = EffectLabel.Movement,
       kind = ActionKind.Agility,
       baseTimeSec = 7,
       unlocksActions = Seq(ExploreHouse),
-//      enable = Val(true),
     )
 
     def ExploreHouse: ActionData = ActionData(
       actionDataType = Types.ExploreHouse,
       title = "Explore the House",
-      subtitle = "",
+      effectLabel = EffectLabel.Explore,
       kind = ActionKind.Agility,
       baseTimeSec = 12,
       unlocksActions = Seq(GoToLivingRoom, GoToKitchen, GoToBackyard),
@@ -48,7 +52,7 @@ object Area1 {
     def GoToLivingRoom: ActionData = ActionData(
       actionDataType = Types.GoToLivingRoom,
       title = "Go to the Living Room",
-      subtitle = "",
+      effectLabel = EffectLabel.Movement,
       kind = ActionKind.Agility,
       baseTimeSec = 5,
       unlocksActions = Seq(SearchLivingRoom),
@@ -57,7 +61,7 @@ object Area1 {
     def SearchLivingRoom: ActionData = ActionData(
       actionDataType = Types.SearchLivingRoom,
       title = "Search the Living Room",
-      subtitle = "",
+      effectLabel = EffectLabel.Explore,
       kind = ActionKind.Exploring,
       baseTimeSec = 10,
       unlocksActions = Seq(PickupBackpack, PickupCoins),
@@ -66,23 +70,27 @@ object Area1 {
     def PickupBackpack: ActionData = ActionData(
       actionDataType = Types.PickupBackpack,
       title = "Pick up the Backpack",
-      subtitle = "",
+      effectLabel = EffectLabel.GetItem(ItemType.Backpack, 1),
       kind = ActionKind.Foraging,
-      baseTimeSec = 3,
+      baseTimeSec = 5,
+      changeInventory = _.increaseInventorySize(+4)
     )
 
     def PickupCoins: ActionData = ActionData(
       actionDataType = Types.PickupCoins,
-      title = "Pick up 5 the Coins",
-      subtitle = "",
+      title = "Pick up Coins",
+      effectLabel = EffectLabel.GetItem(ItemType.Coins, 5),
       kind = ActionKind.Foraging,
       baseTimeSec = 2,
+      changeInventory = _.addItem(ItemType.Coins, 5),
+      invalidReason = state =>
+        Option.unless(state.inventory.canAddItem(ItemType.Coins, 5))(ReasonLabel.InventoryFull)
     )
 
     def GoToKitchen: ActionData = ActionData(
       actionDataType = Types.GoToKitchen,
       title = "Go to the Kitchen",
-      subtitle = "",
+      effectLabel = EffectLabel.Movement,
       kind = ActionKind.Agility,
       baseTimeSec = 5,
       unlocksActions = Seq(SearchKichen),
@@ -91,7 +99,7 @@ object Area1 {
     def SearchKichen: ActionData = ActionData(
       actionDataType = Types.SearchKichen,
       title = "Search the Kitchen",
-      subtitle = "",
+      effectLabel = EffectLabel.Explore,
       kind = ActionKind.Exploring,
       baseTimeSec = 10,
       unlocksActions = Seq(PickupMomo),
@@ -100,17 +108,25 @@ object Area1 {
     def PickupMomo: ActionData = ActionData(
       actionDataType = Types.PickupMomo,
       title = "Pick up Momo",
-      subtitle = "",
+      effectLabel = EffectLabel.GetItem(ItemType.Momo, 1),
       kind = ActionKind.Foraging,
       baseTimeSec = 5,
+      changeInventory = _.addItem(ItemType.Momo, 1),
+      invalidReason = state =>
+        Option.unless(state.inventory.canAddItem(ItemType.Momo, 1))(ReasonLabel.InventoryFull),
     )
 
     def GoToBackyard: ActionData = ActionData(
       actionDataType = Types.GoToBackyard,
       title = "Go to the Backyard",
-      subtitle = "",
+      effectLabel = EffectLabel.Movement,
       kind = ActionKind.Agility,
       baseTimeSec = 25,
+      invalidReason = state =>
+        Option.unless(
+          state.actionsHistory.exists(_.data.actionDataType == Types.GoToKitchen) &&
+            state.actionsHistory.exists(_.data.actionDataType == Types.GoToLivingRoom)
+        )(ReasonLabel.MustExploreHouseFirst)
     )
 
     def load(dataType: ActionDataType): ActionData =

@@ -9,7 +9,9 @@ import pt.rcmartins.loop.model._
 object GameData {
 
   private val gameStateVar: Var[GameState] = Var(GameState.initial)
-  private val gameState: Signal[GameState] = gameStateVar.signal
+
+  // TODO should this be private?
+  val gameState: Signal[GameState] = gameStateVar.signal
 
   val timeElapsedMicro: Signal[Long] = gameState.map(_.timeElapsedMicro).distinct
   val timeElapsedLong: Signal[Long] = timeElapsedMicro.map(_ / 1_000_000L).distinct

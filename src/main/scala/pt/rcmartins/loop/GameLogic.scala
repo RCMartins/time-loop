@@ -20,19 +20,18 @@ object GameLogic {
   private def auxUpdate(initialGameState: GameState, elapsedTimeMicro: Long): GameState = {
     initialGameState.currentAction match {
       case None =>
-        println(s"No current action: selecting next action, ${initialGameState.selectedNextAction}")
         initialGameState.selectedNextAction.flatMap(id =>
           initialGameState.visibleNextActions.find(_.id == id)
         ) match {
           case Some(nextAction) =>
-            println("Starting action: " + nextAction.data.title)
             initialGameState
+              .modify(_.selectedNextAction)
+              .setTo(None)
               .modify(_.currentAction)
               .setTo(Some(nextAction))
               .modify(_.visibleNextActions)
               .using(actions => actions.filterNot(_.id == nextAction.id))
           case None =>
-            println("No action selected")
             initialGameState
         }
       case Some(currentAction) =>
@@ -77,6 +76,9 @@ object GameLogic {
             }
           )
 
+        println(("initialGameState.deckActions", initialGameState.deckActions))
+        println(("initialGameState.visibleNextActions", initialGameState.visibleNextActions))
+
         val currentActionIsComplete: Boolean =
           currentActionElapsedMicro == currentAction.data.baseTimeMicro
 
@@ -102,6 +104,8 @@ object GameLogic {
         .using(_ ++ currentAction.data.unlocksActions.map(_.toActiveAction))
         .modify(_.currentAction)
         .setTo(None)
+        .modify(_.inventory)
+        .using(currentAction.data.changeInventory)
         .pipe(drawNewCardsFromDeck)
     else
       state
@@ -113,28 +117,35 @@ object GameLogic {
     val allAvailableActions: Seq[ActiveActionData] =
       Random.shuffle(state.deckActions ++ state.visibleNextActions)
 
-    val nextActions: Seq[ActiveActionData] =
-      allAvailableActions.find(_.data.isValid(state)) match {
+    println(("state.deckActions", state.deckActions))
+    println(("state.visibleNextActions", state.visibleNextActions))
+    println(("allAvailableActions", allAvailableActions))
+
+    val (nextActions, remainingDeckActions) =
+      allAvailableActions.find(_.data.invalidReason(state).isEmpty) match {
         case None =>
 //          Seq(BugActionData)
-          Seq()
+          (Seq(), Seq())
         case Some(validAction) =>
           val others: Seq[ActiveActionData] =
-            allAvailableActions.filterNot(_.id == validAction.id).take(1)
-          Random.shuffle(validAction +: others)
+            allAvailableActions.filterNot(_.id == validAction.id)
+          (Random.shuffle(validAction +: others.take(1)), others.drop(1))
       }
+
+    println(("nextActions", nextActions))
 
     state
       .modify(_.visibleNextActions)
       .setTo(nextActions)
-
+      .modify(_.deckActions)
+      .setTo(remainingDeckActions)
   }
 
   private val BugActionData =
     ActionData(
       actionDataType = ActionDataType.Bug,
       title = "Bug in action selection",
-      subtitle = "No valid actions available",
+      effectLabel = EffectLabel.Bug,
       kind = ActionKind.Exploring,
       baseTimeSec = 10,
     ).toActiveAction
