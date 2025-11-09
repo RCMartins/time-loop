@@ -11,12 +11,12 @@ object Area1 {
     case object ExploreHouse extends Area1DataType
 
     case object GoToLivingRoom extends Area1DataType
-    case object SearchLivingRoom extends Area1DataType
+    case object ExploreLivingRoom extends Area1DataType
     case object PickupBackpack extends Area1DataType
     case object PickupCoins extends Area1DataType
 
     case object GoToKitchen extends Area1DataType
-    case object SearchKichen extends Area1DataType
+    case object ExploreKitchen extends Area1DataType
     case object PickupMomo extends Area1DataType
 
     case object GoToBackyard extends Area1DataType
@@ -55,11 +55,11 @@ object Area1 {
       effectLabel = EffectLabel.Movement,
       kind = ActionKind.Agility,
       baseTimeSec = 5,
-      unlocksActions = Seq(SearchLivingRoom),
+      unlocksActions = Seq(ExploreLivingRoom),
     )
 
-    def SearchLivingRoom: ActionData = ActionData(
-      actionDataType = Types.SearchLivingRoom,
+    def ExploreLivingRoom: ActionData = ActionData(
+      actionDataType = Types.ExploreLivingRoom,
       title = "Search the Living Room",
       effectLabel = EffectLabel.Explore,
       kind = ActionKind.Exploring,
@@ -93,11 +93,11 @@ object Area1 {
       effectLabel = EffectLabel.Movement,
       kind = ActionKind.Agility,
       baseTimeSec = 5,
-      unlocksActions = Seq(SearchKichen),
+      unlocksActions = Seq(ExploreKitchen),
     )
 
-    def SearchKichen: ActionData = ActionData(
-      actionDataType = Types.SearchKichen,
+    def ExploreKitchen: ActionData = ActionData(
+      actionDataType = Types.ExploreKitchen,
       title = "Search the Kitchen",
       effectLabel = EffectLabel.Explore,
       kind = ActionKind.Exploring,
@@ -124,8 +124,8 @@ object Area1 {
       baseTimeSec = 25,
       invalidReason = state =>
         Option.unless(
-          state.actionsHistory.exists(_.data.actionDataType == Types.GoToKitchen) &&
-            state.actionsHistory.exists(_.data.actionDataType == Types.GoToLivingRoom)
+          state.actionsHistory.exists(_.data.actionDataType == Types.ExploreKitchen) &&
+            state.actionsHistory.exists(_.data.actionDataType == Types.ExploreLivingRoom)
         )(ReasonLabel.MustExploreHouseFirst)
     )
 

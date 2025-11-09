@@ -100,15 +100,19 @@ object GameLogic {
   ): GameState =
     if (currentActionIsComplete)
       state
-        .modify(_.deckActions)
-        .using(_ ++ currentAction.data.unlocksActions.map(_.toActiveAction))
         .modify(_.currentAction)
         .setTo(None)
+        .modify(_.actionsHistory)
+        .using(_ :+ currentAction)
+        .modify(_.deckActions)
+        .using(_ ++ currentAction.data.unlocksActions.map(_.toActiveAction))
         .modify(_.inventory)
         .using(currentAction.data.changeInventory)
         .pipe(drawNewCardsFromDeck)
     else
       state
+
+  private val MaximumAmountOfVisibleActions = 2
 
   private def drawNewCardsFromDeck(
       state: GameState
@@ -124,12 +128,17 @@ object GameLogic {
     val (nextActions, remainingDeckActions) =
       allAvailableActions.find(_.data.invalidReason(state).isEmpty) match {
         case None =>
-//          Seq(BugActionData)
-          (Seq(), Seq())
+          (
+            allAvailableActions.take(MaximumAmountOfVisibleActions),
+            allAvailableActions.drop(MaximumAmountOfVisibleActions),
+          )
         case Some(validAction) =>
           val others: Seq[ActiveActionData] =
             allAvailableActions.filterNot(_.id == validAction.id)
-          (Random.shuffle(validAction +: others.take(1)), others.drop(1))
+          (
+            Random.shuffle(validAction +: others.take(MaximumAmountOfVisibleActions - 1)),
+            others.drop(MaximumAmountOfVisibleActions - 1)
+          )
       }
 
     println(("nextActions", nextActions))
