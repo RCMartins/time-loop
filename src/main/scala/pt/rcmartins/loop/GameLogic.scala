@@ -76,9 +76,6 @@ object GameLogic {
             }
           )
 
-        println(("initialGameState.deckActions", initialGameState.deckActions))
-        println(("initialGameState.visibleNextActions", initialGameState.visibleNextActions))
-
         val currentActionIsComplete: Boolean =
           currentActionElapsedMicro == currentAction.data.baseTimeMicro
 

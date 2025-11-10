@@ -1,23 +1,23 @@
 package pt.rcmartins.loop.model
 
-import pt.rcmartins.loop.model.SkillState.NextLevelXpCache
+import pt.rcmartins.loop.model.SkillState._
 import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
 
 final case class SkillState(
     kind: ActionKind,
     loopLevel: Int, // 0..N
-    loopXPMicro: Long, // current XP in this loop level
+    loopXPMicro: Long, // current XP in loop level
     permLevel: Int, // 0..N
-    permXPMicro: Long, // current XP in this level
+    permXPMicro: Long, // current XP in permanent level
 ) {
 
-  def nextLoopXP: Long = NextLevelXpCache(loopLevel)
+  def nextLoopXP: Long = LoopNextLevelXpCache(loopLevel)
   def nextLoopXPMicro: Long = nextLoopXP * 1_000_000L
   def loopRatio: Double = Math.min(1.0, loopXPMicro.toDouble / nextLoopXPMicro.toDouble)
-  def loopMulti: Double = SkillState.GenerationMultiCache(loopLevel)
+  def loopMulti: Double = SkillState.LoopMultiCache(loopLevel)
   def loopXPLong: Long = loopXPMicro / 1_000_000L
 
-  def nextPermXP: Long = NextLevelXpCache(permLevel)
+  def nextPermXP: Long = PermanentNextLevelXpCache(permLevel)
   def nextPermXPMicro: Long = nextPermXP * 1_000_000L
   def permRatio: Double = Math.min(1.0, permXPMicro.toDouble / nextPermXPMicro.toDouble)
   def permMulti: Double = SkillState.PermanentMultiCache(permLevel)
@@ -40,18 +40,19 @@ object SkillState {
     SkillState(
       kind = kind,
       loopLevel = 0,
-      loopXPMicro = NextLevelXpCache(0),
+      loopXPMicro = 0,
       permLevel = 0,
-      permXPMicro = NextLevelXpCache(0),
+      permXPMicro = 0,
     )
 
   private val NextLevelXpFactor: Double = 1.02
-  private val GenerationMulti: Double = 1.05
-  private val PermanentMult: Double = 1.01
+  private val LoopMultiplier: Double = 1.05
+  private val PermanentMultiplier: Double = 1.01
 
-  val NextLevelXpCache: IndexedSeq[Long] = exponentialCalcLong(25, NextLevelXpFactor)
-  val GenerationMultiCache: IndexedSeq[Double] = exponentialCalcDouble(1.0, GenerationMulti)
-  val PermanentMultiCache: IndexedSeq[Double] = exponentialCalcDouble(1.0, PermanentMult)
+  val LoopNextLevelXpCache: IndexedSeq[Long] = exponentialCalcLong(10, NextLevelXpFactor)
+  val PermanentNextLevelXpCache: IndexedSeq[Long] = exponentialCalcLong(25, NextLevelXpFactor)
+  val LoopMultiCache: IndexedSeq[Double] = exponentialCalcDouble(1.0, LoopMultiplier)
+  val PermanentMultiCache: IndexedSeq[Double] = exponentialCalcDouble(1.0, PermanentMultiplier)
 
   private def exponentialCalcLong(base: Long, mult: Double): IndexedSeq[Long] = {
     var cache: IndexedSeq[Long] = Vector(base)

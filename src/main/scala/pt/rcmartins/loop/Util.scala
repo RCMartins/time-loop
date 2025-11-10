@@ -98,16 +98,6 @@ object Util {
       role := "button",
       cls := base,
       tabIndex := 0,
-      //      cls <-- vm.enable.map {
-      //        case true  => base
-      //        case false => base + disabledCls
-      //      },
-      //      cls(selectedCls) <-- isSelected.signal,
-
-      //      // Interactions: click / Enter / Space toggle select and fire onSelect
-      //      onClick.filter(vm.disabled.map(!_)) --> { _ =>
-      //        isSelected.update(!_); onSelect()
-      //      },
 
       // Content
       div(
@@ -135,24 +125,32 @@ object Util {
             span(
               cls := "px-2 py-0.5 text-xs rounded-full bg-slate-700/70 ring-1 ring-slate-600",
               child.text <-- vm.longSoFar.map { timeSoFar =>
-                s"$timeSoFar / ${vm.data.baseTimeSec}"
+                s"\u00A0$timeSoFar\u00A0 / \u00A0${vm.data.baseTimeSec}\u00A0"
               },
             ),
-            //            span(
-            //              cls := "px-2 py-0.5 text-xs rounded-full bg-amber-700/40 ring-1 ring-amber-600/50",
-            //              child.text <-- Val(s"${vm.energy}⚡")
-            //            )
+            span(
+              cls := "px-2 py-0.5 text-xs rounded-full bg-slate-900/70 ring-1 ring-slate-600",
+              child.text <-- vm.microLeft.withCurrentValueOf(GameData.skills).map {
+                case (timeSoFar, skills) =>
+                  val currentTime: Double =
+                    calcWithSkillDouble(timeSoFar, skills.get(vm.data.kind)) / 1_000_000L
+                  f"$currentTime%.1f s"
+              },
+            ),
           ),
-
-          // Optional progress/cooldown
-
           div(
             cls := "mt-3",
             div(
               cls := "h-1.5 rounded-full bg-slate-700/60 overflow-hidden",
               div(
-                cls := "h-1.5 rounded-full bg-emerald-500 transition-all",
-                width.percent <-- vm.progressRatio.map(ratio => (ratio * 100).toInt),
+                // origin-left ensures scaleX grows from the left edge
+                cls := "h-1.5 rounded-full bg-emerald-500 origin-left will-change-transform",
+
+                // reactive transform: scaleX(progressRatio)
+                transform <-- vm.progressRatio.map { ratio =>
+                  val clamped = ratio.max(0.0).min(1.0)
+                  s"scaleX($clamped)"
+                }
               )
             )
           )
@@ -160,6 +158,13 @@ object Util {
       )
     )
   }
+
+  private def calcWithSkillBonus(baseTime: Long, state: SkillState): Long = {
+    Math.ceil(baseTime.toDouble / state.finalSpeedMulti).toLong
+  }
+
+  private def calcWithSkillDouble(baseTime: Long, state: SkillState): Double =
+    baseTime.toDouble / state.finalSpeedMulti
 
   def actionCard(vm: Signal[ActiveActionData]): HtmlElement = {
     val isSelected = Var(false)
@@ -240,7 +245,9 @@ object Util {
             cls := "mt-2 flex flex-wrap items-center gap-2",
             span(
               cls := "px-2 py-0.5 text-xs rounded-full bg-slate-700/70 ring-1 ring-slate-600",
-              child.text <-- vm.map(_.data.baseTimeSec.toString)
+              "\u00A0",
+              child.text <-- vm.map(_.data.baseTimeSec.toString),
+              "\u00A0",
             ),
           ),
         ),
@@ -258,14 +265,17 @@ object Util {
     )
   }
 
-  def skillAccent(kind: ActionKind): String =
-    kind match {
-      case ActionKind.Agility   => "bg-emerald-500"
-      case ActionKind.Gardening => "bg-lime-500"
-      case ActionKind.Cooking   => "bg-amber-500"
-      case ActionKind.Crafting  => "bg-sky-500"
-      case _                    => "bg-emerald-500"
-    }
+  private def skillAccent(kind: ActionKind, darker: Boolean): String =
+    (kind match {
+      case ActionKind.Agility   => "bg-emerald-"
+      case ActionKind.Exploring => "bg-indigo-"
+      case ActionKind.Foraging  => "bg-lime-"
+      case ActionKind.Social    => "bg-pink-"
+      case ActionKind.Crafting  => "bg-sky-"
+      case ActionKind.Gardening => "bg-green-"
+      case ActionKind.Cooking   => "bg-amber-"
+      case ActionKind.Magic     => "bg-purple-"
+    }) + (if (darker) "700" else "400")
 
   def skillRow(skillSig: Signal[SkillState]): HtmlElement =
     div(
@@ -273,7 +283,7 @@ object Util {
       // Dot accent
       div(
         cls := "h-2.5 w-2.5 rounded-full",
-        cls <-- skillSig.map { sk => skillAccent(sk.kind) },
+        cls <-- skillSig.map { sk => skillAccent(sk.kind, darker = false) },
       ),
       // Title + level
       div(
@@ -288,56 +298,91 @@ object Util {
           ),
           span(cls := "text-xs text-slate-300/80", "Lv ", child.text <-- skillSig.map(_.loopLevel))
         ),
-        // Progress bar
         div(
           cls := "mt-1",
           div(
             cls := "h-1.5 rounded-full bg-slate-700/60 overflow-hidden",
             div(
-              cls := "h-1.5 rounded-full transition-all",
-              cls <-- skillSig.map { sk => skillAccent(sk.kind) },
-              width.percent <-- skillSig.map { sk => (sk.loopRatio * 100).toInt }
+              // grow from the left, GPU-friendly
+              cls := "h-1.5 rounded-full origin-left will-change-transform",
+              cls <-- skillSig.map(sk => skillAccent(sk.kind, darker = false)),
+
+              // scale instead of width; clamp for safety and keep a tiny visible bar
+              transform <-- skillSig.map { sk =>
+                val r = sk.loopRatio.max(0.0).min(1.0)
+                val visible = math.max(0.02, r) // ensures it never fully disappears
+                s"scaleX($visible)"
+              }
             )
           ),
           div(
             cls := "mt-1 text-[11px] text-slate-300/80",
-            child.text <-- skillSig.map { sk => s"${sk.loopXPLong}/${sk.nextLoopXP} XP" }
+            child.text <-- skillSig.map(sk => s"${sk.loopXPLong} / ${sk.nextLoopXP} XP")
+          )
+        ),
+        div(
+          cls := "mt-1",
+          div(
+            cls := "h-1.5 rounded-full bg-slate-700/60 overflow-hidden",
+            div(
+              // grow from the left, GPU-friendly
+              cls := "h-1.5 rounded-full origin-left will-change-transform",
+              cls <-- skillSig.map(sk => skillAccent(sk.kind, darker = true)),
+
+              // scale instead of width; clamp for safety and keep a tiny visible bar
+              transform <-- skillSig.map { sk =>
+                val r = sk.permRatio.max(0.0).min(1.0)
+                val visible = math.max(0.02, r) // ensures it never fully disappears
+                s"scaleX($visible)"
+              }
+            )
+          ),
+          div(
+            cls := "mt-1 text-[11px] text-slate-300/80",
+            child.text <-- skillSig.map(sk => s"${sk.permXPLong} / ${sk.nextPermXP} XP")
           )
         )
       )
     )
 
-//  def skillsPanelRows(skillsSignal: Signal[List[SkillState]]): HtmlElement =
-//    div(
-//      cls := "space-y-2",
-//      children <-- skillsSignal.split(_.kind) { case (_, _, s) => skillRow(s) }
-//    )
-
-  def actionIcon(kind: ActionKind): Element = kind match {
-    case ActionKind.Gardening =>
-      i(
-        cls := "fa-solid fa-seedling h-5 w-5 opacity-90"
-      )
-    case ActionKind.Exploring =>
-      i(
-        cls := "fa-solid fa-magnifying-glass h-5 w-5 opacity-90"
-      )
-    case ActionKind.Cooking =>
-      i(
-        cls := "fa-solid fa-utensils h-5 w-5 opacity-90"
-      )
-    case ActionKind.Crafting =>
-      i(
-        cls := "fa-solid fa-scissors h-5 w-5 opacity-90"
-      )
-    case ActionKind.Agility =>
-      i(
-        cls := "fa-solid fa-person-running h-5 w-5 opacity-90"
-      )
-    case _ =>
-      i(
-        cls := "fa-solid fa-question h-5 w-5 opacity-90"
-      )
-  }
+  private def actionIcon(kind: ActionKind): Element =
+    kind match {
+      case ActionKind.Agility =>
+        i(
+          cls := "fa-solid fa-person-running h-5 w-5 opacity-90"
+        )
+      case ActionKind.Exploring =>
+        i(
+          cls := "fa-solid fa-magnifying-glass h-5 w-5 opacity-90"
+        )
+      case ActionKind.Foraging =>
+        i(
+          cls := "fa-solid fa-apple-whole h-5 w-5 opacity-90"
+        )
+      case ActionKind.Social =>
+        i(
+          cls := "fa-solid fa-people-arrows h-5 w-5 opacity-90"
+        )
+      case ActionKind.Crafting =>
+        i(
+          cls := "fa-solid fa-scissors h-5 w-5 opacity-90"
+        )
+      case ActionKind.Gardening =>
+        i(
+          cls := "fa-solid fa-seedling h-5 w-5 opacity-90"
+        )
+      case ActionKind.Cooking =>
+        i(
+          cls := "fa-solid fa-utensils h-5 w-5 opacity-90"
+        )
+      case ActionKind.Magic =>
+        i(
+          cls := "fa-solid fa-magic-wand-sparkles h-5 w-5 opacity-90"
+        )
+      case _ =>
+        i(
+          cls := "fa-solid fa-question h-5 w-5 opacity-90"
+        )
+    }
 
 }
