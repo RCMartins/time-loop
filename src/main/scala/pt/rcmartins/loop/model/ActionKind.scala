@@ -12,11 +12,11 @@ sealed trait ActionKind {
 object ActionKind {
   case object Agility extends ActionKind { val name: String = "Agility" }
   case object Exploring extends ActionKind { val name: String = "Exploring" }
-  case object Cooking extends ActionKind { val name: String = "Cooking" }
-  case object Crafting extends ActionKind { val name: String = "Crafting" }
-  case object Gardening extends ActionKind { val name: String = "Gardening" }
   case object Foraging extends ActionKind { val name: String = "Foraging" }
   case object Social extends ActionKind { val name: String = "Social" }
+  case object Crafting extends ActionKind { val name: String = "Crafting" }
+  case object Gardening extends ActionKind { val name: String = "Gardening" }
+  case object Cooking extends ActionKind { val name: String = "Cooking" }
   case object Magic extends ActionKind { val name: String = "Magic" }
 
   implicit val decoder: JsonDecoder[ActionKind] = DeriveJsonDecoder.gen[ActionKind]
@@ -54,6 +54,9 @@ class ActiveActionData(
 
   val longSoFar: Signal[Long] =
     microSoFar.signal.map(_ / 1_000_000L)
+
+  val microLeft: Signal[Long] =
+    microSoFar.signal.map(data.baseTimeMicro - _)
 
   val progressRatio: Signal[Double] =
     microSoFar.signal.map(_.toDouble / data.baseTimeMicro.toDouble)

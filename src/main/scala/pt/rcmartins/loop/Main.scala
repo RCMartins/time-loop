@@ -3,23 +3,20 @@ package pt.rcmartins.loop
 import com.raquo.laminar.api.L._
 import com.raquo.laminar.nodes.ReactiveHtmlElement
 import org.scalajs.dom
-import org.scalajs.dom.{HTMLDivElement, HTMLUListElement, html, window}
+import org.scalajs.dom.{HTMLDivElement, HTMLUListElement}
 import pt.rcmartins.loop.GameData._
 import pt.rcmartins.loop.Util._
-import pt.rcmartins.loop.model._
 
-import scala.scalajs.js.timers.{setInterval, setTimeout}
+import scala.scalajs.js.timers.setInterval
 
 object Main {
 
-  // Example skills list (use your real skillsPanelRows or skillsPanelGrid)
   private val skillsView =
     div(
       cls := "space-y-2",
-      children <-- skills.map(_.allSeq).split(_.kind) { case (_, _, s) => skillRow(s) }
+      children <-- skills.map(_.allHigherThan0).split(_.kind) { case (_, _, s) => skillRow(s) }
     )
 
-  // Current action sample
   private val currentActionView: ReactiveHtmlElement[HTMLDivElement] =
     div(
       cls := "flex items-start gap-3",
@@ -32,7 +29,6 @@ object Main {
         }
     )
 
-  // Next actions grid (your actionCard components here)
   private val nextActionsView: ReactiveHtmlElement[HTMLDivElement] =
     div(
       cls := "grid gap-3 sm:grid-cols-2",
@@ -42,7 +38,6 @@ object Main {
         }
     )
 
-  // Inventory list
   private val inventoryView: ReactiveHtmlElement[HTMLUListElement] =
     ul(
       cls := "space-y-2",
@@ -152,7 +147,7 @@ object Main {
         div(cls := "order-2 md:order-1", skillsSidebar(skillsView)),
         div(cls := "order-1 md:order-2", centerColumn(currentActionView, nextActionsView)),
         div(cls := "order-3 md:order-3", rightSidebar(inventoryView, miscView))
-      )
+      ),
     )
 
 }
