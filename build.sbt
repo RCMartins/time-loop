@@ -3,15 +3,14 @@ name := "time-loop"
 inThisBuild(
   Seq(
     organization := "io.github.rcmartins",
-    scalaVersion := "2.13.16",
+    scalaVersion := "2.13.17",
   )
 )
 
 val V = new {
-  val zio = "2.1.19"
-  val zioJson = "0.7.44"
+  val zioJson = "0.7.45"
   val laminar = "17.2.1"
-  val scalajsDom = "2.8.0"
+  val scalajsDom = "2.8.1"
   val quicklens = "1.9.12"
 }
 
@@ -31,6 +30,7 @@ lazy val frontend =
         // Production
         "com.raquo"                  %%% "laminar"   % V.laminar,
         "com.softwaremill.quicklens" %%% "quicklens" % V.quicklens,
+        "dev.zio"                    %%% "zio-json"  % "0.7.44",
       )
     )
 

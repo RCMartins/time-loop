@@ -2,7 +2,11 @@ package pt.rcmartins.loop.model
 
 import pt.rcmartins.loop.data.Area1
 
+import scala.util.Random
+
 case class GameState(
+    version: Int,
+    seed: Long,
     timeElapsedMicro: Long,
     energyMicro: Long,
     maxEnergyInt: Int,
@@ -15,13 +19,17 @@ case class GameState(
     visibleNextActions: Seq[ActiveActionData],
     selectedNextAction: Option[Long],
     deckActions: Seq[ActiveActionData],
-    actionsHistory: Seq[ActiveActionData],
+    actionsHistory: Seq[ActionData],
 )
 
 object GameState {
 
-  val StartingMaxEnergy: Int = 100
+  val CurrentVersion: Int = 1
+  private val StartingMaxEnergy: Int = 100
+
   val initial: GameState = GameState(
+    version = CurrentVersion,
+    seed = Random.nextLong(),
     timeElapsedMicro = 0L,
     energyMicro = StartingMaxEnergy * 1000000L,
     maxEnergyInt = StartingMaxEnergy,

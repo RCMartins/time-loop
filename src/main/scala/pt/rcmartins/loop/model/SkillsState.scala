@@ -1,5 +1,7 @@
 package pt.rcmartins.loop.model
 
+import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
+
 case class SkillsState(
     agility: SkillState, // movement, etc.
     explore: SkillState, // exploration, etc.
@@ -49,6 +51,18 @@ case class SkillsState(
       case ActionKind.Magic     => copy(magic = function(magic))
     }
 
+  def resetLoopProgress: SkillsState =
+    SkillsState(
+      agility = agility.resetLoopProgress,
+      explore = explore.resetLoopProgress,
+      cooking = cooking.resetLoopProgress,
+      crafting = crafting.resetLoopProgress,
+      gardening = gardening.resetLoopProgress,
+      foraging = foraging.resetLoopProgress,
+      social = social.resetLoopProgress,
+      magic = magic.resetLoopProgress,
+    )
+
 }
 
 object SkillsState {
@@ -63,5 +77,8 @@ object SkillsState {
     social = SkillState.initial(ActionKind.Social),
     magic = SkillState.initial(ActionKind.Magic),
   )
+
+  implicit val decoder: JsonDecoder[SkillsState] = DeriveJsonDecoder.gen[SkillsState]
+  implicit val encoder: JsonEncoder[SkillsState] = DeriveJsonEncoder.gen[SkillsState]
 
 }
