@@ -36,6 +36,9 @@ object GameData {
     gameStateVar.set(newState)
   }
 
+  def loadGameState(newGameState: GameState): Unit =
+    gameStateVar.set(newGameState)
+
   def selectNextAction(id: Long): Unit = {
     println(s"Selecting next action: $id")
     gameStateVar.update(

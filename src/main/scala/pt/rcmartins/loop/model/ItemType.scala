@@ -1,5 +1,7 @@
 package pt.rcmartins.loop.model
 
+import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
+
 sealed trait ItemType {
   val visible: Boolean = true
   val noInventoyLimit: Boolean = false

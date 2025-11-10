@@ -5,24 +5,6 @@ import pt.rcmartins.loop.model._
 
 object Area1 {
 
-  object Types {
-
-    case object WakeUp extends Area1DataType
-    case object ExploreHouse extends Area1DataType
-
-    case object GoToLivingRoom extends Area1DataType
-    case object ExploreLivingRoom extends Area1DataType
-    case object PickupBackpack extends Area1DataType
-    case object PickupCoins extends Area1DataType
-
-    case object GoToKitchen extends Area1DataType
-    case object ExploreKitchen extends Area1DataType
-    case object PickupMomo extends Area1DataType
-
-    case object GoToBackyard extends Area1DataType
-
-  }
-
   object Data {
 
     val InitialActionData: Seq[ActionData] = Seq(
@@ -32,7 +14,7 @@ object Area1 {
     )
 
     def WakeUp: ActionData = ActionData(
-      actionDataType = Types.WakeUp,
+      actionDataType = Area1DataType.WakeUp,
       title = "Wake Up from bed",
       effectLabel = EffectLabel.Movement,
       kind = ActionKind.Agility,
@@ -41,7 +23,7 @@ object Area1 {
     )
 
     def ExploreHouse: ActionData = ActionData(
-      actionDataType = Types.ExploreHouse,
+      actionDataType = Area1DataType.ExploreHouse,
       title = "Explore the House",
       effectLabel = EffectLabel.Explore,
       kind = ActionKind.Agility,
@@ -50,7 +32,7 @@ object Area1 {
     )
 
     def GoToLivingRoom: ActionData = ActionData(
-      actionDataType = Types.GoToLivingRoom,
+      actionDataType = Area1DataType.GoToLivingRoom,
       title = "Go to the Living Room",
       effectLabel = EffectLabel.Movement,
       kind = ActionKind.Agility,
@@ -59,7 +41,7 @@ object Area1 {
     )
 
     def ExploreLivingRoom: ActionData = ActionData(
-      actionDataType = Types.ExploreLivingRoom,
+      actionDataType = Area1DataType.ExploreLivingRoom,
       title = "Search the Living Room",
       effectLabel = EffectLabel.Explore,
       kind = ActionKind.Exploring,
@@ -68,7 +50,7 @@ object Area1 {
     )
 
     def PickupBackpack: ActionData = ActionData(
-      actionDataType = Types.PickupBackpack,
+      actionDataType = Area1DataType.PickupBackpack,
       title = "Pick up the Backpack",
       effectLabel = EffectLabel.GetItem(ItemType.Backpack, 1),
       kind = ActionKind.Foraging,
@@ -77,7 +59,7 @@ object Area1 {
     )
 
     def PickupCoins: ActionData = ActionData(
-      actionDataType = Types.PickupCoins,
+      actionDataType = Area1DataType.PickupCoins,
       title = "Pick up Coins",
       effectLabel = EffectLabel.GetItem(ItemType.Coins, 5),
       kind = ActionKind.Foraging,
@@ -88,7 +70,7 @@ object Area1 {
     )
 
     def GoToKitchen: ActionData = ActionData(
-      actionDataType = Types.GoToKitchen,
+      actionDataType = Area1DataType.GoToKitchen,
       title = "Go to the Kitchen",
       effectLabel = EffectLabel.Movement,
       kind = ActionKind.Agility,
@@ -97,7 +79,7 @@ object Area1 {
     )
 
     def ExploreKitchen: ActionData = ActionData(
-      actionDataType = Types.ExploreKitchen,
+      actionDataType = Area1DataType.ExploreKitchen,
       title = "Search the Kitchen",
       effectLabel = EffectLabel.Explore,
       kind = ActionKind.Exploring,
@@ -106,7 +88,7 @@ object Area1 {
     )
 
     def PickupMomo: ActionData = ActionData(
-      actionDataType = Types.PickupMomo,
+      actionDataType = Area1DataType.PickupMomo,
       title = "Pick up Momo",
       effectLabel = EffectLabel.GetItem(ItemType.Momo, 1),
       kind = ActionKind.Foraging,
@@ -117,22 +99,17 @@ object Area1 {
     )
 
     def GoToBackyard: ActionData = ActionData(
-      actionDataType = Types.GoToBackyard,
+      actionDataType = Area1DataType.GoToBackyard,
       title = "Go to the Backyard",
       effectLabel = EffectLabel.Movement,
       kind = ActionKind.Agility,
       baseTimeSec = 25,
       invalidReason = state =>
         Option.unless(
-          state.actionsHistory.exists(_.data.actionDataType == Types.ExploreKitchen) &&
-            state.actionsHistory.exists(_.data.actionDataType == Types.ExploreLivingRoom)
+          state.actionsHistory.exists(_.actionDataType == Area1DataType.ExploreKitchen) &&
+            state.actionsHistory.exists(_.actionDataType == Area1DataType.ExploreLivingRoom)
         )(ReasonLabel.MustExploreHouseFirst)
     )
-
-    def load(dataType: ActionDataType): ActionData =
-      dataType match {
-        case Types.WakeUp => WakeUp
-      }
 
   }
 

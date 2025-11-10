@@ -1,6 +1,7 @@
 package pt.rcmartins.loop.model
 
 import com.raquo.laminar.api.L.{Signal, Var}
+import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
 
 import scala.util.Random
 
@@ -17,17 +18,21 @@ object ActionKind {
   case object Foraging extends ActionKind { val name: String = "Foraging" }
   case object Social extends ActionKind { val name: String = "Social" }
   case object Magic extends ActionKind { val name: String = "Magic" }
+
+  implicit val decoder: JsonDecoder[ActionKind] = DeriveJsonDecoder.gen[ActionKind]
+  implicit val encoder: JsonEncoder[ActionKind] = DeriveJsonEncoder.gen[ActionKind]
+
 }
 
 final case class ActionData(
-                             actionDataType: ActionDataType,
-                             title: String,
-                             effectLabel: EffectLabel,
-                             kind: ActionKind,
-                             baseTimeSec: Long,
-                             unlocksActions: Seq[ActionData] = Seq.empty,
-                             invalidReason: GameState => Option[ReasonLabel] = _ => None,
-                             changeInventory: InventoryState => InventoryState = identity,
+    actionDataType: ActionDataType,
+    title: String,
+    effectLabel: EffectLabel,
+    kind: ActionKind,
+    baseTimeSec: Long,
+    unlocksActions: Seq[ActionData] = Seq.empty,
+    invalidReason: GameState => Option[ReasonLabel] = _ => None,
+    changeInventory: InventoryState => InventoryState = identity,
 ) {
 
   def baseTimeMicro: Long = baseTimeSec * 1_000_000L
@@ -40,17 +45,6 @@ final case class ActionData(
     )
 
 }
-
-//class InGameActionData(
-//    id: String,
-//    data: ActionData,
-//    microSoFar: Var[Long],
-//) {
-//
-//  def progressRatio: Double =
-//    microSoFar.toDouble / (data.baseTimeSec * 1000000).toDouble
-//
-//}
 
 class ActiveActionData(
     val id: Long,

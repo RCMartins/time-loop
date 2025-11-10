@@ -1,6 +1,7 @@
 package pt.rcmartins.loop.model
 
 import pt.rcmartins.loop.model.SkillState.NextLevelXpCache
+import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
 
 final case class SkillState(
     kind: ActionKind,
@@ -24,6 +25,12 @@ final case class SkillState(
 
   def finalSpeedMulti: Double =
     loopMulti * permMulti
+
+  def resetLoopProgress: SkillState =
+    copy(
+      loopLevel = 0,
+      loopXPMicro = 0L,
+    )
 
 }
 
@@ -65,5 +72,8 @@ object SkillState {
     }
     cache
   }
+
+  implicit val decoder: JsonDecoder[SkillState] = DeriveJsonDecoder.gen[SkillState]
+  implicit val encoder: JsonEncoder[SkillState] = DeriveJsonEncoder.gen[SkillState]
 
 }

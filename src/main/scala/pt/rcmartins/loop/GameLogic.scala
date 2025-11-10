@@ -103,7 +103,7 @@ object GameLogic {
         .modify(_.currentAction)
         .setTo(None)
         .modify(_.actionsHistory)
-        .using(_ :+ currentAction)
+        .using(_ :+ currentAction.data)
         .modify(_.deckActions)
         .using(_ ++ currentAction.data.unlocksActions.map(_.toActiveAction))
         .modify(_.inventory)
@@ -149,14 +149,5 @@ object GameLogic {
       .modify(_.deckActions)
       .setTo(remainingDeckActions)
   }
-
-  private val BugActionData =
-    ActionData(
-      actionDataType = ActionDataType.Bug,
-      title = "Bug in action selection",
-      effectLabel = EffectLabel.Bug,
-      kind = ActionKind.Exploring,
-      baseTimeSec = 10,
-    ).toActiveAction
 
 }
