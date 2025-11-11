@@ -108,7 +108,8 @@ object Area1 {
         Option.unless(
           state.actionsHistory.exists(_.actionDataType == Area1DataType.ExploreKitchen) &&
             state.actionsHistory.exists(_.actionDataType == Area1DataType.ExploreLivingRoom)
-        )(ReasonLabel.MustExploreHouseFirst)
+        )(ReasonLabel.MustExploreHouseFirst),
+      unlocksActions = Seq(Area2.Data.ExploreTown),
     )
 
   }

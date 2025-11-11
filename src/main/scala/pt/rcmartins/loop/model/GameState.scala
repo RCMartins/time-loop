@@ -10,8 +10,11 @@ case class GameState(
     timeElapsedMicro: Long,
     energyMicro: Long,
     maxEnergyInt: Int,
-    tiredBaseSecond: Double,
-    tiredMultSecond: Double,
+    initialTiredSecond: Double,
+    initialTiredMultSecond: Double,
+    currentTiredSecond: Double,
+    currentTiredMultSecond: Double,
+    nextTiredIncreaseMicro: Long,
     stats: Stats,
     skills: SkillsState,
     inventory: InventoryState,
@@ -20,21 +23,46 @@ case class GameState(
     selectedNextAction: Option[Long],
     deckActions: Seq[ActiveActionData],
     actionsHistory: Seq[ActionData],
-)
+) {
+
+  def currentTiredSecondMicro: Long = (currentTiredSecond * 1_000_000L).toLong
+
+  def resetForNewLoop: GameState =
+    this.copy(
+      timeElapsedMicro = 0L,
+      energyMicro = maxEnergyInt * 1_000_000L,
+      currentTiredSecond = initialTiredSecond,
+      currentTiredMultSecond = initialTiredMultSecond,
+      nextTiredIncreaseMicro = 1_000_000L,
+      skills = skills.resetLoopProgress,
+      inventory = InventoryState.initial,
+      currentAction = None,
+      visibleNextActions = Area1.Data.InitialActionData.map(_.toActiveAction),
+      selectedNextAction = None,
+      deckActions = Seq(),
+      actionsHistory = Seq(),
+    )
+
+}
 
 object GameState {
 
   val CurrentVersion: Int = 1
   private val StartingMaxEnergy: Int = 100
+  private val initialTiredSecond: Double = 0.1
+  private val InitialTiredMultSecond: Double = 1.00372699 // x^60=1.25 per minute
 
   val initial: GameState = GameState(
     version = CurrentVersion,
     seed = Random.nextLong(),
     timeElapsedMicro = 0L,
-    energyMicro = StartingMaxEnergy * 1000000L,
+    energyMicro = StartingMaxEnergy * 1_000_000L,
     maxEnergyInt = StartingMaxEnergy,
-    tiredBaseSecond = 0.1,
-    tiredMultSecond = 1.01,
+    initialTiredSecond = initialTiredSecond,
+    initialTiredMultSecond = InitialTiredMultSecond,
+    currentTiredSecond = initialTiredSecond,
+    currentTiredMultSecond = InitialTiredMultSecond,
+    nextTiredIncreaseMicro = 1_000_000L,
     stats = Stats.initial,
     skills = SkillsState.initial,
     inventory = InventoryState.initial,
