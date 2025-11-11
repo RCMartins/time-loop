@@ -73,11 +73,19 @@ object Main {
           }
         ),
       ),
-//      div(cls := "flex justify-between", span("Loop"), span("Day 6"))
+      div(
+        cls := "flex justify-between",
+        span("Tiredness"),
+        span(
+          child.text <-- currentTiredSecond.map { tiredSecond =>
+            f"$tiredSecond%.2f / sec"
+          }
+        ),
+      ),
     )
 
   def main(args: Array[String]): Unit = {
-//    render(dom.document.getElementById("main-div"), mainDiv())
+    SaveLoad.loadFromLocalStorage().foreach(SaveLoad.reloadDataFromLoadedSave)
 
     setInterval(25) {
       runUpdateGameState()

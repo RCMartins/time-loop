@@ -17,7 +17,12 @@ object GameLogic {
     auxUpdate(initialGameState, elapsedTimeMicro)
   }
 
+  @inline
   private def auxUpdate(initialGameState: GameState, elapsedTimeMicro: Long): GameState = {
+    updateTiredness(updateAction(initialGameState, elapsedTimeMicro))
+  }
+
+  private def updateAction(initialGameState: GameState, elapsedTimeMicro: Long): GameState = {
     initialGameState.currentAction match {
       case None =>
         initialGameState.selectedNextAction.flatMap(id =>
@@ -146,5 +151,28 @@ object GameLogic {
       .modify(_.deckActions)
       .setTo(remainingDeckActions)
   }
+
+  private def updateTiredness(initialGameState: GameState): GameState =
+    if (initialGameState.timeElapsedMicro >= initialGameState.nextTiredIncreaseMicro) {
+      initialGameState
+        .modify(_.currentTiredSecond)
+        .using(_ * initialGameState.currentTiredMultSecond)
+        .modify(_.nextTiredIncreaseMicro)
+        .using(_ + 1_000_000L)
+        .modify(_.energyMicro)
+        .using(energy => Math.max(0, energy - initialGameState.currentTiredSecondMicro))
+        .pipe(checkDeathDueToTiredness)
+    } else {
+      initialGameState
+    }
+
+  private def checkDeathDueToTiredness(state: GameState): GameState =
+    if (state.energyMicro == 0L) {
+      val newState = state.resetForNewLoop
+      SaveLoad.saveToLocalStorage(newState)
+      newState
+    } else {
+      state
+    }
 
 }
