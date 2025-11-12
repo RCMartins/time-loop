@@ -19,25 +19,32 @@ object GameLogic {
 
   @inline
   private def auxUpdate(initialGameState: GameState, elapsedTimeMicro: Long): GameState = {
-    updateTiredness(updateAction(initialGameState, elapsedTimeMicro))
+    val (newState, actualElapsedMicro) = updateAction(initialGameState, elapsedTimeMicro)
+    updateTiredness(newState, actualElapsedMicro)
   }
 
-  private def updateAction(initialGameState: GameState, elapsedTimeMicro: Long): GameState = {
+  private def updateAction(
+      initialGameState: GameState,
+      elapsedTimeMicro: Long,
+  ): (GameState, Long) = {
     initialGameState.currentAction match {
       case None =>
         initialGameState.selectedNextAction.flatMap(id =>
           initialGameState.visibleNextActions.find(_.id == id)
         ) match {
           case Some(nextAction) =>
-            initialGameState
-              .modify(_.selectedNextAction)
-              .setTo(None)
-              .modify(_.currentAction)
-              .setTo(Some(nextAction))
-              .modify(_.visibleNextActions)
-              .using(actions => actions.filterNot(_.id == nextAction.id))
+            (
+              initialGameState
+                .modify(_.selectedNextAction)
+                .setTo(None)
+                .modify(_.currentAction)
+                .setTo(Some(nextAction))
+                .modify(_.visibleNextActions)
+                .using(actions => actions.filterNot(_.id == nextAction.id)),
+              0L
+            )
           case None =>
-            initialGameState
+            (initialGameState, 0L)
         }
       case Some(currentAction) =>
         val initialSkillState: SkillState = initialGameState.skills.get(currentAction.data.kind)
@@ -84,14 +91,17 @@ object GameLogic {
         val currentActionIsComplete: Boolean =
           currentActionElapsedMicro == currentAction.data.baseTimeMicro
 
-        initialGameState
-          .modify(_.currentAction)
-          .using(_.map(_.copy(microSoFar = currentActionElapsedMicro)))
-          .modify(_.timeElapsedMicro)
-          .using(_ + actualElapsedMicro)
-          .modify(_.skills)
-          .setTo(skillsUpdated)
-          .pipe(applyCurrentActionIfComplete(_, currentActionIsComplete, currentAction))
+        (
+          initialGameState
+            .modify(_.currentAction)
+            .using(_.map(_.copy(microSoFar = currentActionElapsedMicro)))
+            .modify(_.timeElapsedMicro)
+            .using(_ + actualElapsedMicro)
+            .modify(_.skills)
+            .setTo(skillsUpdated)
+            .pipe(applyCurrentActionIfComplete(_, currentActionIsComplete, currentAction)),
+          actualElapsedMicro
+        )
     }
   }
 
@@ -187,19 +197,28 @@ object GameLogic {
       .setTo(remainingDeckActions ++ invisibleInvalid)
   }
 
-  private def updateTiredness(initialGameState: GameState): GameState =
+  private def updateTiredness(
+      initialGameState: GameState,
+      actualElapsedMicro: Long,
+  ): GameState = {
     if (initialGameState.timeElapsedMicro >= initialGameState.nextTiredIncreaseMicro) {
       initialGameState
         .modify(_.currentTiredSecond)
         .using(_ * initialGameState.currentTiredMultSecond)
         .modify(_.nextTiredIncreaseMicro)
         .using(_ + 1_000_000L)
-        .modify(_.energyMicro)
-        .using(energy => Math.max(0, energy - initialGameState.currentTiredSecondMicro))
-        .pipe(checkDeathDueToTiredness)
     } else {
       initialGameState
     }
+  }
+    .modify(_.energyMicro)
+    .using(energy =>
+      Math.max(
+        0,
+        energy - (initialGameState.currentTiredSecondMicro * (actualElapsedMicro / 1e6)).toLong
+      )
+    )
+    .pipe(checkDeathDueToTiredness)
 
   private def checkDeathDueToTiredness(state: GameState): GameState =
     if (state.energyMicro == 0L) {

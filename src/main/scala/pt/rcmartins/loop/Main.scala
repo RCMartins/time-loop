@@ -238,6 +238,13 @@ object Main {
       cls := "flex flex-col gap-2",
       button(
         cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",
+        "Loop Now!",
+        onClick --> { _ =>
+          GameData.DebugLoopNow()
+        }
+      ),
+      button(
+        cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",
         "Add 100 Energy",
         onClick --> { _ => addEnergyBus.writer.onNext(100) }
       ),
@@ -263,9 +270,9 @@ object Main {
       ),
       button(
         cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",
-        "Loop Now!",
+        "Hard Reset!",
         onClick --> { _ =>
-          GameData.DebugLoopNow()
+          GameData.DebugHardReset()
         }
       )
     )

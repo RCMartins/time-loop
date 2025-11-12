@@ -56,4 +56,10 @@ object GameData {
     }
   }
 
+  def DebugHardReset(): Unit = {
+    val newState = GameState.initial
+    SaveLoad.saveToLocalStorage(newState)
+    gameStateVar.set(newState)
+  }
+
 }
