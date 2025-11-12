@@ -2,17 +2,23 @@ package pt.rcmartins.loop
 
 import com.raquo.laminar.api.L._
 import pt.rcmartins.loop.GameData.selectedNextAction
-import pt.rcmartins.loop.model.{ActionKind, ActiveActionData, SkillState}
+import pt.rcmartins.loop.model.{ActionData, ActionKind, ActiveActionData, SkillState}
 
 object Util {
 
   private val owner = new Owner {}
 
-  def activeActionCard(vm: ActiveActionData): HtmlElement = {
+  def activeActionCard(vm: Signal[ActiveActionData]): HtmlElement = {
     val base =
       "rounded-2xl p-4 bg-slate-800/60 ring-1 ring-slate-700 shadow transition " +
         "hover:ring-emerald-400/60 hover:shadow-md focus:outline-none " +
         "focus:ring-2 focus:ring-emerald-400 pointer-events-none shadow-lg"
+
+    val data: Signal[ActionData] = vm.distinctBy(_.id).map(_.data)
+    val longSoFar: Signal[Long] = ActiveActionData.longSoFar(vm).distinct
+    val microLeft: Signal[Long] = ActiveActionData.microLeft(vm).distinct
+    val progressRatio: Signal[Double] = ActiveActionData.progressRatio(vm).distinct
+    val numberOfActionsLeftSignal: Signal[Int] = vm.map(_.amountOfActionsLeft)
 
     div(
       role := "button",
@@ -21,11 +27,12 @@ object Util {
 
       // Content
       div(
+        cls := "relative inline-block",
         cls := "flex items-start gap-3",
         // Icon + kind accent
         div(
           cls := "mt-0.5 shrink-0 rounded-xl bg-slate-700/60 ring-1 ring-slate-600 p-2",
-          actionIcon(vm.data.kind)
+          child <-- vm.map(action => actionIcon(action.data.kind))
         ),
 
         // Title + subtitle + badges
@@ -34,8 +41,11 @@ object Util {
           div(
             cls := "flex items-start justify-between gap-3",
             div(
-              h3(cls := "text-base font-semibold tracking-tight", vm.data.title),
-              p(cls := "text-xs text-slate-300/90", vm.data.effectLabel.label)
+              h3(
+                cls := "text-base font-semibold tracking-tight",
+                child.text <-- vm.map(_.data.title)
+              ),
+              p(cls := "text-xs text-slate-300/90", child.text <-- vm.map(_.data.effectLabel.label))
             ),
           ),
 
@@ -44,22 +54,22 @@ object Util {
             cls := "mt-2 flex flex-wrap items-center gap-2",
             span(
               cls := "px-2 py-0.5 text-xs rounded-full bg-slate-700/70 ring-1 ring-slate-600",
-              child.text <-- vm.longSoFar.map { timeSoFar =>
-                s"\u00A0$timeSoFar\u00A0 / \u00A0${vm.data.baseTimeSec}\u00A0"
+              child.text <-- longSoFar.combineWith(data).map { case (timeSoFar, data) =>
+                s"\u00A0$timeSoFar\u00A0 / \u00A0${data.baseTimeSec}\u00A0"
               },
             ),
             span(
               cls := "px-2 py-0.5 text-xs rounded-full bg-slate-900/70 ring-1 ring-slate-600",
-              child.text <-- vm.microLeft.withCurrentValueOf(GameData.skills).map {
-                case (timeSoFar, skills) =>
+              child.text <-- microLeft.combineWith(data, GameData.skills).map {
+                case (timeSoFar, data, skills) =>
                   val currentTime: Double =
-                    calcWithSkillDouble(timeSoFar, skills.get(vm.data.kind)) / 1_000_000L
+                    calcWithSkillDouble(timeSoFar, skills.get(data.kind)) / 1_000_000L
                   f"$currentTime%.1f s"
               },
             ),
           ),
           div(
-            cls := "mt-3",
+            cls := "mt-3 mb-1",
             div(
               cls := "h-1.5 rounded-full bg-slate-700/60 overflow-hidden",
               div(
@@ -67,14 +77,22 @@ object Util {
                 cls := "h-1.5 rounded-full bg-emerald-500 origin-left will-change-transform",
 
                 // reactive transform: scaleX(progressRatio)
-                transform <-- vm.progressRatio.map { ratio =>
+                transform <-- progressRatio.map { ratio =>
                   val clamped = ratio.max(0.0).min(1.0)
                   s"scaleX($clamped)"
                 }
               )
             )
-          )
-        )
+          ),
+        ),
+        // Amount of actions tooltip (bottom right)
+        div(
+          cls := "absolute right-0 top-full translate-x-3/4 -translate-y-1/4 mt-2 px-2 py-1 " +
+            "text-xs text-slate-100 bg-slate-700 rounded-md whitespace-nowrap shadow-lg " +
+            "transition-opacity duration-150 opacity-0 pointer-events-none",
+          child.text <-- numberOfActionsLeftSignal.map(amount => s"x$amount"),
+          cls("opacity-100") <-- numberOfActionsLeftSignal.map(_ > 1)
+        ),
       )
     )
   }
@@ -92,7 +110,7 @@ object Util {
     val base =
       "rounded-2xl p-4 bg-slate-800/60 ring-1 ring-slate-700 shadow transition " +
         "hover:ring-emerald-400/60 hover:shadow-md focus:outline-none " +
-        "focus:ring-2 focus:ring-emerald-400 m-1 mt-4"
+        "focus:ring-2 focus:ring-emerald-400 m-1 mt-4 me-2"
 
     val selectedCls =
       " ring-2 ring-emerald-500 shadow-lg"
@@ -115,11 +133,13 @@ object Util {
         case _ =>
       }(owner)
 
-    val tooltipText =
+    val invalidTooltipText: Signal[String] =
       vm.map(_.data.invalidReason).combineWith(GameData.gameState).map {
         case (invalidReasonF, gameState) =>
           invalidReasonF(gameState).map(_.label).getOrElse("")
       }
+
+    val numberOfActionsLeftSignal: Signal[Int] = vm.map(_.amountOfActionsLeft)
 
     div(
       role := "button",
@@ -172,14 +192,22 @@ object Util {
           ),
         ),
 
-        // Tooltip — visibility controlled by Signal
+        // Invalid reason tooltip (top center)
         div(
           cls := "absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-2 py-1 " +
             "text-xs text-slate-100 bg-slate-700 rounded-md whitespace-nowrap shadow-lg " +
             "transition-opacity duration-150 opacity-0 pointer-events-none",
-          child.text <-- tooltipText,
-          // Toggle visibility via opacity
+          child.text <-- invalidTooltipText,
           cls("opacity-100") <-- isDisabled
+        ),
+
+        // Amount of actions tooltip (bottom right)
+        div(
+          cls := "absolute right-0 top-full translate-x-3/4 -translate-y-1/4 mt-2 px-2 py-1 " +
+            "text-xs text-slate-100 bg-slate-700 rounded-md whitespace-nowrap shadow-lg " +
+            "transition-opacity duration-150 opacity-0 pointer-events-none",
+          child.text <-- numberOfActionsLeftSignal.map(amount => s"x$amount"),
+          cls("opacity-100") <-- numberOfActionsLeftSignal.map(_ > 1)
         )
       )
     )
@@ -216,7 +244,10 @@ object Util {
             " ",
             child.text <-- skillSig.map(_.kind.name),
           ),
-          span(cls := "text-xs text-slate-300/80", "Lv ", child.text <-- skillSig.map(_.loopLevel))
+          span(
+            cls := "text-xs text-slate-300/80",
+            child.text <-- skillSig.map(skill => f"x${skill.finalSpeedMulti}%.2f"),
+          )
         ),
         div(
           cls := "mt-1",

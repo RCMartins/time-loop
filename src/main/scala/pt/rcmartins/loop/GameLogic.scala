@@ -41,7 +41,7 @@ object GameLogic {
         }
       case Some(currentAction) =>
         val initialSkillState: SkillState = initialGameState.skills.get(currentAction.data.kind)
-        val currentActionMicroSoFar = currentAction.microSoFar.now()
+        val currentActionMicroSoFar = currentAction.microSoFar
         val elapsedWithMultiplier: Long =
           Math.floor(elapsedTimeMicro.toDouble * initialSkillState.finalSpeedMulti).toLong
 
@@ -84,9 +84,9 @@ object GameLogic {
         val currentActionIsComplete: Boolean =
           currentActionElapsedMicro == currentAction.data.baseTimeMicro
 
-        currentAction.microSoFar.set(currentActionElapsedMicro)
-
         initialGameState
+          .modify(_.currentAction)
+          .using(_.map(_.copy(microSoFar = currentActionElapsedMicro)))
           .modify(_.timeElapsedMicro)
           .using(_ + actualElapsedMicro)
           .modify(_.skills)
@@ -102,17 +102,48 @@ object GameLogic {
   ): GameState =
     if (currentActionIsComplete)
       state
-        .modify(_.currentAction)
-        .setTo(None)
         .modify(_.actionsHistory)
         .using(_ :+ currentAction.data)
         .modify(_.deckActions)
         .using(_ ++ currentAction.data.unlocksActions.map(_.toActiveAction))
         .modify(_.inventory)
         .using(currentAction.data.changeInventory)
-        .pipe(drawNewCardsFromDeck)
+        .pipe(checkMultiAction(_, currentAction))
     else
       state
+
+  private def checkMultiAction(
+      state: GameState,
+      justCompletedAction: ActiveActionData
+  ): GameState = {
+    if (justCompletedAction.amountOfActionsLeft > 1) {
+      val updatedAction: ActiveActionData =
+        justCompletedAction
+          .modify(_.microSoFar)
+          .setTo(0L)
+          .modify(_.amountOfActionsLeft)
+          .using(_ - 1)
+
+      updatedAction.data.invalidReason(state) match {
+        case Some(_) =>
+          state
+            .modify(_.currentAction)
+            .setTo(None)
+            .modify(_.deckActions)
+            .using(_ :+ updatedAction)
+            .pipe(drawNewCardsFromDeck)
+        case None =>
+          state
+            .modify(_.currentAction)
+            .setTo(Some(updatedAction))
+      }
+    } else {
+      state
+        .modify(_.currentAction)
+        .setTo(None)
+        .pipe(drawNewCardsFromDeck)
+    }
+  }
 
   private val MaximumAmountOfVisibleActions = 2
 
@@ -122,34 +153,38 @@ object GameLogic {
     // TODO stable shuffle based on seed (with a stable random generator)
     val allAvailableActions: Seq[ActiveActionData] =
       Random.shuffle(state.deckActions ++ state.visibleNextActions)
+    val (invisibleInvalid, visibleActions) =
+      allAvailableActions.partition(action =>
+        action.data.invalidReason(state).nonEmpty && !action.data.showWhenInvalid
+      )
 
-    println(("state.deckActions", state.deckActions))
-    println(("state.visibleNextActions", state.visibleNextActions))
-    println(("allAvailableActions", allAvailableActions))
+//    println(("state.deckActions", state.deckActions))
+//    println(("state.visibleNextActions", state.visibleNextActions))
+//    println(("visibleActions", visibleActions))
 
     val (nextActions, remainingDeckActions) =
-      allAvailableActions.find(_.data.invalidReason(state).isEmpty) match {
+      visibleActions.find(_.data.invalidReason(state).isEmpty) match {
         case None =>
           (
-            allAvailableActions.take(MaximumAmountOfVisibleActions),
-            allAvailableActions.drop(MaximumAmountOfVisibleActions),
+            visibleActions.take(MaximumAmountOfVisibleActions),
+            visibleActions.drop(MaximumAmountOfVisibleActions),
           )
         case Some(validAction) =>
           val others: Seq[ActiveActionData] =
-            allAvailableActions.filterNot(_.id == validAction.id)
+            visibleActions.filterNot(_.id == validAction.id)
           (
             Random.shuffle(validAction +: others.take(MaximumAmountOfVisibleActions - 1)),
             others.drop(MaximumAmountOfVisibleActions - 1)
           )
       }
 
-    println(("nextActions", nextActions))
+//    println(("nextActions", nextActions))
 
     state
       .modify(_.visibleNextActions)
       .setTo(nextActions)
       .modify(_.deckActions)
-      .setTo(remainingDeckActions)
+      .setTo(remainingDeckActions ++ invisibleInvalid)
   }
 
   private def updateTiredness(initialGameState: GameState): GameState =

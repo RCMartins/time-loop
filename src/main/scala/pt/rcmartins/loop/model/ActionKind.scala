@@ -30,8 +30,10 @@ final case class ActionData(
     effectLabel: EffectLabel,
     kind: ActionKind,
     baseTimeSec: Long,
+    initialAmountOfActions: Int = 1,
     unlocksActions: Seq[ActionData] = Seq.empty,
     invalidReason: GameState => Option[ReasonLabel] = _ => None,
+    showWhenInvalid: Boolean = true,
     changeInventory: InventoryState => InventoryState = identity,
 ) {
 
@@ -41,27 +43,33 @@ final case class ActionData(
     new ActiveActionData(
       id = Random.nextLong(),
       data = this,
-      microSoFar = Var(0L),
+      microSoFar = 0L,
+      amountOfActionsLeft = initialAmountOfActions,
     )
 
 }
 
-class ActiveActionData(
-    val id: Long,
-    val data: ActionData,
-    val microSoFar: Var[Long],
+case class ActiveActionData(
+    id: Long,
+    data: ActionData,
+    microSoFar: Long,
+    amountOfActionsLeft: Int,
 ) {
 
-  val longSoFar: Signal[Long] =
-    microSoFar.signal.map(_ / 1_000_000L)
-
-  val microLeft: Signal[Long] =
-    microSoFar.signal.map(data.baseTimeMicro - _)
-
-  val progressRatio: Signal[Double] =
-    microSoFar.signal.map(_.toDouble / data.baseTimeMicro.toDouble)
-
   override def toString: String =
-    s"ActiveActionData(id=$id, data=${data.title}, microSoFar=${microSoFar.now()})"
+    s"ActiveActionData(data=${data.title}, microSoFar=$microSoFar, amountOfActionsLeft=$amountOfActionsLeft)"
+
+}
+
+object ActiveActionData {
+
+  def longSoFar(action: Signal[ActiveActionData]): Signal[Long] =
+    action.map(_.microSoFar / 1_000_000L)
+
+  def microLeft(action: Signal[ActiveActionData]): Signal[Long] =
+    action.map(action => action.data.baseTimeMicro - action.microSoFar)
+
+  def progressRatio(action: Signal[ActiveActionData]): Signal[Double] =
+    action.map(action => action.microSoFar.toDouble / action.data.baseTimeMicro.toDouble)
 
 }
