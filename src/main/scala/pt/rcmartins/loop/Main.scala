@@ -1,15 +1,44 @@
 package pt.rcmartins.loop
 
+import com.raquo.airstream.ownership.OneTimeOwner
 import com.raquo.laminar.api.L._
 import com.raquo.laminar.nodes.ReactiveHtmlElement
+import com.softwaremill.quicklens.ModifyPimp
 import org.scalajs.dom
 import org.scalajs.dom.{HTMLDivElement, HTMLUListElement}
 import pt.rcmartins.loop.GameData._
 import pt.rcmartins.loop.Util._
+import pt.rcmartins.loop.model.SkillsState
 
 import scala.scalajs.js.timers.setInterval
 
 object Main {
+
+  private val DEBUG_MODE: Boolean = true
+
+  def main(args: Array[String]): Unit = {
+    SaveLoad.loadFromLocalStorage().foreach(SaveLoad.reloadDataFromLoadedSave)
+
+    setInterval(25) {
+      runUpdateGameState()
+    }
+
+    val ui: ReactiveHtmlElement[HTMLDivElement] =
+      div(
+        // page padding & responsive grid
+        cls := "min-h-dvh p-4 md:py-6 md:px-20 bg-slate-900 text-slate-100",
+        div(
+          // mobile: single column; desktop: 3 columns
+          cls := "grid gap-4 md:grid-cols-[260px,1fr,300px]",
+          // Order for mobile stacking
+          div(cls := "order-1 md:order-1", skillsSidebar(skillsView)),
+          div(cls := "order-2 md:order-2", centerColumn(currentActionView, nextActionsView)),
+          div(cls := "order-3 md:order-3", rightSidebar(inventoryView, miscView))
+        ),
+      )
+
+    render(dom.document.getElementById("main-div"), ui)
+  }
 
   private val skillsView =
     div(
@@ -32,7 +61,7 @@ object Main {
 
   private val nextActionsView: ReactiveHtmlElement[HTMLDivElement] =
     div(
-      cls := "grid gap-3 sm:grid-cols-2",
+      cls := "grid gap-5 sm:grid-cols-2",
       children <--
         nextActions.split(_.id) { case (_, _, action) =>
           actionCard(action)
@@ -84,19 +113,8 @@ object Main {
       ),
     )
 
-  def main(args: Array[String]): Unit = {
-    SaveLoad.loadFromLocalStorage().foreach(SaveLoad.reloadDataFromLoadedSave)
-
-    setInterval(25) {
-      runUpdateGameState()
-    }
-
-    val ui = appLayout(skillsView, currentActionView, nextActionsView, inventoryView, miscView)
-    render(dom.document.getElementById("main-div"), ui)
-  }
-
   /** Reusable section shells */
-  def panelCard(title: ReactiveHtmlElement[_], mods: Mod[HtmlElement]*): HtmlElement =
+  private def panelCard(title: ReactiveHtmlElement[_], mods: Mod[HtmlElement]*): HtmlElement =
     div(
       cls := "rounded-2xl p-4 bg-slate-800/60 ring-1 ring-slate-700 shadow",
       h3(cls := "text-sm font-semibold tracking-tight mb-2", title),
@@ -104,14 +122,17 @@ object Main {
     )
 
   /** Skills sidebar (left) */
-  def skillsSidebar(skillsView: HtmlElement): HtmlElement =
+  private def skillsSidebar(skillsView: HtmlElement): HtmlElement =
     div(
       cls := "space-y-3 sticky top-4 self-start",
       panelCard(span("Skills"), skillsView)
     )
 
   /** Center column: top (current) + bottom (next) */
-  def centerColumn(currentActionView: HtmlElement, nextActionsView: HtmlElement): HtmlElement =
+  private def centerColumn(
+      currentActionView: HtmlElement,
+      nextActionsView: HtmlElement
+  ): HtmlElement =
     div(
       // two rows: auto (top) + 1fr (bottom)
       cls := "grid grid-rows-[auto,1fr] gap-4 min-h-[60dvh]",
@@ -151,7 +172,7 @@ object Main {
     )
 
   /** Right sidebar: inventory + other info stacked */
-  def rightSidebar(inventoryView: HtmlElement, miscView: HtmlElement): HtmlElement =
+  private def rightSidebar(inventoryView: HtmlElement, miscView: HtmlElement): HtmlElement =
     div(
       cls := "space-y-3 sticky top-4 self-start",
       panelCard(
@@ -164,28 +185,90 @@ object Main {
       panelCard(
         span("Notes / Info"),
         div(cls := "space-y-2 max-h-[30dvh] overflow-auto", miscView)
-      )
+      ),
+      if (DEBUG_MODE)
+        panelCard(
+          span("Debug Actions"),
+          div(cls := "space-y-2 max-h-[30dvh] overflow-auto", debugView)
+        )
+      else
+        emptyNode
     )
 
-  /** Page scaffold */
-  def appLayout(
-      skillsView: HtmlElement,
-      currentActionView: HtmlElement,
-      nextActionsView: HtmlElement,
-      inventoryView: HtmlElement,
-      miscView: HtmlElement
-  ): HtmlElement =
+  private def debugView: HtmlElement = {
+    val owner: Owner = new OneTimeOwner(() => println("Debug view owner disposed"))
+    val addEnergyBus: EventBus[Int] = new EventBus[Int]()
+    val multiplyAllSkillsBus: EventBus[Double] = new EventBus[Double]()
+
+    addEnergyBus.events
+      .withCurrentValueOf(GameData.gameState)
+      .foreach { case (amount, state) =>
+        val newEnergy = state.energyMicro + amount.toLong * 1_000_000L
+        val cappedEnergy = Math.min(newEnergy, state.maxEnergyMicro)
+        val newState = state.modify(_.energyMicro).setTo(cappedEnergy)
+        GameData.loadGameState(newState)
+      }(owner)
+
+    multiplyAllSkillsBus.events
+      .withCurrentValueOf(GameData.gameState)
+      .foreach { case (multiplier, state) =>
+        val newSkills =
+          state.skills.allSkillsSeq.map { skill =>
+            skill.modifyAll(_.initialBonusMultiplier, _.currentBonusMultiplier).setTo(multiplier)
+          }
+        val newState =
+          state
+            .modify(_.skills)
+            .setTo(
+              SkillsState(
+                agility = newSkills(0),
+                explore = newSkills(1),
+                foraging = newSkills(2),
+                social = newSkills(3),
+                crafting = newSkills(4),
+                gardening = newSkills(5),
+                cooking = newSkills(6),
+                magic = newSkills(7),
+              )
+            )
+        GameData.loadGameState(newState)
+      }(owner)
+
     div(
-      // page padding & responsive grid
-      cls := "min-h-dvh p-4 md:p-6 bg-slate-900 text-slate-100",
-      div(
-        // mobile: single column; desktop: 3 columns
-        cls := "grid gap-4 md:grid-cols-[260px,1fr,300px]",
-        // Order for mobile stacking
-        div(cls := "order-2 md:order-1", skillsSidebar(skillsView)),
-        div(cls := "order-1 md:order-2", centerColumn(currentActionView, nextActionsView)),
-        div(cls := "order-3 md:order-3", rightSidebar(inventoryView, miscView))
+      cls := "flex flex-col gap-2",
+      button(
+        cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",
+        "Add 100 Energy",
+        onClick --> { _ => addEnergyBus.writer.onNext(100) }
       ),
+      button(
+        cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",
+        "x1 Skills",
+        onClick --> { _ => multiplyAllSkillsBus.writer.onNext(1.0) }
+      ),
+      button(
+        cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",
+        "x2 Skills",
+        onClick --> { _ => multiplyAllSkillsBus.writer.onNext(2.0) }
+      ),
+      button(
+        cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",
+        "x5 Skills",
+        onClick --> { _ => multiplyAllSkillsBus.writer.onNext(5.0) }
+      ),
+      button(
+        cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",
+        "x10 Skills",
+        onClick --> { _ => multiplyAllSkillsBus.writer.onNext(10.0) }
+      ),
+      button(
+        cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",
+        "Loop Now!",
+        onClick --> { _ =>
+          GameData.DebugLoopNow()
+        }
+      )
     )
+  }
 
 }
