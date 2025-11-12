@@ -16,9 +16,14 @@ object GameData {
   val timeElapsedLong: Signal[Long] = timeElapsedMicro.map(_ / 1_000_000L).distinct
 
   val energyMicro: Signal[Long] = gameState.map(_.energyMicro).distinct
-  val energyLong: Signal[Long] = energyMicro.map(e => Math.ceil(e / 1e6).toLong).distinct
-
+  val energyLong: Signal[Long] = energyMicro.map(e => Math.floor(e / 1e6).toLong).distinct
   val maxEnergyInt: Signal[Int] = gameState.map(_.maxEnergyInt).distinct
+  val energyRatio: Signal[Double] =
+    energyMicro
+      .combineWith(maxEnergyInt)
+      .map { case (energyMicro, maxEnergyInt) => (energyMicro / 1e6) / maxEnergyInt.toDouble }
+      .distinct
+
   val currentTiredSecond: Signal[Double] = gameState.map(_.currentTiredSecond).distinct
   val currentTiredMultSecond: Signal[Double] = gameState.map(_.currentTiredMultSecond).distinct
 

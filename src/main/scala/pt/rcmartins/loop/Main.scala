@@ -17,15 +17,16 @@ object Main {
       children <-- skills.map(_.allHigherThan0).split(_.kind) { case (_, _, s) => skillRow(s) }
     )
 
+  private val currentActionIsDefined: Signal[Boolean] =
+    currentAction.map(_.isDefined).distinct
+
   private val currentActionView: ReactiveHtmlElement[HTMLDivElement] =
     div(
       cls := "flex items-start gap-3",
       child.maybe <--
-        currentAction.map {
-          case None =>
-            None
-          case Some(activeAction) =>
-            Some(activeActionCard(activeAction))
+        currentActionIsDefined.map {
+          case false => None
+          case true  => Some(activeActionCard(currentAction.map(_.get)))
         }
     )
 
@@ -58,8 +59,7 @@ object Main {
       cls := "space-y-2 text-sm",
       div(
         cls := "flex justify-between",
-        span("Time"),
-        // span("07:42")
+        span("Time Elapsed"),
         span(
           child.text <-- timeElapsedLong.map(s => "%02d:%02d".format(s / 60, s % 60))
         )
@@ -96,7 +96,7 @@ object Main {
   }
 
   /** Reusable section shells */
-  def panelCard(title: String, mods: Mod[HtmlElement]*): HtmlElement =
+  def panelCard(title: ReactiveHtmlElement[_], mods: Mod[HtmlElement]*): HtmlElement =
     div(
       cls := "rounded-2xl p-4 bg-slate-800/60 ring-1 ring-slate-700 shadow",
       h3(cls := "text-sm font-semibold tracking-tight mb-2", title),
@@ -107,7 +107,7 @@ object Main {
   def skillsSidebar(skillsView: HtmlElement): HtmlElement =
     div(
       cls := "space-y-3 sticky top-4 self-start",
-      panelCard("Skills", skillsView)
+      panelCard(span("Skills"), skillsView)
     )
 
   /** Center column: top (current) + bottom (next) */
@@ -117,7 +117,7 @@ object Main {
       cls := "grid grid-rows-[auto,1fr] gap-4 min-h-[60dvh]",
       // top: current action
       panelCard(
-        "Current Action",
+        span("Current Action"),
         // keep this compact; grows only as needed
         div(cls := "space-y-3", currentActionView)
       ),
@@ -126,6 +126,27 @@ object Main {
         cls := "rounded-2xl p-4 bg-slate-800/60 ring-1 ring-slate-700 shadow flex flex-col min-h-0",
         h3(cls := "text-sm font-semibold tracking-tight mb-2", "Next Actions"),
         div(cls := "overflow-auto min-h-0 grow", nextActionsView)
+      ),
+      div(
+        cls := "mt-3 relative", // allow absolute positioning inside
+        // progress background
+        div(
+          cls := "h-3.5 rounded-full bg-slate-700/60 overflow-hidden",
+          div(
+            cls := "h-3.5 rounded-full bg-green-600 origin-left will-change-transform",
+            transform <-- energyRatio.map { ratio =>
+              val clamped = ratio.max(0.0).min(1.0)
+              s"scaleX($clamped)"
+            }
+          )
+        ),
+        // centered label
+        div(
+          cls := "absolute inset-0 flex items-center justify-center text-[11px] font-semibold text-slate-100",
+          child.text <-- energyLong.combineWith(maxEnergyInt).map { case (energy, maxEnergy) =>
+            f"$energy%d / $maxEnergy%d"
+          }
+        )
       )
     )
 
@@ -133,8 +154,17 @@ object Main {
   def rightSidebar(inventoryView: HtmlElement, miscView: HtmlElement): HtmlElement =
     div(
       cls := "space-y-3 sticky top-4 self-start",
-      panelCard("Inventory", div(cls := "space-y-2 max-h-[40dvh] overflow-auto", inventoryView)),
-      panelCard("Notes / Info", div(cls := "space-y-2 max-h-[30dvh] overflow-auto", miscView))
+      panelCard(
+        span(
+          "Inventory",
+          child.text <-- inventory.map(inv => s" (max size: ${inv.maximumSize})"),
+        ),
+        div(cls := "space-y-2 max-h-[40dvh] overflow-auto", inventoryView)
+      ),
+      panelCard(
+        span("Notes / Info"),
+        div(cls := "space-y-2 max-h-[30dvh] overflow-auto", miscView)
+      )
     )
 
   /** Page scaffold */

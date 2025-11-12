@@ -34,6 +34,7 @@ case class GameState(
       currentTiredSecond = initialTiredSecond,
       currentTiredMultSecond = initialTiredMultSecond,
       nextTiredIncreaseMicro = 1_000_000L,
+      stats = stats.resetForNewLoop,
       skills = skills.resetLoopProgress,
       inventory = InventoryState.initial,
       currentAction = None,

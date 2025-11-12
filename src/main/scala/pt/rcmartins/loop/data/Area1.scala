@@ -93,6 +93,7 @@ object Area1 {
       effectLabel = EffectLabel.GetItem(ItemType.Momo, 1),
       kind = ActionKind.Foraging,
       baseTimeSec = 5,
+      initialAmountOfActions = 3,
       changeInventory = _.addItem(ItemType.Momo, 1),
       invalidReason = state =>
         Option.unless(state.inventory.canAddItem(ItemType.Momo, 1))(ReasonLabel.InventoryFull),
@@ -109,6 +110,7 @@ object Area1 {
           state.actionsHistory.exists(_.actionDataType == Area1DataType.ExploreKitchen) &&
             state.actionsHistory.exists(_.actionDataType == Area1DataType.ExploreLivingRoom)
         )(ReasonLabel.MustExploreHouseFirst),
+      showWhenInvalid = false,
       unlocksActions = Seq(Area2.Data.ExploreTown),
     )
 
