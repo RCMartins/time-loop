@@ -26,6 +26,7 @@ case class GameState(
 ) {
 
   def currentTiredSecondMicro: Long = (currentTiredSecond * 1_000_000L).toLong
+  def maxEnergyMicro: Long = maxEnergyInt * 1_000_000L
 
   def resetForNewLoop: GameState =
     this.copy(

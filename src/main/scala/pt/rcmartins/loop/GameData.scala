@@ -48,4 +48,12 @@ object GameData {
       _.modify(_.selectedNextAction).setTo(Some(id))
     )
 
+  def DebugLoopNow(): Unit = {
+    gameStateVar.update { state =>
+      val newState = state.resetForNewLoop
+      SaveLoad.saveToLocalStorage(newState)
+      newState
+    }
+  }
+
 }

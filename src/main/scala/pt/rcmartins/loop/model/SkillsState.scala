@@ -13,7 +13,7 @@ case class SkillsState(
     magic: SkillState, // supernatural abilities, etc.
 ) {
 
-  val allSeq: Seq[SkillState] = Seq(
+  def allSkillsSeq: Seq[SkillState] = Seq(
     agility,
     explore,
     foraging,
@@ -24,8 +24,8 @@ case class SkillsState(
     magic,
   )
 
-  val allHigherThan0: Seq[SkillState] =
-    allSeq.filter(_.permXPMicro > 0)
+  def allHigherThan0: Seq[SkillState] =
+    allSkillsSeq.filter(_.permXPMicro > 0)
 
   def get(kind: ActionKind): SkillState =
     kind match {
