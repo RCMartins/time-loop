@@ -1,5 +1,6 @@
 package pt.rcmartins.loop
 
+import com.raquo.airstream.core.AirstreamError.CombinedError
 import com.raquo.airstream.ownership.OneTimeOwner
 import com.raquo.laminar.api.L._
 import com.raquo.laminar.nodes.ReactiveHtmlElement
@@ -8,15 +9,37 @@ import org.scalajs.dom
 import org.scalajs.dom.{HTMLDivElement, HTMLUListElement}
 import pt.rcmartins.loop.GameData._
 import pt.rcmartins.loop.Util._
+import pt.rcmartins.loop.data.Area1
 import pt.rcmartins.loop.model.SkillsState
 
 import scala.scalajs.js.timers.setInterval
+import scala.util.Try
 
 object Main {
 
   private val DEBUG_MODE: Boolean = true
 
   def main(args: Array[String]): Unit = {
+    AirstreamError.registerUnhandledErrorCallback { e =>
+      println("=== UNHANDLED AIRSTREAM ERROR ===")
+
+      def dump(t: Throwable, indent: String = ""): Unit = t match {
+        case ce: CombinedError =>
+          println(indent + s"CombinedError with ${ce.causes.size} inner errors")
+          ce.causes.zipWithIndex.foreach { case (inner, i) =>
+            println(indent + s"  child #$i:")
+            inner.foreach(dump(_, indent + "    "))
+          }
+        case other =>
+          println(indent + s"${other.getClass.getName}: ${other.getMessage}")
+          other.getStackTrace.take(15).foreach { f =>
+            println(indent + s"  at $f")
+          }
+      }
+
+      dump(e)
+    }
+
     SaveLoad.loadFromLocalStorage().foreach(SaveLoad.reloadDataFromLoadedSave)
 
     setInterval(25) {
@@ -55,7 +78,8 @@ object Main {
       child.maybe <--
         currentActionIsDefined.map {
           case false => None
-          case true  => Some(activeActionCard(currentAction.map(_.get)))
+          case true  =>
+            Some(activeActionCard(currentAction.map(_.getOrElse(Area1.Data.WakeUp.toActiveAction))))
         }
     )
 
@@ -72,11 +96,22 @@ object Main {
     ul(
       cls := "space-y-2",
       children <-- inventory.map(_.items).map {
-        _.sortBy(_._1.inventoryOrder).map { case (item, qty) =>
+        _.filter(_._2 > 0).sortBy(_._1.inventoryOrder).map { case (item, qty, cooldownTimeMicro) =>
           li(
             cls := "rounded-lg p-2 bg-slate-800/60 ring-1 ring-slate-700 flex justify-between items-center m-1",
             span(cls := "font-mono", s"$qty "),
             span(item.name),
+            span(
+              child.text <-- timeElapsedMicro.map(elapsed =>
+                if (elapsed > cooldownTimeMicro)
+                  ""
+                else {
+                  val remainingMicro = cooldownTimeMicro - elapsed
+                  val remainingSec = remainingMicro.toDouble / 1e6
+                  f"$remainingSec%.1f"
+                }
+              )
+            ),
           )
         }
       }
