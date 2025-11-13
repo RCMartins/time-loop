@@ -218,7 +218,37 @@ object GameLogic {
         energy - (initialGameState.currentTiredSecondMicro * (actualElapsedMicro / 1e6)).toLong
       )
     )
+    .pipe(checkFoodConsumption)
     .pipe(checkDeathDueToTiredness)
+
+  private val FoodConsumptionIntervalMicro: Long = 5 * 1_000_000L
+
+  private def checkFoodConsumption(state: GameState): GameState =
+    if (state.energyMicro == 0L) {
+      state
+    } else {
+      val elapsed = state.timeElapsedMicro
+      var energyMicro = state.energyMicro
+      var items = state.inventory.items
+      var anyChange: Boolean = false
+      for (i <- items.indices) {
+        val (itemType, amount, cooldown) = items(i)
+        if (amount > 0 && itemType.isFoodItem && elapsed > cooldown) {
+          if ((state.maxEnergyMicro - energyMicro) >= itemType.foodValueMicro) {
+            energyMicro += itemType.foodValueMicro
+            items = items.updated(i, (itemType, amount - 1, elapsed + FoodConsumptionIntervalMicro))
+            anyChange = true
+          }
+        }
+      }
+      if (!anyChange)
+        state
+      else
+        state.copy(
+          inventory = state.inventory.copy(items = items),
+          energyMicro = energyMicro,
+        )
+    }
 
   private def checkDeathDueToTiredness(state: GameState): GameState =
     if (state.energyMicro == 0L) {
