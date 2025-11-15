@@ -4,6 +4,24 @@ inThisBuild(
   Seq(
     organization := "io.github.rcmartins",
     scalaVersion := "2.13.17",
+    scalacOptions ++= Seq(
+      "-encoding",
+      "UTF-8",
+      "-feature",
+      "-deprecation",
+      "-unchecked",
+      "-language:implicitConversions",
+      "-language:existentials",
+      "-language:dynamics",
+      "-Xlint:-unused",
+      "-Ybackend-parallelism",
+      "4",
+      "-Ycache-plugin-class-loader:last-modified",
+      "-Ycache-macro-class-loader:last-modified",
+      "-Xnon-strict-patmat-analysis",
+      "-Xlint:-strict-unsealed-patmat",
+      "-Wunused:imports",
+    ),
   )
 )
 

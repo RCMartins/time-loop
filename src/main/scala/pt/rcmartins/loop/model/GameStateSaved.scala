@@ -1,6 +1,6 @@
 package pt.rcmartins.loop.model
 
-import pt.rcmartins.loop.data.Area1
+import pt.rcmartins.loop.data.Level1
 import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
 
 case class GameStateSaved(
@@ -25,11 +25,12 @@ case class GameStateSaved(
       currentTiredSecond = initialTiredSecond,
       currentTiredMultSecond = initialTiredMultSecond,
       nextTiredIncreaseMicro = 1_000_000L,
+      characterArea = Level1.Data.InitialCharacterArea,
       stats = stats,
       skills = skills.resetLoopProgress,
       inventory = InventoryState.initial,
       currentAction = None,
-      visibleNextActions = Area1.Data.InitialActionData.map(_.toActiveAction),
+      visibleNextActions = Level1.Data.InitialActionData.map(_.toActiveAction),
       selectedNextAction = None,
       deckActions = Seq.empty,
       actionsHistory = Seq.empty,
