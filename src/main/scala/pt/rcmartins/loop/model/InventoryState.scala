@@ -12,6 +12,9 @@ case class InventoryState(
     itemType.noInventoyLimit ||
       getItemAmount(itemType) + amount <= maximumSize
 
+  def canRemoveItem(itemType: ItemType, amount: Int): Boolean =
+    getItemAmount(itemType) - amount >= 0
+
   def addItem(itemType: ItemType, amount: Int): InventoryState =
     if (canAddItem(itemType, amount)) {
       items.find(_._1 == itemType) match {
@@ -31,6 +34,21 @@ case class InventoryState(
       }
     } else
       this
+
+  def removeItem(itemType: ItemType, amount: Int): InventoryState =
+    items.find(_._1 == itemType) match {
+      case None =>
+        this // Item not found, nothing to remove ?
+      case Some(_) =>
+        this.copy(
+          items = items.map {
+            case (`itemType`, currentAmount, cooldown) =>
+              (itemType, currentAmount - amount, cooldown)
+            case other =>
+              other
+          }
+        )
+    }
 
   def increaseInventorySize(amount: Int): InventoryState =
     this.copy(maximumSize = maximumSize + amount)

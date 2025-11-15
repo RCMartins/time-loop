@@ -1,6 +1,6 @@
 package pt.rcmartins.loop.model
 
-import pt.rcmartins.loop.data.Area1
+import pt.rcmartins.loop.data.Level1
 
 import scala.util.Random
 
@@ -15,6 +15,7 @@ case class GameState(
     currentTiredSecond: Double,
     currentTiredMultSecond: Double,
     nextTiredIncreaseMicro: Long,
+    characterArea: CharacterArea,
     stats: Stats,
     skills: SkillsState,
     inventory: InventoryState,
@@ -39,7 +40,7 @@ case class GameState(
       skills = skills.resetLoopProgress,
       inventory = InventoryState.initial,
       currentAction = None,
-      visibleNextActions = Area1.Data.InitialActionData.map(_.toActiveAction),
+      visibleNextActions = Level1.Data.InitialActionData.map(_.toActiveAction),
       selectedNextAction = None,
       deckActions = Seq(),
       actionsHistory = Seq(),
@@ -50,9 +51,13 @@ case class GameState(
 object GameState {
 
   val CurrentVersion: Int = 1
+
   private val StartingMaxEnergy: Int = 100
   private val initialTiredSecond: Double = 0.1
   private val InitialTiredMultSecond: Double = 1.00372699 // x^60=1.25 per minute
+
+  val MaximumAmountOfVisibleActions = 4
+  val FoodConsumptionIntervalMicro: Long = 5 * 1_000_000L
 
   val initial: GameState = GameState(
     version = CurrentVersion,
@@ -65,20 +70,15 @@ object GameState {
     currentTiredSecond = initialTiredSecond,
     currentTiredMultSecond = InitialTiredMultSecond,
     nextTiredIncreaseMicro = 1_000_000L,
+    characterArea = Level1.Data.InitialCharacterArea,
     stats = Stats.initial,
     skills = SkillsState.initial,
     inventory = InventoryState.initial,
     currentAction = None,
-    visibleNextActions = Area1.Data.InitialActionData.map(_.toActiveAction),
+    visibleNextActions = Level1.Data.InitialActionData.map(_.toActiveAction),
     selectedNextAction = None,
     deckActions = Seq(),
     actionsHistory = Seq(),
   )
-
-  def save(): Unit = {}
-
-  def load(dataStr: String): GameState = {
-    initial
-  }
 
 }

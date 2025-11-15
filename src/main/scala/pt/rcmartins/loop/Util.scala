@@ -2,7 +2,13 @@ package pt.rcmartins.loop
 
 import com.raquo.laminar.api.L._
 import pt.rcmartins.loop.GameData.selectedNextAction
-import pt.rcmartins.loop.model.{ActionData, ActionKind, ActiveActionData, SkillState}
+import pt.rcmartins.loop.model.{
+  ActionData,
+  ActionKind,
+  ActiveActionData,
+  AmountOfActions,
+  SkillState
+}
 
 object Util {
 
@@ -18,7 +24,7 @@ object Util {
     val longSoFar: Signal[Long] = ActiveActionData.longSoFar(vm).distinct
     val microLeft: Signal[Long] = ActiveActionData.microLeft(vm).distinct
     val progressRatio: Signal[Double] = ActiveActionData.progressRatio(vm).distinct
-    val numberOfActionsLeftSignal: Signal[Int] = vm.map(_.amountOfActionsLeft)
+    val numberOfActionsLeftSignal: Signal[AmountOfActions] = vm.map(_.amountOfActionsLeft)
 
     div(
       role := "button",
@@ -55,7 +61,7 @@ object Util {
             span(
               cls := "px-2 py-0.5 text-xs rounded-full bg-slate-700/70 ring-1 ring-slate-600",
               child.text <-- longSoFar.combineWith(data).map { case (timeSoFar, data) =>
-                s"\u00A0$timeSoFar\u00A0 / \u00A0${data.baseTimeSec}\u00A0"
+                s"\u00A0$timeSoFar\u00A0 / \u00A0${data.actionTime}\u00A0"
               },
             ),
             span(
@@ -91,7 +97,7 @@ object Util {
             "text-xs text-slate-100 bg-slate-700 rounded-md whitespace-nowrap shadow-lg " +
             "transition-opacity duration-150 opacity-0 pointer-events-none",
           child.text <-- numberOfActionsLeftSignal.map(amount => s"x$amount"),
-          cls("opacity-100") <-- numberOfActionsLeftSignal.map(_ > 1)
+          cls("opacity-100") <-- numberOfActionsLeftSignal.map(_.moreThanOne)
         ),
       )
     )
@@ -139,7 +145,7 @@ object Util {
           invalidReasonF(gameState).map(_.label).getOrElse("")
       }
 
-    val numberOfActionsLeftSignal: Signal[Int] = vm.map(_.amountOfActionsLeft)
+    val numberOfActionsLeftSignal: Signal[AmountOfActions] = vm.map(_.amountOfActionsLeft)
 
     div(
       role := "button",
@@ -186,7 +192,7 @@ object Util {
             span(
               cls := "px-2 py-0.5 text-xs rounded-full bg-slate-700/70 ring-1 ring-slate-600",
               "\u00A0",
-              child.text <-- vm.map(_.data.baseTimeSec.toString),
+              child.text <-- vm.map(_.data.actionTime.toString),
               "\u00A0",
             ),
           ),
@@ -206,8 +212,11 @@ object Util {
           cls := "absolute right-0 top-full translate-x-3/4 -translate-y-1/4 mt-2 px-2 py-1 " +
             "text-xs text-slate-100 bg-slate-700 rounded-md whitespace-nowrap shadow-lg " +
             "transition-opacity duration-150 opacity-0 pointer-events-none",
-          child.text <-- numberOfActionsLeftSignal.map(amount => s"x$amount"),
-          cls("opacity-100") <-- numberOfActionsLeftSignal.map(_ > 1)
+          child.text <-- numberOfActionsLeftSignal.map {
+            case AmountOfActions.Standard(amount) => s"x$amount"
+            case AmountOfActions.Unlimited        => "∞"
+          },
+          cls("opacity-100") <-- numberOfActionsLeftSignal.map(_.moreThanOne)
         )
       )
     )

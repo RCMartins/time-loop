@@ -1,6 +1,7 @@
 package pt.rcmartins.loop
 
 import com.softwaremill.quicklens.ModifyPimp
+import pt.rcmartins.loop.model.GameState._
 import pt.rcmartins.loop.model._
 
 import scala.util.Random
@@ -64,8 +65,10 @@ object GameLogic {
           initialGameState.skills.update(
             currentAction.data.kind,
             skillState => {
-              val newLoopXPMicro: Long = skillState.loopXPMicro + actualElapsedMicro
-              val newPermXPMicro: Long = skillState.permXPMicro + actualElapsedMicro
+              val actualXPGainMicro: Long =
+                Math.ceil(currentAction.xpMultiplier * actualElapsedMicro).toLong
+              val newLoopXPMicro: Long = skillState.loopXPMicro + actualXPGainMicro
+              val newPermXPMicro: Long = skillState.permXPMicro + actualXPGainMicro
 
               val (updatedLoopLevel, updatedLoopXPMicro) =
                 if (newLoopXPMicro >= skillState.nextLoopXPMicro)
@@ -90,6 +93,8 @@ object GameLogic {
 
         val currentActionIsComplete: Boolean =
           currentActionElapsedMicro == currentAction.data.baseTimeMicro
+        val firstTimeComplete: Boolean =
+          currentAction.numberOfCompletions == 0
 
         (
           initialGameState
@@ -99,7 +104,14 @@ object GameLogic {
             .using(_ + actualElapsedMicro)
             .modify(_.skills)
             .setTo(skillsUpdated)
-            .pipe(applyCurrentActionIfComplete(_, currentActionIsComplete, currentAction)),
+            .pipe(
+              applyCurrentActionIfComplete(
+                _,
+                currentActionIsComplete,
+                firstTimeComplete,
+                currentAction
+              )
+            ),
           actualElapsedMicro
         )
     }
@@ -108,31 +120,65 @@ object GameLogic {
   private def applyCurrentActionIfComplete(
       state: GameState,
       currentActionIsComplete: Boolean,
+      firstTimeComplete: Boolean,
       currentAction: ActiveActionData
   ): GameState =
-    if (currentActionIsComplete)
-      state
-        .modify(_.actionsHistory)
-        .using(_ :+ currentAction.data)
-        .modify(_.deckActions)
-        .using(_ ++ currentAction.data.unlocksActions.map(_.toActiveAction))
-        .modify(_.inventory)
-        .using(currentAction.data.changeInventory)
-        .pipe(checkMultiAction(_, currentAction))
-    else
+    if (currentActionIsComplete) {
+      val actionSuccess: Boolean = currentAction.currentActionSuccessChance >= Random.nextDouble()
+
+      if (!actionSuccess)
+        state
+          .modify(_.currentAction)
+          .setTo(
+            Some(
+              currentAction
+                .modify(_.microSoFar)
+                .setTo(0L)
+                .modify(_.currentActionSuccessChance)
+                .using(chance => Math.max(1.0, chance + currentAction.actionSuccessChanceIncrease))
+            )
+          )
+      else
+        state
+          .modify(_.actionsHistory)
+          .using(_ :+ currentAction.data)
+          .modify(_.deckActions)
+          .usingIf(firstTimeComplete)(
+            _ ++ currentAction.data.firstTimeUnlocksActions(()).map(_.toActiveAction)
+          )
+          .modify(_.deckActions)
+          .using(
+            _ ++
+              currentAction.data
+                .everyTimeUnlocksActions(currentAction.numberOfCompletions + 1)
+                .map(_.toActiveAction)
+          )
+          .modify(_.inventory)
+          .using(currentAction.data.changeInventory)
+          .pipe(checkMultiAction(_, currentAction))
+    } else
       state
 
   private def checkMultiAction(
       state: GameState,
       justCompletedAction: ActiveActionData
   ): GameState = {
-    if (justCompletedAction.amountOfActionsLeft > 1) {
+    if (justCompletedAction.amountOfActionsLeft.moreThanOne) {
       val updatedAction: ActiveActionData =
         justCompletedAction
           .modify(_.microSoFar)
           .setTo(0L)
           .modify(_.amountOfActionsLeft)
-          .using(_ - 1)
+          .using(_.reduceOne)
+          .modify(_.xpMultiplier)
+          .using { currentMultiplier =>
+            justCompletedAction.data.actionTime match {
+              case ActionTime.Standard(_)                => currentMultiplier
+              case ActionTime.ReduzedXP(_, xpMultiplier) => currentMultiplier * xpMultiplier
+            }
+          }
+          .modify(_.numberOfCompletions)
+          .using(_ + 1)
 
       updatedAction.data.invalidReason(state) match {
         case Some(_) =>
@@ -155,8 +201,6 @@ object GameLogic {
     }
   }
 
-  private val MaximumAmountOfVisibleActions = 2
-
   private def drawNewCardsFromDeck(
       state: GameState
   ): GameState = {
@@ -165,7 +209,7 @@ object GameLogic {
       Random.shuffle(state.deckActions ++ state.visibleNextActions)
     val (invisibleInvalid, visibleActions) =
       allAvailableActions.partition(action =>
-        action.data.invalidReason(state).nonEmpty && !action.data.showWhenInvalid
+        action.isInvalid(state) && !action.data.showWhenInvalid
       )
 
 //    println(("state.deckActions", state.deckActions))
@@ -173,7 +217,7 @@ object GameLogic {
 //    println(("visibleActions", visibleActions))
 
     val (nextActions, remainingDeckActions) =
-      visibleActions.find(_.data.invalidReason(state).isEmpty) match {
+      visibleActions.find(!_.isInvalid(state)) match {
         case None =>
           (
             visibleActions.take(MaximumAmountOfVisibleActions),
@@ -220,8 +264,6 @@ object GameLogic {
     )
     .pipe(checkFoodConsumption)
     .pipe(checkDeathDueToTiredness)
-
-  private val FoodConsumptionIntervalMicro: Long = 5 * 1_000_000L
 
   private def checkFoodConsumption(state: GameState): GameState =
     if (state.energyMicro == 0L) {

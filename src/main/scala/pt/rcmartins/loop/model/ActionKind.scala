@@ -1,6 +1,6 @@
 package pt.rcmartins.loop.model
 
-import com.raquo.laminar.api.L.{Signal, Var}
+import com.raquo.laminar.api.L.Signal
 import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
 
 import scala.util.Random
@@ -26,25 +26,38 @@ object ActionKind {
 
 final case class ActionData(
     actionDataType: ActionDataType,
+    area: Option[CharacterArea],
     title: String,
     effectLabel: EffectLabel,
     kind: ActionKind,
-    baseTimeSec: Long,
-    initialAmountOfActions: Int = 1,
-    unlocksActions: Seq[ActionData] = Seq.empty,
+    actionTime: ActionTime,
+    actionSuccessType: ActionSuccessType = ActionSuccessType.Always,
+    initialAmountOfActions: AmountOfActions = AmountOfActions.Standard(1),
+    firstTimeUnlocksActions: Unit => Seq[ActionData] = _ => Seq.empty,
+    everyTimeUnlocksActions: Int => Seq[ActionData] = _ => Seq.empty,
     invalidReason: GameState => Option[ReasonLabel] = _ => None,
     showWhenInvalid: Boolean = true,
     changeInventory: InventoryState => InventoryState = identity,
+    moveToArea: Option[CharacterArea] = None,
 ) {
 
-  def baseTimeMicro: Long = baseTimeSec * 1_000_000L
+  val baseTimeMicro: Long = actionTime.baseTimeSec * 1_000_000L
 
   def toActiveAction: ActiveActionData =
     new ActiveActionData(
       id = Random.nextLong(),
       data = this,
       microSoFar = 0L,
+      xpMultiplier = 1.0,
       amountOfActionsLeft = initialAmountOfActions,
+      currentActionSuccessChance = actionSuccessType match {
+        case ActionSuccessType.Always                     => 1.0
+        case ActionSuccessType.WithFailure(baseChance, _) => baseChance
+      },
+      actionSuccessChanceIncrease = actionSuccessType match {
+        case ActionSuccessType.Always                   => 0.0
+        case ActionSuccessType.WithFailure(_, increase) => increase
+      },
     )
 
 }
@@ -53,11 +66,19 @@ case class ActiveActionData(
     id: Long,
     data: ActionData,
     microSoFar: Long,
-    amountOfActionsLeft: Int,
+    xpMultiplier: Double,
+    amountOfActionsLeft: AmountOfActions,
+    numberOfCompletions: Int = 0,
+    currentActionSuccessChance: Double,
+    actionSuccessChanceIncrease: Double,
 ) {
 
   override def toString: String =
     s"ActiveActionData(data=${data.title}, microSoFar=$microSoFar, amountOfActionsLeft=$amountOfActionsLeft)"
+
+  def isInvalid(state: GameState): Boolean =
+    data.invalidReason(state).nonEmpty ||
+      data.area.exists(_ != state.characterArea)
 
 }
 

@@ -9,11 +9,10 @@ import org.scalajs.dom
 import org.scalajs.dom.{HTMLDivElement, HTMLUListElement}
 import pt.rcmartins.loop.GameData._
 import pt.rcmartins.loop.Util._
-import pt.rcmartins.loop.data.Area1
+import pt.rcmartins.loop.data.Level1
 import pt.rcmartins.loop.model.SkillsState
 
 import scala.scalajs.js.timers.setInterval
-import scala.util.Try
 
 object Main {
 
@@ -79,7 +78,7 @@ object Main {
         currentActionIsDefined.map {
           case false => None
           case true  =>
-            Some(activeActionCard(currentAction.map(_.getOrElse(Area1.Data.WakeUp.toActiveAction))))
+            Some(activeActionCard(currentAction.map(_.getOrElse(Level1.Data.WakeUp.toActiveAction))))
         }
     )
 
