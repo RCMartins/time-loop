@@ -93,7 +93,7 @@ object Level1 {
     def PickupHerbs: ActionData = pickupToItem(
       actionDataType = Level1DataType.PickHerbsGarden,
       area = Some(Area1_House),
-      itemType = ItemType.SoapHerb,
+      itemType = ItemType.GardenHerb,
       amount = 1,
       actionTime = ActionTime.Standard(10),
       initialAmountOfActions = AmountOfActions.Standard(25),
@@ -147,6 +147,7 @@ object Level1 {
       actionTime = ActionTime.Standard(10),
       initialAmountOfActions = AmountOfActions.Unlimited,
       firstTimeUnlocksActions = _ => Seq(),
+      showWhenInvalid = false,
     )
 
     def GoToBackToHouse_FromStore: ActionData = ActionData(
@@ -170,6 +171,7 @@ object Level1 {
       actionTime = ActionTime.Standard(15),
       initialAmountOfActions = AmountOfActions.Unlimited,
       firstTimeUnlocksActions = _ => Seq(MoldSoap),
+      showWhenInvalid = false,
     )
 
     def MoldSoap: ActionData = craftItem(
@@ -177,10 +179,10 @@ object Level1 {
       area = Some(Area1_House),
       itemType = ItemType.HotMoldedSoap,
       amount = 1,
-      cost = Seq(ItemType.MeltedGlycerin -> 1, ItemType.SoapHerb -> 1),
+      cost = Seq(ItemType.MeltedGlycerin -> 1, ItemType.GardenHerb -> 1),
       actionTime = ActionTime.Standard(10),
       initialAmountOfActions = AmountOfActions.Unlimited,
-      firstTimeUnlocksActions = _ => Seq(MoldSoap),
+      firstTimeUnlocksActions = _ => Seq(CreateSoap),
     )
 
     def CreateSoap: ActionData = craftItem(
@@ -193,6 +195,7 @@ object Level1 {
       actionTime = ActionTime.Standard(10),
       initialAmountOfActions = AmountOfActions.Unlimited,
       firstTimeUnlocksActions = _ => Seq(GoToTown),
+      showWhenInvalid = false,
     )
 
     def GoToTown: ActionData = ActionData(
@@ -225,12 +228,14 @@ object Level1 {
       effectLabel = EffectLabel.SellSoap,
       kind = ActionKind.Social,
       actionTime = ActionTime.Standard(15),
+      initialAmountOfActions = AmountOfActions.Unlimited,
       actionSuccessType = ActionSuccessType.WithFailure(0.5, 0.1),
       changeInventory = _.addItem(ItemType.Coins, 2).removeItem(ItemType.HerbSoap, 1),
       invalidReason = state =>
         Option.unless(state.inventory.canRemoveItem(ItemType.HerbSoap, 1))(
           ReasonLabel.NotEnoughSoapToSell
         ),
+      firstTimeUnlocksActions = _ => Seq(ExploreTown),
     )
 
     def GoToBackToHouse_FromTown: ActionData = ActionData(

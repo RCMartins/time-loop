@@ -59,14 +59,24 @@ object GameLogic {
             currentActionMicroSoFar + elapsedWithMultiplier
           )
 
-        val actualElapsedMicro = currentActionElapsedMicro - currentActionMicroSoFar
+        val percentActualTimePassed: Double =
+          (currentActionMicroSoFar + elapsedWithMultiplier) / currentActionElapsedMicro.toDouble
+        val actualElapsedMicro = (elapsedTimeMicro * percentActualTimePassed).toLong
+
+//        println("percentSec", percentSec)
+//        println("actualElapsedMicro", actualElapsedMicro)
+//        println("actualElapsedWithMultiplierMicro", actualElapsedWithMultiplierMicro)
 
         val skillsUpdated: SkillsState =
           initialGameState.skills.update(
             currentAction.data.kind,
             skillState => {
               val actualXPGainMicro: Long =
-                Math.ceil(currentAction.xpMultiplier * actualElapsedMicro).toLong
+                Math
+                  .ceil(
+                    currentAction.xpMultiplier * elapsedWithMultiplier * percentActualTimePassed
+                  )
+                  .toLong
               val newLoopXPMicro: Long = skillState.loopXPMicro + actualXPGainMicro
               val newPermXPMicro: Long = skillState.permXPMicro + actualXPGainMicro
 
@@ -155,6 +165,8 @@ object GameLogic {
           )
           .modify(_.inventory)
           .using(currentAction.data.changeInventory)
+          .modify(_.characterArea)
+          .using(currentAction.data.moveToArea.getOrElse(_))
           .pipe(checkMultiAction(_, currentAction))
     } else
       state
@@ -180,18 +192,17 @@ object GameLogic {
           .modify(_.numberOfCompletions)
           .using(_ + 1)
 
-      updatedAction.data.invalidReason(state) match {
-        case Some(_) =>
-          state
-            .modify(_.currentAction)
-            .setTo(None)
-            .modify(_.deckActions)
-            .using(_ :+ updatedAction)
-            .pipe(drawNewCardsFromDeck)
-        case None =>
-          state
-            .modify(_.currentAction)
-            .setTo(Some(updatedAction))
+      if (updatedAction.isInvalid(state)) {
+        state
+          .modify(_.currentAction)
+          .setTo(None)
+          .modify(_.deckActions)
+          .using(_ :+ updatedAction)
+          .pipe(drawNewCardsFromDeck)
+      } else {
+        state
+          .modify(_.currentAction)
+          .setTo(Some(updatedAction))
       }
     } else {
       state
@@ -207,38 +218,36 @@ object GameLogic {
     // TODO stable shuffle based on seed (with a stable random generator)
     val allAvailableActions: Seq[ActiveActionData] =
       Random.shuffle(state.deckActions ++ state.visibleNextActions)
-    val (invisibleInvalid, visibleActions) =
-      allAvailableActions.partition(action =>
-        action.isInvalid(state) && !action.data.showWhenInvalid
-      )
+//    val (invisibleInvalid, visibleActions) =
+//      allAvailableActions.partition(action =>
+//        action.isInvalid(state) &&
+//          (!action.data.showWhenInvalid || !action.areaIsValid(state))
+//      )
+    val (invalid, valid) =
+      allAvailableActions.partition(_.isInvalid(state))
+    val (invisibleInvalid, visibleInvalid) =
+      invalid.partition(action => !action.data.showWhenInvalid || !action.areaIsValid(state))
 
 //    println(("state.deckActions", state.deckActions))
 //    println(("state.visibleNextActions", state.visibleNextActions))
 //    println(("visibleActions", visibleActions))
 
-    val (nextActions, remainingDeckActions) =
-      visibleActions.find(!_.isInvalid(state)) match {
-        case None =>
-          (
-            visibleActions.take(MaximumAmountOfVisibleActions),
-            visibleActions.drop(MaximumAmountOfVisibleActions),
-          )
-        case Some(validAction) =>
-          val others: Seq[ActiveActionData] =
-            visibleActions.filterNot(_.id == validAction.id)
-          (
-            Random.shuffle(validAction +: others.take(MaximumAmountOfVisibleActions - 1)),
-            others.drop(MaximumAmountOfVisibleActions - 1)
-          )
-      }
+    val (nextActions, remainingDeckActions) = {
+      val (takenVisible, remainingVisible) =
+        (valid ++ visibleInvalid).splitAt(MaximumAmountOfVisibleActions)
+      (
+        takenVisible,
+        remainingVisible ++ invisibleInvalid
+      )
+    }
 
-//    println(("nextActions", nextActions))
+    //    println(("nextActions", nextActions))
 
     state
       .modify(_.visibleNextActions)
       .setTo(nextActions)
       .modify(_.deckActions)
-      .setTo(remainingDeckActions ++ invisibleInvalid)
+      .setTo(remainingDeckActions)
   }
 
   private def updateTiredness(
@@ -269,16 +278,19 @@ object GameLogic {
     if (state.energyMicro == 0L) {
       state
     } else {
-      val elapsed = state.timeElapsedMicro
+      val currentTime = state.timeElapsedMicro
       var energyMicro = state.energyMicro
       var items = state.inventory.items
       var anyChange: Boolean = false
       for (i <- items.indices) {
         val (itemType, amount, cooldown) = items(i)
-        if (amount > 0 && itemType.isFoodItem && elapsed > cooldown) {
+        if (amount > 0 && itemType.isFoodItem && currentTime > cooldown) {
           if ((state.maxEnergyMicro - energyMicro) >= itemType.foodValueMicro) {
             energyMicro += itemType.foodValueMicro
-            items = items.updated(i, (itemType, amount - 1, elapsed + FoodConsumptionIntervalMicro))
+            items = items.updated(
+              i,
+              (itemType, amount - 1, currentTime + FoodConsumptionIntervalMicro)
+            )
             anyChange = true
           }
         }

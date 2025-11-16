@@ -6,9 +6,9 @@ sealed trait ItemType {
   val name: String
   val inventoryOrder: Int
 
-  val foodValueLong: Long
-  def isFoodItem: Boolean = foodValueLong > 0
-  def foodValueMicro: Long = foodValueLong * 1_000_000L
+  def foodValueLong: Long
+  lazy val isFoodItem: Boolean = foodValueLong > 0
+  lazy val foodValueMicro: Long = foodValueLong * 1_000_000L
 }
 
 object ItemType {
@@ -29,7 +29,7 @@ object ItemType {
   }
 
   case object Glycerin extends ItemType {
-    val name: String = "Glycerin"
+    val name: String = "Glycerin Based Soap"
     val inventoryOrder: Int = 2
     val foodValueLong: Long = 0L
   }
@@ -40,7 +40,7 @@ object ItemType {
     val foodValueLong: Long = 0L
   }
 
-  case object SoapHerb extends ItemType {
+  case object GardenHerb extends ItemType {
     val name: String = "Garden Herb"
     val inventoryOrder: Int = 5
     val foodValueLong: Long = 0L
@@ -61,7 +61,7 @@ object ItemType {
   // Raw Food Items
 
   case object RawMomo extends ItemType {
-    val name: String = "Momo"
+    val name: String = "Raw Momo"
     val inventoryOrder: Int = 11
     val foodValueLong: Long = 0L
   }

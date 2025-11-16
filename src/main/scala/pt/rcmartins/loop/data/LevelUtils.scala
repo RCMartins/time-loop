@@ -44,7 +44,10 @@ object LevelUtils {
       initialAmountOfActions = initialAmountOfActions,
       changeInventory = _.addItem(itemType, amount).removeItem(ItemType.Coins, cost),
       invalidReason = state =>
-        Option.unless(state.inventory.canRemoveItem(ItemType.Coins, cost))(
+        Option.unless(
+          state.inventory.canRemoveItem(ItemType.Coins, cost) &&
+            state.inventory.canAddItem(itemType, amount)
+        )(
           ReasonLabel.NotEnoughCoins
         ),
       firstTimeUnlocksActions = firstTimeUnlocksActions,
@@ -60,29 +63,30 @@ object LevelUtils {
       initialAmountOfActions: AmountOfActions,
       actionSuccessType: ActionSuccessType = ActionSuccessType.Always,
       firstTimeUnlocksActions: Unit => Seq[ActionData] = _ => Seq.empty,
-  ): ActionData = {
-    val costStr =
-      cost.map { case (it, ct) => s"$ct ${it.name}" }.mkString(" and ")
-
+      showWhenInvalid: Boolean = true,
+  ): ActionData =
     ActionData(
       actionDataType = actionDataType,
       area = area,
-      title = s"Craft ${amount} ${itemType.name}",
+      title = s"Craft $amount ${itemType.name}",
       effectLabel = EffectLabel.CraftItem(itemType, amount, cost),
       kind = ActionKind.Crafting,
       actionTime = actionTime,
       initialAmountOfActions = initialAmountOfActions,
       actionSuccessType = actionSuccessType,
+      showWhenInvalid = showWhenInvalid,
       changeInventory = inventory =>
         cost
           .foldLeft(inventory) { case (inv, (it, ct)) => inv.removeItem(it, ct) }
           .addItem(itemType, amount),
       invalidReason = state =>
-        Option.unless(cost.forall { case (itemType, amount) =>
-          state.inventory.canRemoveItem(itemType, amount)
-        })(ReasonLabel.NotEnoughResources),
+        Option.unless(
+          cost.forall { case (itemType, amount) =>
+            state.inventory.canRemoveItem(itemType, amount)
+          } &&
+            state.inventory.canAddItem(itemType, amount)
+        )(ReasonLabel.NotEnoughResources),
       firstTimeUnlocksActions = firstTimeUnlocksActions,
     )
-  }
 
 }

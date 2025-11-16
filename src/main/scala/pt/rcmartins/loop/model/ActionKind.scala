@@ -76,9 +76,11 @@ case class ActiveActionData(
   override def toString: String =
     s"ActiveActionData(data=${data.title}, microSoFar=$microSoFar, amountOfActionsLeft=$amountOfActionsLeft)"
 
+  def areaIsValid(state: GameState): Boolean =
+    data.area.forall(_ == state.characterArea)
+
   def isInvalid(state: GameState): Boolean =
-    data.invalidReason(state).nonEmpty ||
-      data.area.exists(_ != state.characterArea)
+    data.invalidReason(state).nonEmpty || !areaIsValid(state)
 
 }
 

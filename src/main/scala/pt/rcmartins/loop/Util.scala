@@ -2,13 +2,7 @@ package pt.rcmartins.loop
 
 import com.raquo.laminar.api.L._
 import pt.rcmartins.loop.GameData.selectedNextAction
-import pt.rcmartins.loop.model.{
-  ActionData,
-  ActionKind,
-  ActiveActionData,
-  AmountOfActions,
-  SkillState
-}
+import pt.rcmartins.loop.model._
 
 object Util {
 
@@ -61,7 +55,7 @@ object Util {
             span(
               cls := "px-2 py-0.5 text-xs rounded-full bg-slate-700/70 ring-1 ring-slate-600",
               child.text <-- longSoFar.combineWith(data).map { case (timeSoFar, data) =>
-                s"\u00A0$timeSoFar\u00A0 / \u00A0${data.actionTime}\u00A0"
+                s"\u00A0$timeSoFar\u00A0 / \u00A0${data.actionTime.baseTimeSec}\u00A0"
               },
             ),
             span(
@@ -91,14 +85,7 @@ object Util {
             )
           ),
         ),
-        // Amount of actions tooltip (bottom right)
-        div(
-          cls := "absolute right-0 top-full translate-x-3/4 -translate-y-1/4 mt-2 px-2 py-1 " +
-            "text-xs text-slate-100 bg-slate-700 rounded-md whitespace-nowrap shadow-lg " +
-            "transition-opacity duration-150 opacity-0 pointer-events-none",
-          child.text <-- numberOfActionsLeftSignal.map(amount => s"x$amount"),
-          cls("opacity-100") <-- numberOfActionsLeftSignal.map(_.moreThanOne)
-        ),
+        amountOfActionsTooltip(numberOfActionsLeftSignal),
       )
     )
   }
@@ -116,7 +103,7 @@ object Util {
     val base =
       "rounded-2xl p-4 bg-slate-800/60 ring-1 ring-slate-700 shadow transition " +
         "hover:ring-emerald-400/60 hover:shadow-md focus:outline-none " +
-        "focus:ring-2 focus:ring-emerald-400 m-1 mt-4 me-2"
+        "focus:ring-2 focus:ring-emerald-400 m-2 mt-4 me-3"
 
     val selectedCls =
       " ring-2 ring-emerald-500 shadow-lg"
@@ -192,7 +179,7 @@ object Util {
             span(
               cls := "px-2 py-0.5 text-xs rounded-full bg-slate-700/70 ring-1 ring-slate-600",
               "\u00A0",
-              child.text <-- vm.map(_.data.actionTime.toString),
+              child.text <-- vm.map(_.data.actionTime.baseTimeSec.toString),
               "\u00A0",
             ),
           ),
@@ -206,21 +193,22 @@ object Util {
           child.text <-- invalidTooltipText,
           cls("opacity-100") <-- isDisabled
         ),
-
-        // Amount of actions tooltip (bottom right)
-        div(
-          cls := "absolute right-0 top-full translate-x-3/4 -translate-y-1/4 mt-2 px-2 py-1 " +
-            "text-xs text-slate-100 bg-slate-700 rounded-md whitespace-nowrap shadow-lg " +
-            "transition-opacity duration-150 opacity-0 pointer-events-none",
-          child.text <-- numberOfActionsLeftSignal.map {
-            case AmountOfActions.Standard(amount) => s"x$amount"
-            case AmountOfActions.Unlimited        => "∞"
-          },
-          cls("opacity-100") <-- numberOfActionsLeftSignal.map(_.moreThanOne)
-        )
+        amountOfActionsTooltip(numberOfActionsLeftSignal)
       )
     )
   }
+
+  private def amountOfActionsTooltip(amountOfActionsSignal: Signal[AmountOfActions]): HtmlElement =
+    div(
+      cls := "absolute right-0 top-full translate-x-3/4 -translate-y-1/4 mt-2 px-2 py-1 " +
+        "text-xs text-slate-100 bg-slate-700 rounded-md whitespace-nowrap shadow-lg " +
+        "transition-opacity duration-150 opacity-0 pointer-events-none",
+      child.text <-- amountOfActionsSignal.map {
+        case AmountOfActions.Standard(amount) => s"x$amount"
+        case AmountOfActions.Unlimited        => "∞"
+      },
+      cls("opacity-100") <-- amountOfActionsSignal.map(_.moreThanOne)
+    )
 
   private def skillAccent(kind: ActionKind, darker: Boolean): String =
     (kind match {

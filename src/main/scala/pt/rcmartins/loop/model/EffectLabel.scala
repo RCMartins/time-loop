@@ -8,10 +8,6 @@ sealed trait EffectLabel {
 
 object EffectLabel {
 
-  case object Bug extends EffectLabel {
-    override val label: String = "Bug: No effect label defined."
-  }
-
   case object Empty extends EffectLabel {
     override val label: String = ""
   }
@@ -41,11 +37,11 @@ object EffectLabel {
   }
 
   case class BuyItem(itemType: ItemType, amount: Int, cost: Int) extends EffectLabel {
-    override val label: String = s"Buy $amount ${itemType.name} for $cost coins."
+    override val label: String = s"Cost: $cost coin${plural(cost)}."
   }
 
   case class BuyEmptyStore(cost: Int) extends EffectLabel {
-    override val label: String = s"Buy Empty Store for $cost coins."
+    override val label: String = s"Cost: $cost coin${plural(cost)}."
   }
 
   case class CraftItem(itemType: ItemType, amount: Int, cost: Seq[(ItemType, Int)])
@@ -53,9 +49,11 @@ object EffectLabel {
     override val label: String = {
       val costStr: String =
         cost.map { case (it, ct) => s"$ct ${it.name}" }.mkString(" and ")
-      s"Buy $amount ${itemType.name} for $costStr."
+      s"Cost: $costStr."
     }
 
   }
+
+  private def plural(n: Int): String = if (n == 1) "" else "s"
 
 }
