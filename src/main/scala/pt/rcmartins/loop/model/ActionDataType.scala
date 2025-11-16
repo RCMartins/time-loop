@@ -46,7 +46,7 @@ object ActionDataType {
 
     case object SearchLivingRoom extends Level1DataType
 
-    case object PickupBackpack extends Level1DataType
+    case object PickupSimpleSoapMold extends Level1DataType
 
     case object PickupCoins extends Level1DataType
 
@@ -54,7 +54,7 @@ object ActionDataType {
 
     case object CookRice extends Level1DataType
 
-    case object GoToGarden extends Level1DataType
+    case object SearchGarden extends Level1DataType
 
     case object PickHerbsGarden extends Level1DataType
 
@@ -65,6 +65,8 @@ object ActionDataType {
     case object BuyGlycerin extends Level1DataType
 
     case object BuyRawMomo extends Level1DataType
+
+    case object BuyGoodSoapMold extends Level1DataType
 
     case object CookMomo extends Level1DataType
 
@@ -87,6 +89,14 @@ object ActionDataType {
     case object BuyBigBag extends Level1DataType
 
     case object BuyHugeBag extends Level1DataType
+
+    case object GoToForest extends Level1DataType
+
+    case object PickupBerries extends Level1DataType
+
+    case object PickupPrettyFlower extends Level1DataType
+
+    case object SellFlowerInStore extends Level1DataType
 
     case object BuyEmptyStore extends Level1DataType
 

@@ -32,17 +32,16 @@ object Level1 {
       effectLabel = EffectLabel.Explore,
       kind = ActionKind.Exploring,
       actionTime = ActionTime.Standard(5),
-      firstTimeUnlocksActions = _ => Seq(PickupBackpack, PickupCoins),
+      firstTimeUnlocksActions = _ => Seq(PickupSimpleSoapMold, PickupCoins),
     )
 
-    def PickupBackpack: ActionData = ActionData(
-      actionDataType = Level1DataType.PickupBackpack,
+    def PickupSimpleSoapMold: ActionData = pickupToItem(
+      actionDataType = Level1DataType.PickupSimpleSoapMold,
       area = Seq(Area1_House),
-      title = "Pick up the Backpack",
-      effectLabel = EffectLabel.GetInventoryIncrease("Small Backpack", 5),
-      kind = ActionKind.Foraging,
-      actionTime = ActionTime.Standard(5),
-      changeInventory = _.increaseInventorySizeTo(5)
+      itemType = ItemType.SimpleSoapMold,
+      amount = 1,
+      actionTime = ActionTime.Standard(1),
+      initialAmountOfActions = AmountOfActions.Standard(10),
     )
 
     def PickupCoins: ActionData = pickupToItem(
@@ -64,15 +63,6 @@ object Level1 {
       firstTimeUnlocksActions = _ => Seq(CookRice),
     )
 
-//    def CookRice: ActionData = cook(
-//      actionDataType = Level1DataType.PickupRice,
-//      area = Seq(Area1_House),
-//      itemType = ItemType.Rice,
-//      amount = 1,
-//      actionTime = ActionTime.Standard(5),
-//      initialAmountOfActions = AmountOfActions.Unlimited,
-//    )
-
     def CookRice: ActionData = cookingAction(
       actionDataType = Level1DataType.CookRice,
       area = Seq(Area1_House),
@@ -86,29 +76,29 @@ object Level1 {
     )
 
     def SearchGarden: ActionData = ActionData(
-      actionDataType = Level1DataType.GoToGarden,
+      actionDataType = Level1DataType.SearchGarden,
       area = Seq(Area1_House),
-      title = "Go to the Garden",
-      effectLabel = EffectLabel.Movement,
-      kind = ActionKind.Agility,
+      title = "Explore the Garden",
+      effectLabel = EffectLabel.Explore,
+      kind = ActionKind.Exploring,
       actionTime = ActionTime.Standard(20),
       firstTimeUnlocksActions = _ => Seq(PickupHerbs, GoToGeneralStore),
       invalidReason = state =>
         Option.unless(
           state.actionsHistory.exists(_.actionDataType == Level1DataType.SearchKitchen) &&
             state.actionsHistory.exists(_.actionDataType == Level1DataType.SearchLivingRoom) &&
-            state.actionsHistory.exists(_.actionDataType == Level1DataType.PickupBackpack)
+            state.actionsHistory.exists(_.actionDataType == Level1DataType.PickupSimpleSoapMold)
         )(ReasonLabel.Empty),
       showWhenInvalid = false,
     )
 
-    def PickupHerbs: ActionData = pickupToItem(
+    def PickupHerbs: ActionData = gardeningAction(
       actionDataType = Level1DataType.PickHerbsGarden,
       area = Seq(Area1_House),
       itemType = ItemType.GardenHerb,
       amount = 1,
-      actionTime = ActionTime.Standard(10),
-      initialAmountOfActions = AmountOfActions.Standard(25),
+      actionTime = ActionTime.Standard(8),
+      initialAmountOfActions = AmountOfActions.Unlimited,
     )
 
     def GoToGeneralStore: ActionData = ActionData(
@@ -148,6 +138,19 @@ object Level1 {
       actionTime = ActionTime.Standard(10),
       initialAmountOfActions = AmountOfActions.Unlimited,
       firstTimeUnlocksActions = _ => Seq(CookMomo),
+    )
+
+    // TODO how should this work?
+    def BuyGoodSoapMold: ActionData = buyItemAction(
+      actionDataType = Level1DataType.BuyRawMomo,
+      area = Seq(Area3_Store),
+      itemType = ItemType.GoodSoapMold,
+      amount = 5,
+      cost = 1,
+      actionTime = ActionTime.Standard(10),
+      initialAmountOfActions = AmountOfActions.Standard(1),
+      firstTimeUnlocksActions = _ => Seq(),
+      changeInventoryExtra = _.removeItem(ItemType.SimpleSoapMold, 1),
     )
 
     def CookMomo: ActionData = cookingAction(
@@ -302,27 +305,45 @@ object Level1 {
     )
 
     def GoToForest: ActionData = ActionData(
-      actionDataType = Level1DataType.GoToEquipamentStore,
+      actionDataType = Level1DataType.GoToForest,
       area = Seq(Area2_Town),
       title = "Go to the Forest",
       effectLabel = EffectLabel.Movement,
       kind = ActionKind.Agility,
       actionTime = ActionTime.ReduzedXP(50, 0.5),
       initialAmountOfActions = AmountOfActions.Unlimited,
-      firstTimeUnlocksActions = _ =>
-        Seq(
-          PickupBerries,
-        ),
+      firstTimeUnlocksActions = _ => Seq(PickupBerries, PickupPrettyFlower),
       moveToArea = Some(Area5_Forest),
     )
 
     def PickupBerries: ActionData = pickupToItem(
-      actionDataType = Level1DataType.PickupCoins,
+      actionDataType = Level1DataType.PickupBerries,
       area = Seq(Area1_House),
       itemType = ItemType.Berries,
       amount = 1,
       actionTime = ActionTime.Standard(5),
       initialAmountOfActions = AmountOfActions.Unlimited,
+    )
+
+    def PickupPrettyFlower: ActionData = pickupToItem(
+      actionDataType = Level1DataType.PickupPrettyFlower,
+      area = Seq(Area1_House),
+      itemType = ItemType.PrettyFlower,
+      amount = 1,
+      actionTime = ActionTime.Standard(10),
+      initialAmountOfActions = AmountOfActions.Unlimited,
+      firstTimeUnlocksActions = _ => Seq(SellFlowerInGeneralStore),
+    )
+
+    def SellFlowerInGeneralStore: ActionData = sellItemAction(
+      actionDataType = Level1DataType.SellFlowerInStore,
+      area = Seq(Area3_Store),
+      itemType = ItemType.PrettyFlower,
+      amount = 1,
+      coinsGain = 1,
+      actionTime = ActionTime.Standard(10),
+      initialAmountOfActions = AmountOfActions.Standard(10),
+      firstTimeUnlocksActions = _ => Seq(),
     )
 
     def BuyEmptyStore: ActionData =
@@ -334,7 +355,7 @@ object Level1 {
         kind = ActionKind.Social,
         actionTime = ActionTime.Standard(60),
         invalidReason = state =>
-          Option.unless(state.inventory.canRemoveItem(ItemType.Coins, 50))(
+          Option.unless(state.inventory.canRemoveItem(ItemType.Coins, 25))(
             ReasonLabel.NotEnoughCoins
           ),
         firstTimeUnlocksActions = _ => Seq(PrepareStoreForBusiness),

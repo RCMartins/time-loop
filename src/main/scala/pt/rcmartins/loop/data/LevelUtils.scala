@@ -11,6 +11,7 @@ object LevelUtils {
       amount: Int,
       actionTime: ActionTime,
       initialAmountOfActions: AmountOfActions = AmountOfActions.Standard(1),
+      firstTimeUnlocksActions: Unit => Seq[ActionData] = _ => Seq.empty,
   ): ActionData = ActionData(
     actionDataType = actionDataType,
     area = area,
@@ -21,7 +22,28 @@ object LevelUtils {
     initialAmountOfActions = initialAmountOfActions,
     changeInventory = _.addItem(itemType, amount),
     invalidReason = state =>
-      Option.unless(state.inventory.canAddItem(itemType, amount))(ReasonLabel.InventoryFull)
+      Option.unless(state.inventory.canAddItem(itemType, amount))(ReasonLabel.InventoryFull),
+    firstTimeUnlocksActions = firstTimeUnlocksActions,
+  )
+
+  def gardeningAction(
+      actionDataType: ActionDataType,
+      area: Seq[CharacterArea],
+      itemType: ItemType,
+      amount: Int,
+      actionTime: ActionTime,
+      initialAmountOfActions: AmountOfActions = AmountOfActions.Standard(1),
+  ): ActionData = ActionData(
+    actionDataType = actionDataType,
+    area = area,
+    title = s"Pick up ${amount} ${itemType.name}",
+    effectLabel = EffectLabel.GetItem(itemType, amount),
+    kind = ActionKind.Gardening,
+    actionTime = actionTime,
+    initialAmountOfActions = initialAmountOfActions,
+    changeInventory = _.addItem(itemType, amount),
+    invalidReason = state =>
+      Option.unless(state.inventory.canAddItem(itemType, amount))(ReasonLabel.InventoryFull),
   )
 
   def buyItemAction(
@@ -51,6 +73,36 @@ object LevelUtils {
             state.inventory.canAddItem(itemType, amount)
         )(
           ReasonLabel.NotEnoughCoins
+        ),
+      firstTimeUnlocksActions = firstTimeUnlocksActions,
+    )
+
+  def sellItemAction(
+      actionDataType: ActionDataType,
+      area: Seq[CharacterArea],
+      itemType: ItemType,
+      amount: Int,
+      coinsGain: Int,
+      actionTime: ActionTime,
+      initialAmountOfActions: AmountOfActions,
+      firstTimeUnlocksActions: Unit => Seq[ActionData] = _ => Seq.empty,
+      changeInventoryExtra: InventoryState => InventoryState = identity,
+  ): ActionData =
+    ActionData(
+      actionDataType = actionDataType,
+      area = area,
+      title = s"Sell ${amount} ${itemType.name}",
+      effectLabel = EffectLabel.SellItem(itemType, amount, coinsGain),
+      kind = ActionKind.Social,
+      actionTime = actionTime,
+      initialAmountOfActions = initialAmountOfActions,
+      changeInventory = inventory =>
+        changeInventoryExtra(
+          inventory.removeItem(itemType, amount).addItem(ItemType.Coins, coinsGain)
+        ),
+      invalidReason = state =>
+        Option.unless(state.inventory.canRemoveItem(itemType, amount))(
+          ReasonLabel.NotEnoughResources
         ),
       firstTimeUnlocksActions = firstTimeUnlocksActions,
     )
