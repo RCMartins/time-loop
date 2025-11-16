@@ -26,7 +26,7 @@ object ActionKind {
 
 final case class ActionData(
     actionDataType: ActionDataType,
-    area: Option[CharacterArea],
+    area: Seq[CharacterArea],
     title: String,
     effectLabel: EffectLabel,
     kind: ActionKind,
@@ -77,7 +77,7 @@ case class ActiveActionData(
     s"ActiveActionData(data=${data.title}, microSoFar=$microSoFar, amountOfActionsLeft=$amountOfActionsLeft)"
 
   def areaIsValid(state: GameState): Boolean =
-    data.area.forall(_ == state.characterArea)
+    data.area.contains(state.characterArea)
 
   def isInvalid(state: GameState): Boolean =
     data.invalidReason(state).nonEmpty || !areaIsValid(state)
