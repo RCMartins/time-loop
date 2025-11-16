@@ -53,7 +53,7 @@ object GameState {
   val CurrentVersion: Int = 1
 
   private val StartingMaxEnergy: Int = 100
-  private val initialTiredSecond: Double = 0.1
+  private val initialTiredSecond: Double = 1.0 // 0.1
   private val InitialTiredMultSecond: Double = 1.00372699 // x^60=1.25 per minute
 
   val MaximumAmountOfVisibleActions = 4
