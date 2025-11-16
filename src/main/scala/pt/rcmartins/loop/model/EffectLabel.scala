@@ -48,6 +48,10 @@ object EffectLabel {
     override val label: String = s"Cost: $cost coin${plural(cost)}."
   }
 
+  case class SellItem(itemType: ItemType, amount: Int, coinsGain: Int) extends EffectLabel {
+    override val label: String = s"Sell for $coinsGain coin${plural(coinsGain)}."
+  }
+
   case class BuyEmptyStore(cost: Int) extends EffectLabel {
     override val label: String = s"Cost: $cost coin${plural(cost)}."
   }
@@ -55,9 +59,13 @@ object EffectLabel {
   case class CraftItem(itemType: ItemType, amount: Int, cost: Seq[(ItemType, Int)])
       extends EffectLabel {
     override val label: String = {
-      val costStr: String =
-        cost.map { case (it, ct) => s"$ct ${it.name}" }.mkString(" and ")
-      s"Cost: $costStr."
+      if (cost.isEmpty)
+        s"Get $amount ${itemType.name}."
+      else {
+        val costStr: String =
+          cost.map { case (it, ct) => s"$ct ${it.name}" }.mkString(" and ")
+        s"Cost: $costStr."
+      }
     }
 
   }

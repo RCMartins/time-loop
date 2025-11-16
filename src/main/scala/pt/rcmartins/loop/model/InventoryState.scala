@@ -58,7 +58,7 @@ case class InventoryState(
 object InventoryState {
 
   val initial: InventoryState = InventoryState(
-    maximumSize = 1,
+    maximumSize = 5,
     items = Seq(),
   )
 

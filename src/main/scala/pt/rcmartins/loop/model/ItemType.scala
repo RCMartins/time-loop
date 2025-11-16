@@ -24,6 +24,18 @@ object ItemType {
 
   // Misc Items
 
+  case object SimpleSoapMold extends ItemType {
+    val name: String = "Simple Soap Mold"
+    val inventoryOrder: Int = 1
+    val foodValueLong: Long = 0L
+  }
+
+  case object GoodSoapMold extends ItemType {
+    val name: String = "Good Soap Mold"
+    val inventoryOrder: Int = 1
+    val foodValueLong: Long = 0L
+  }
+
   case object Glycerin extends ItemType {
     val name: String = "Glycerin Based Soap"
     val inventoryOrder: Int = 2
@@ -51,6 +63,12 @@ object ItemType {
   case object HerbSoap extends ItemType {
     val name: String = "Herb Soap"
     val inventoryOrder: Int = 4
+    val foodValueLong: Long = 0L
+  }
+
+  case object PrettyFlower extends ItemType {
+    val name: String = "Pretty Flower"
+    val inventoryOrder: Int = 5
     val foodValueLong: Long = 0L
   }
 
