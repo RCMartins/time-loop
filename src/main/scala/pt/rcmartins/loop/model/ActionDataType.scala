@@ -52,7 +52,7 @@ object ActionDataType {
 
     case object SearchKitchen extends Level1DataType
 
-    case object PickupMomo extends Level1DataType
+    case object CookRice extends Level1DataType
 
     case object GoToGarden extends Level1DataType
 
@@ -81,6 +81,12 @@ object ActionDataType {
     case object SellSoapToPeople extends Level1DataType
 
     case object ExploreTown extends Level1DataType
+
+    case object GoToEquipamentStore extends Level1DataType
+
+    case object BuyBigBag extends Level1DataType
+
+    case object BuyHugeBag extends Level1DataType
 
     case object BuyEmptyStore extends Level1DataType
 

@@ -50,15 +50,17 @@ object SkillState {
       currentBonusMultiplier = 1.0,
     )
 
-  private val NextLevelXpFactor: Double = 1.02
+  private val NextLevelLoopXpFactor: Double = 1.1
   private val LoopMultiplier: Double = 1.05
+
+  private val NextLevelPermXpFactor: Double = 1.02
   private val PermanentMultiplier: Double = 1.01
 
   private val LoopNextLevelXpCache: IndexedSeq[Long] =
-    exponentialCalcLong(10, NextLevelXpFactor)
+    exponentialCalcLong(10, NextLevelLoopXpFactor)
 
   private val PermanentNextLevelXpCache: IndexedSeq[Long] =
-    exponentialCalcLong(25, NextLevelXpFactor)
+    exponentialCalcLong(25, NextLevelPermXpFactor)
 
   private val LoopMultiCache: IndexedSeq[Double] =
     exponentialCalcDouble(1.0, LoopMultiplier)

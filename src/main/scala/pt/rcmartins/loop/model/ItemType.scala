@@ -13,13 +13,7 @@ sealed trait ItemType {
 
 object ItemType {
 
-  // Misc Items
-  case object Backpack extends ItemType {
-    val name: String = "Backpack"
-    override val visible: Boolean = false
-    val inventoryOrder: Int = 0
-    val foodValueLong: Long = 0L
-  }
+  // Coins
 
   case object Coins extends ItemType {
     val name: String = "Coins"
@@ -27,6 +21,8 @@ object ItemType {
     val inventoryOrder: Int = 1
     val foodValueLong: Long = 0L
   }
+
+  // Misc Items
 
   case object Glycerin extends ItemType {
     val name: String = "Glycerin Based Soap"
@@ -67,33 +63,40 @@ object ItemType {
   }
 
   // Food Items
+
   case object Rice extends ItemType {
     val name: String = "Rice"
     val inventoryOrder: Int = 21
     val foodValueLong: Long = 5L
   }
 
+  case object Berries extends ItemType {
+    val name: String = "Berries"
+    val inventoryOrder: Int = 22
+    val foodValueLong: Long = 6L
+  }
+
   case object Momo extends ItemType {
     val name: String = "Momo"
-    val inventoryOrder: Int = 22
-    val foodValueLong: Long = 8L
+    val inventoryOrder: Int = 23
+    val foodValueLong: Long = 10L
   }
 
   case object Curry extends ItemType {
     val name: String = "Curry"
-    val inventoryOrder: Int = 23
+    val inventoryOrder: Int = 24
     val foodValueLong: Long = 12L
   }
 
   case object Chatpate extends ItemType {
     val name: String = "Chatpate"
-    val inventoryOrder: Int = 24
+    val inventoryOrder: Int = 25
     val foodValueLong: Long = 15L
   }
 
   case object Panipuri extends ItemType {
     val name: String = "Panipuri"
-    val inventoryOrder: Int = 25
+    val inventoryOrder: Int = 26
     val foodValueLong: Long = 20L
   }
 

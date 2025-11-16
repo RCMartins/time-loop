@@ -32,6 +32,14 @@ object EffectLabel {
     override val label: String = s"Cook $amount ${itemType.name}."
   }
 
+  case class GetInventoryIncrease(name: String, maxSize: Int) extends EffectLabel {
+    override val label: String = s"Get $name, max size $maxSize."
+  }
+
+  case class BuyInventoryIncrease(name: String, cost: Int, maxSize: Int) extends EffectLabel {
+    override val label: String = s"Cost: $cost coin${plural(cost)}, max size $maxSize."
+  }
+
   case class GetItem(itemType: ItemType, amount: Int) extends EffectLabel {
     override val label: String = s"Get $amount ${itemType.name}."
   }

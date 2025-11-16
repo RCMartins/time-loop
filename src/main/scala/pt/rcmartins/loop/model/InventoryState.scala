@@ -50,8 +50,8 @@ case class InventoryState(
         )
     }
 
-  def increaseInventorySize(amount: Int): InventoryState =
-    this.copy(maximumSize = maximumSize + amount)
+  def increaseInventorySizeTo(amount: Int): InventoryState =
+    this.copy(maximumSize = Math.max(maximumSize, amount))
 
 }
 
