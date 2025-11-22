@@ -18,7 +18,7 @@ object Level1 {
       actionDataType = Level1DataType.WakeUp,
       area = Seq(Area1_House),
       title = "Wake Up from bed",
-      effectLabel = EffectLabel.Movement,
+      effectLabel = EffectLabel.Empty,
       kind = ActionKind.Agility,
       actionTime = ActionTime.Standard(7),
       firstTimeUnlocksActions = _ => Seq(SearchLivingRoom, SearchKitchen, SearchGarden),
@@ -40,8 +40,8 @@ object Level1 {
       area = Seq(Area1_House),
       itemType = ItemType.SimpleSoapMold,
       amount = 1,
-      actionTime = ActionTime.Standard(1),
-      initialAmountOfActions = AmountOfActions.Standard(10),
+      actionTime = ActionTime.Standard(5),
+      initialAmountOfActions = AmountOfActions.Standard(1),
     )
 
     def PickupCoins: ActionData = pickupToItem(
@@ -261,12 +261,13 @@ object Level1 {
       kind = ActionKind.Exploring,
       actionTime = ActionTime.Standard(150),
       initialAmountOfActions = AmountOfActions.Standard(3),
+      forceMaxAmountOfActions = Some(1),
       everyTimeUnlocksActions = {
         case 1 => Seq(GoToEquipmentStore)
         case 2 => Seq(GoToForest)
         case 3 => Seq(BuyEmptyStore)
         case _ => Seq()
-      }
+      },
     )
 
     def GoToEquipmentStore: ActionData = ActionData(
@@ -318,7 +319,7 @@ object Level1 {
 
     def PickupBerries: ActionData = pickupToItem(
       actionDataType = Level1DataType.PickupBerries,
-      area = Seq(Area1_House),
+      area = Seq(Area5_Forest),
       itemType = ItemType.Berries,
       amount = 1,
       actionTime = ActionTime.Standard(5),
@@ -327,7 +328,7 @@ object Level1 {
 
     def PickupPrettyFlower: ActionData = pickupToItem(
       actionDataType = Level1DataType.PickupPrettyFlower,
-      area = Seq(Area1_House),
+      area = Seq(Area5_Forest),
       itemType = ItemType.PrettyFlower,
       amount = 1,
       actionTime = ActionTime.Standard(10),
@@ -351,7 +352,7 @@ object Level1 {
         actionDataType = Level1DataType.BuyEmptyStore,
         area = Seq(Area2_Town),
         title = s"Buy Empty Store",
-        effectLabel = EffectLabel.BuyEmptyStore(50),
+        effectLabel = EffectLabel.BuyEmptyStore(25),
         kind = ActionKind.Social,
         actionTime = ActionTime.Standard(60),
         invalidReason = state =>

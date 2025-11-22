@@ -30,16 +30,16 @@ object GameLogic {
   ): (GameState, Long) = {
     initialGameState.currentAction match {
       case None =>
-        initialGameState.selectedNextAction.flatMap(id =>
-          initialGameState.visibleNextActions.find(_.id == id)
-        ) match {
-          case Some(nextAction) =>
+        initialGameState.selectedNextAction.flatMap { case (id, limit) =>
+          initialGameState.visibleNextActions.find(_.id == id).map((_, limit))
+        } match {
+          case Some((nextAction, limit)) =>
             (
               initialGameState
                 .modify(_.selectedNextAction)
                 .setTo(None)
                 .modify(_.currentAction)
-                .setTo(Some(nextAction))
+                .setTo(Some(nextAction.copy(limitOfActions = limit)))
                 .modify(_.visibleNextActions)
                 .using(actions => actions.filterNot(_.id == nextAction.id)),
               0L
@@ -191,8 +191,13 @@ object GameLogic {
           }
           .modify(_.numberOfCompletions)
           .using(_ + 1)
+          .modify(_.limitOfActions)
+          .using {
+            case Some(limit) if limit >= 1 => Some(limit - 1)
+            case other                     => other
+          }
 
-      if (updatedAction.isInvalid(state)) {
+      if (updatedAction.isInvalid(state) || updatedAction.limitOfActions.contains(0)) {
         state
           .modify(_.currentAction)
           .setTo(None)

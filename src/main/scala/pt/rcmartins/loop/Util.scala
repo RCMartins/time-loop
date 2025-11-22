@@ -1,8 +1,12 @@
 package pt.rcmartins.loop
 
 import com.raquo.laminar.api.L._
+import com.raquo.laminar.nodes.ReactiveHtmlElement
+import org.scalajs.dom.HTMLDivElement
 import pt.rcmartins.loop.GameData.selectedNextAction
 import pt.rcmartins.loop.model._
+
+import scala.util.chaining.scalaUtilChainingOps
 
 object Util {
 
@@ -97,8 +101,9 @@ object Util {
   private def calcWithSkillDouble(baseTime: Long, state: SkillState): Double =
     baseTime.toDouble / state.finalSpeedMulti
 
-  def actionCard(vm: Signal[ActiveActionData]): HtmlElement = {
-    val isSelected = Var(false)
+  def actionCard(actionSignal: Signal[ActiveActionData]): HtmlElement = {
+    val isSelected: Var[Boolean] = Var(false)
+    val selectedLimit: Var[Int] = Var(-1)
 
     val base =
       "rounded-2xl p-4 bg-slate-800/60 ring-1 ring-slate-700 shadow transition " +
@@ -112,33 +117,33 @@ object Util {
       " opacity-50 grayscale pointer-events-none"
 
     val isDisabled =
-      vm.map(_.data.invalidReason).combineWith(GameData.gameState).map {
+      actionSignal.map(_.data.invalidReason).combineWith(GameData.gameState).map {
         case (invalidReasonF, gameState) =>
           invalidReasonF(gameState).isDefined
       }
 
     isSelected.signal
-      .withCurrentValueOf(vm, isDisabled)
+      .sample(isSelected, selectedLimit, actionSignal, isDisabled)
       .foreach {
-        case (true, action, false) =>
-          println(s"Action selected: ${action.data.title}")
-          GameData.selectNextAction(action.id)
+        case (true, limit, action, false) =>
+          GameData.selectNextAction(action.id, Some(limit).filter(_ != -1))
         case _ =>
       }(owner)
 
     val invalidTooltipText: Signal[String] =
-      vm.map(_.data.invalidReason).combineWith(GameData.gameState).map {
+      actionSignal.map(_.data.invalidReason).combineWith(GameData.gameState).map {
         case (invalidReasonF, gameState) =>
           invalidReasonF(gameState).map(_.label).getOrElse("")
       }
 
-    val numberOfActionsLeftSignal: Signal[AmountOfActions] = vm.map(_.amountOfActionsLeft)
+    val numberOfActionsLeftSignal: Signal[AmountOfActions] =
+      actionSignal.map(_.amountOfActionsLeft)
 
     div(
       role := "button",
       tabIndex := 0,
       cls := base,
-      cls(selectedCls) <-- selectedNextAction.combineWith(vm.map(_.id)).map {
+      cls(selectedCls) <-- selectedNextAction.combineWith(actionSignal.map(_.id)).map {
         case (optId, actionId) => optId.contains(actionId)
       },
       cls(disabledCls) <-- isDisabled,
@@ -156,7 +161,7 @@ object Util {
         // Icon + kind accent
         div(
           cls := "mt-0.5 shrink-0 rounded-xl bg-slate-700/60 ring-1 ring-slate-600 p-2",
-          child <-- vm.map(action => actionIcon(action.data.kind))
+          child <-- actionSignal.map(action => actionIcon(action.data.kind)),
         ),
 
         // Title + subtitle + badges
@@ -167,9 +172,12 @@ object Util {
             div(
               h3(
                 cls := "text-base font-semibold tracking-tight",
-                child.text <-- vm.map(_.data.title)
+                child.text <-- actionSignal.map(_.data.title),
               ),
-              p(cls := "text-xs text-slate-300/90", child.text <-- vm.map(_.data.effectLabel.label))
+              p(
+                cls := "text-xs text-slate-300/90",
+                child.text <-- actionSignal.map(_.data.effectLabel.label),
+              )
             ),
           ),
 
@@ -179,7 +187,7 @@ object Util {
             span(
               cls := "px-2 py-0.5 text-xs rounded-full bg-slate-700/70 ring-1 ring-slate-600",
               "\u00A0",
-              child.text <-- vm.map(_.data.actionTime.baseTimeSec.toString),
+              child.text <-- actionSignal.map(_.data.actionTime.baseTimeSec.toString),
               "\u00A0",
             ),
           ),
@@ -193,7 +201,8 @@ object Util {
           child.text <-- invalidTooltipText,
           cls("opacity-100") <-- isDisabled
         ),
-        amountOfActionsTooltip(numberOfActionsLeftSignal)
+        amountOfActionsTooltip(numberOfActionsLeftSignal),
+        selectAmountOfActionsOverlay(actionSignal, selectedLimit),
       )
     )
   }
@@ -209,6 +218,70 @@ object Util {
       },
       cls("opacity-100") <-- amountOfActionsSignal.map(_.moreThanOne)
     )
+
+  private def selectAmountOfActionsOverlay(
+      actionSignal: Signal[ActiveActionData],
+      selectedLimit: Var[Int],
+  ): ReactiveHtmlElement[HTMLDivElement] = {
+    val allowed = actionSignal.map(action =>
+      {
+
+        action.amountOfActionsLeft match {
+          case _
+              if action.data.moveToArea.nonEmpty ||
+                action.data.initialAmountOfActions.singleAction ||
+                action.data.forceMaxAmountOfActions.contains(1) =>
+            Nil
+          case AmountOfActions.Unlimited =>
+            List(1, 5, 10, -1)
+          case AmountOfActions.Standard(1) =>
+            List(1)
+          case AmountOfActions.Standard(amount) if amount < 5 =>
+            List(1, 2, 3, -1).filter(_ <= amount)
+          case AmountOfActions.Standard(amount) if amount < 10 =>
+            List(1, 2, 5, -1).filter(_ <= amount)
+          case AmountOfActions.Standard(amount) =>
+            List(1, 5, 10, -1).filter(_ <= amount)
+        }
+      }.pipe { actions =>
+        action.data.forceMaxAmountOfActions match {
+          case None            => actions
+          case Some(maxAmount) => actions.filter(_ <= maxAmount)
+        }
+      }
+    )
+    val hideDiv = actionSignal.map(action =>
+      action.data.moveToArea.nonEmpty || !action.amountOfActionsLeft.moreThanOne
+    )
+    div(
+      cls := "absolute top-2 right-2",
+      div(
+        cls := "flex items-center gap-1",
+        children <-- allowed.map(_.map { amount =>
+          val label =
+            if (amount == -1) "Max"
+            else s"x$amount"
+
+          button(
+            cls := "px-2 py-0.5 text-[10px] rounded-md " +
+              "bg-slate-700/60 ring-1 ring-slate-600 " +
+              "hover:bg-slate-600/60 transition cursor-pointer " +
+              "select-none text-base",
+
+            // highlight if selected
+            cls("ring-emerald-400 bg-emerald-600/60 text-white") <--
+              selectedLimit.signal.map(_ == amount),
+            label,
+            onClick --> { e =>
+              e.stopPropagation()
+              selectedLimit.set(amount)
+            }
+          )
+        }),
+        cls("opacity-100") <-- hideDiv
+      )
+    )
+  }
 
   private def skillAccent(kind: ActionKind, darker: Boolean): String =
     (kind match {

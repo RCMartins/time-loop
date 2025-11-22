@@ -32,7 +32,8 @@ object GameData {
   val currentAction: Signal[Option[ActiveActionData]] = gameState.map(_.currentAction).distinct
   val nextActions: Signal[Seq[ActiveActionData]] = gameState.map(_.visibleNextActions).distinct
   val deckActions: Signal[Seq[ActiveActionData]] = gameState.map(_.deckActions).distinct
-  val selectedNextAction: Signal[Option[Long]] = gameState.map(_.selectedNextAction).distinct
+  val selectedNextAction: Signal[Option[(ActionId, Option[Int])]] =
+    gameState.map(_.selectedNextAction).distinct
 
   def runUpdateGameState(): Unit = {
     val initialGameState = gameStateVar.now()
@@ -43,9 +44,9 @@ object GameData {
   def loadGameState(newGameState: GameState): Unit =
     gameStateVar.set(newGameState)
 
-  def selectNextAction(id: Long): Unit =
+  def selectNextAction(actionId: ActionId, limitOfActions: Option[Int]): Unit =
     gameStateVar.update(
-      _.modify(_.selectedNextAction).setTo(Some(id))
+      _.modify(_.selectedNextAction).setTo(Some((actionId, limitOfActions)))
     )
 
   def DebugLoopNow(): Unit = {
