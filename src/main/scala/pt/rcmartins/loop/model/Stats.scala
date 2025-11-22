@@ -4,6 +4,7 @@ import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
 
 case class Stats(
     loopNumber: Int,
+    usedCheats: Boolean,
 ) {
 
   def resetForNewLoop: Stats =
@@ -18,6 +19,7 @@ object Stats {
   val initial: Stats =
     Stats(
       loopNumber = 0,
+      usedCheats = false,
     )
 
   implicit val decoder: JsonDecoder[Stats] = DeriveJsonDecoder.gen[Stats]

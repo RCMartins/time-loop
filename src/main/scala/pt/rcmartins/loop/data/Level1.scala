@@ -10,9 +10,8 @@ object Level1 {
   object Data {
 
     val InitialCharacterArea: CharacterArea = Area1_House
-    val InitialActionData: Seq[ActionData] = Seq(
-      WakeUp,
-    )
+    val InitialActions: Seq[ActionData] = Seq(WakeUp)
+    val InitialMoveActions: Seq[ActionData] = Seq.empty
 
     def WakeUp: ActionData = ActionData(
       actionDataType = Level1DataType.WakeUp,
@@ -22,7 +21,6 @@ object Level1 {
       kind = ActionKind.Agility,
       actionTime = ActionTime.Standard(7),
       firstTimeUnlocksActions = _ => Seq(SearchLivingRoom, SearchKitchen, SearchGarden),
-      moveToArea = Some(Area1_House),
     )
 
     def SearchLivingRoom: ActionData = ActionData(

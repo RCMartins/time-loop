@@ -14,7 +14,7 @@ object Util {
 
   def activeActionCard(vm: Signal[ActiveActionData]): HtmlElement = {
     val base =
-      "rounded-2xl p-4 bg-slate-800/60 ring-1 ring-slate-700 shadow transition " +
+      "rounded-2xl p-4 pb-5 bg-slate-800/60 ring-1 ring-slate-700 shadow transition " +
         "hover:ring-emerald-400/60 hover:shadow-md focus:outline-none " +
         "focus:ring-2 focus:ring-emerald-400 pointer-events-none shadow-lg"
 
@@ -106,7 +106,7 @@ object Util {
     val selectedLimit: Var[Int] = Var(-1)
 
     val base =
-      "rounded-2xl p-4 bg-slate-800/60 ring-1 ring-slate-700 shadow transition " +
+      "rounded-2xl p-4 pb-5 bg-slate-800/60 ring-1 ring-slate-700 shadow transition " +
         "hover:ring-emerald-400/60 hover:shadow-md focus:outline-none " +
         "focus:ring-2 focus:ring-emerald-400 m-2 mt-4 me-3"
 
@@ -147,9 +147,6 @@ object Util {
         case (optId, actionId) => optId.contains(actionId)
       },
       cls(disabledCls) <-- isDisabled,
-//      disabled <-- isDisabled,
-
-//      // Interactions: click / Enter / Space toggle select and fire onSelect
       onClick --> { _ =>
         isSelected.set(true)
       },

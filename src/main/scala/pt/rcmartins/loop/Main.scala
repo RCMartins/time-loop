@@ -10,7 +10,7 @@ import org.scalajs.dom.{HTMLDivElement, HTMLUListElement}
 import pt.rcmartins.loop.GameData._
 import pt.rcmartins.loop.Util._
 import pt.rcmartins.loop.data.Level1
-import pt.rcmartins.loop.model.SkillsState
+import pt.rcmartins.loop.model.{GameState, SkillsState}
 
 import scala.scalajs.js.timers.setInterval
 
@@ -54,7 +54,10 @@ object Main {
           cls := "grid gap-4 md:grid-cols-[260px,1fr,300px]",
           // Order for mobile stacking
           div(cls := "order-1 md:order-1", skillsSidebar(skillsView)),
-          div(cls := "order-2 md:order-2", centerColumn(currentActionView, nextActionsView)),
+          div(
+            cls := "order-2 md:order-2",
+            centerColumn(currentActionView, nextActionsView, nextMoveActionsView)
+          ),
           div(cls := "order-3 md:order-3", rightSidebar(inventoryView, miscView))
         ),
       )
@@ -78,17 +81,22 @@ object Main {
         currentActionIsDefined.map {
           case false => None
           case true  =>
-            Some(activeActionCard(currentAction.map(_.getOrElse(Level1.Data.WakeUp.toActiveAction))))
+            Some(
+              activeActionCard(currentAction.map(_.getOrElse(Level1.Data.WakeUp.toActiveAction)))
+            )
         }
     )
 
   private val nextActionsView: ReactiveHtmlElement[HTMLDivElement] =
     div(
       cls := "grid gap-5 sm:grid-cols-2",
-      children <--
-        nextActions.split(_.id) { case (_, _, action) =>
-          actionCard(action)
-        }
+      children <-- nextActions.split(_.id) { case (_, _, action) => actionCard(action) }
+    )
+
+  private val nextMoveActionsView: ReactiveHtmlElement[HTMLDivElement] =
+    div(
+      cls := "grid gap-5 sm:grid-cols-2",
+      children <-- nextMoveActions.split(_.id) { case (_, _, action) => actionCard(action) }
     )
 
   private val inventoryView: ReactiveHtmlElement[HTMLUListElement] =
@@ -165,7 +173,8 @@ object Main {
   /** Center column: top (current) + bottom (next) */
   private def centerColumn(
       currentActionView: HtmlElement,
-      nextActionsView: HtmlElement
+      nextActionsView: HtmlElement,
+      nextMoveActionsView: HtmlElement,
   ): HtmlElement =
     div(
       // two rows: auto (top) + 1fr (bottom)
@@ -179,16 +188,22 @@ object Main {
       // bottom: next actions list with own scroll
       div(
         cls := "rounded-2xl p-4 bg-slate-800/60 ring-1 ring-slate-700 shadow flex flex-col min-h-0",
-        h3(cls := "text-sm font-semibold tracking-tight mb-2", "Next Actions"),
+        h3(cls := "text-sm font-semibold tracking-tight mb-2", "Available Actions"),
         div(cls := "overflow-auto min-h-0 grow", nextActionsView)
+      ),
+      // bottom: next actions list with own scroll
+      div(
+        cls := "rounded-2xl p-4 bg-slate-800/60 ring-1 ring-slate-700 shadow flex flex-col min-h-0",
+        h3(cls := "text-sm font-semibold tracking-tight mb-2", "Move Actions"),
+        div(cls := "overflow-auto min-h-0 grow", nextMoveActionsView)
       ),
       div(
         cls := "mt-3 relative", // allow absolute positioning inside
         // progress background
         div(
-          cls := "h-3.5 rounded-full bg-slate-700/60 overflow-hidden",
+          cls := "h-5 rounded-full bg-slate-700/60 overflow-hidden",
           div(
-            cls := "h-3.5 rounded-full bg-green-600 origin-left will-change-transform",
+            cls := "h-5 rounded-full bg-green-600 origin-left will-change-transform",
             transform <-- energyRatio.map { ratio =>
               val clamped = ratio.max(0.0).min(1.0)
               s"scaleX($clamped)"
@@ -239,7 +254,12 @@ object Main {
       .foreach { case (amount, state) =>
         val newEnergy = state.energyMicro + amount.toLong * 1_000_000L
         val cappedEnergy = Math.min(newEnergy, state.maxEnergyMicro)
-        val newState = state.modify(_.energyMicro).setTo(cappedEnergy)
+        val newState: GameState =
+          state
+            .modify(_.energyMicro)
+            .setTo(cappedEnergy)
+            .modify(_.stats.usedCheats)
+            .setTo(true)
         GameData.loadGameState(newState)
       }(owner)
 
@@ -265,6 +285,8 @@ object Main {
                 magic = newSkills(7),
               )
             )
+            .modify(_.stats.usedCheats)
+            .setTo(true)
         GameData.loadGameState(newState)
       }(owner)
 

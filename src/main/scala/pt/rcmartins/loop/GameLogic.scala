@@ -31,7 +31,10 @@ object GameLogic {
     initialGameState.currentAction match {
       case None =>
         initialGameState.selectedNextAction.flatMap { case (id, limit) =>
-          initialGameState.visibleNextActions.find(_.id == id).map((_, limit))
+          initialGameState.visibleNextActions
+            .find(_.id == id)
+            .map((_, limit))
+            .orElse(initialGameState.visibleMoveActions.find(_.id == id).map((_, limit)))
         } match {
           case Some((nextAction, limit)) =>
             (
@@ -41,6 +44,8 @@ object GameLogic {
                 .modify(_.currentAction)
                 .setTo(Some(nextAction.copy(limitOfActions = limit)))
                 .modify(_.visibleNextActions)
+                .using(actions => actions.filterNot(_.id == nextAction.id))
+                .modify(_.visibleMoveActions)
                 .using(actions => actions.filterNot(_.id == nextAction.id)),
               0L
             )
@@ -221,9 +226,12 @@ object GameLogic {
       state: GameState
   ): GameState = {
     // TODO stable shuffle based on seed (with a stable random generator)
-    val allAvailableActions: Seq[ActiveActionData] =
-      Random.shuffle(state.deckActions ++ state.visibleNextActions)
-//    val (invisibleInvalid, visibleActions) =
+    val (allAvailableActions, allMoveActions) = {
+      val allActions = state.deckActions ++ state.visibleNextActions ++ state.visibleMoveActions
+      val (stardardActions, moveActions) = allActions.partition(_.data.moveToArea.isEmpty)
+      (Random.shuffle(stardardActions), moveActions.sortBy(_.id.id))
+    }
+    //    val (invisibleInvalid, visibleActions) =
 //      allAvailableActions.partition(action =>
 //        action.isInvalid(state) &&
 //          (!action.data.showWhenInvalid || !action.areaIsValid(state))
@@ -251,6 +259,8 @@ object GameLogic {
     state
       .modify(_.visibleNextActions)
       .setTo(nextActions)
+      .modify(_.visibleMoveActions)
+      .setTo(allMoveActions)
       .modify(_.deckActions)
       .setTo(remainingDeckActions)
   }
