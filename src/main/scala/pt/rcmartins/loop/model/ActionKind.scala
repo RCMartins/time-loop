@@ -33,6 +33,7 @@ final case class ActionData(
     actionTime: ActionTime,
     actionSuccessType: ActionSuccessType = ActionSuccessType.Always,
     initialAmountOfActions: AmountOfActions = AmountOfActions.Standard(1),
+    forceMaxAmountOfActions: Option[Int] = None,
     firstTimeUnlocksActions: Unit => Seq[ActionData] = _ => Seq.empty,
     everyTimeUnlocksActions: Int => Seq[ActionData] = _ => Seq.empty,
     invalidReason: GameState => Option[ReasonLabel] = _ => None,
@@ -45,7 +46,7 @@ final case class ActionData(
 
   def toActiveAction: ActiveActionData =
     new ActiveActionData(
-      id = Random.nextLong(),
+      id = ActionId(Random.nextLong()),
       data = this,
       microSoFar = 0L,
       xpMultiplier = 1.0,
@@ -63,14 +64,15 @@ final case class ActionData(
 }
 
 case class ActiveActionData(
-    id: Long,
+    id: ActionId,
     data: ActionData,
     microSoFar: Long,
     xpMultiplier: Double,
     amountOfActionsLeft: AmountOfActions,
-    numberOfCompletions: Int = 0,
     currentActionSuccessChance: Double,
     actionSuccessChanceIncrease: Double,
+    limitOfActions: Option[Int] = None,
+    numberOfCompletions: Int = 0,
 ) {
 
   override def toString: String =

@@ -21,7 +21,7 @@ case class GameState(
     inventory: InventoryState,
     currentAction: Option[ActiveActionData],
     visibleNextActions: Seq[ActiveActionData],
-    selectedNextAction: Option[Long],
+    selectedNextAction: Option[(ActionId, Option[Int])],
     deckActions: Seq[ActiveActionData],
     actionsHistory: Seq[ActionData],
 ) {

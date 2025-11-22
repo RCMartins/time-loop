@@ -6,6 +6,8 @@ sealed trait AmountOfActions {
 
   def reduceOne: AmountOfActions
 
+  def singleAction: Boolean
+
 }
 
 object AmountOfActions {
@@ -13,11 +15,13 @@ object AmountOfActions {
   case class Standard(amount: Int) extends AmountOfActions {
     def moreThanOne: Boolean = amount > 1
     def reduceOne: AmountOfActions = Standard(amount - 1)
+    def singleAction: Boolean = amount == 1
   }
 
   case object Unlimited extends AmountOfActions {
     val moreThanOne: Boolean = true
     val reduceOne: AmountOfActions = Unlimited
+    val singleAction: Boolean = false
   }
 
 }
