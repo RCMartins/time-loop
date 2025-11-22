@@ -31,6 +31,7 @@ object GameData {
   val inventory: Signal[InventoryState] = gameState.map(_.inventory).distinct
   val currentAction: Signal[Option[ActiveActionData]] = gameState.map(_.currentAction).distinct
   val nextActions: Signal[Seq[ActiveActionData]] = gameState.map(_.visibleNextActions).distinct
+  val nextMoveActions: Signal[Seq[ActiveActionData]] = gameState.map(_.visibleMoveActions).distinct
   val deckActions: Signal[Seq[ActiveActionData]] = gameState.map(_.deckActions).distinct
   val selectedNextAction: Signal[Option[(ActionId, Option[Int])]] =
     gameState.map(_.selectedNextAction).distinct
@@ -51,7 +52,10 @@ object GameData {
 
   def DebugLoopNow(): Unit = {
     gameStateVar.update { state =>
-      val newState = state.resetForNewLoop
+      val newState: GameState =
+        state.resetForNewLoop
+          .modify(_.stats.usedCheats)
+          .setTo(true)
       SaveLoad.saveToLocalStorage(newState)
       newState
     }
