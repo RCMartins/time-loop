@@ -25,6 +25,8 @@ case class GameState(
     selectedNextAction: Option[(ActionId, Option[Int])],
     deckActions: Seq[ActiveActionData],
     actionsHistory: Seq[ActionData],
+    storyActionsHistory: List[String],
+    inProgressStoryActions: Seq[RunTimeStoryAction],
 ) {
 
   def currentTiredSecondMicro: Long = (currentTiredSecond * 1_000_000L).toLong
@@ -46,6 +48,7 @@ case class GameState(
       selectedNextAction = None,
       deckActions = Seq(),
       actionsHistory = Seq(),
+      inProgressStoryActions = Seq(),
     )
 
 }
@@ -82,6 +85,15 @@ object GameState {
     selectedNextAction = None,
     deckActions = Seq(),
     actionsHistory = Seq(),
+    storyActionsHistory = Nil,
+    inProgressStoryActions = Seq(),
   )
+
+  object LoopCount {
+
+    def unapply(gameState: GameState): Option[Int] =
+      Some(gameState.stats.loopNumber)
+
+  }
 
 }

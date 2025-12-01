@@ -11,11 +11,13 @@ object LevelUtils {
       amount: Int,
       actionTime: ActionTime,
       initialAmountOfActions: AmountOfActions = AmountOfActions.Standard(1),
-      firstTimeUnlocksActions: Unit => Seq[ActionData] = _ => Seq.empty,
+      firstTimeUnlocksActions: GameState => Seq[ActionData] = _ => Seq.empty,
+      everyTimeUnlocksActions: (GameState, Int) => Seq[ActionData] = (_, _) => Seq.empty,
+      addStory: GameState => Option[StoryLine] = _ => None,
   ): ActionData = ActionData(
     actionDataType = actionDataType,
     area = area,
-    title = s"Pick up ${amount} ${itemType.name}",
+    title = s"Pick up $amount ${itemType.name}",
     effectLabel = EffectLabel.GetItem(itemType, amount),
     kind = ActionKind.Foraging,
     actionTime = actionTime,
@@ -24,6 +26,8 @@ object LevelUtils {
     invalidReason = state =>
       Option.unless(state.inventory.canAddItem(itemType, amount))(ReasonLabel.InventoryFull),
     firstTimeUnlocksActions = firstTimeUnlocksActions,
+    everyTimeUnlocksActions = everyTimeUnlocksActions,
+    addStory = addStory,
   )
 
   def gardeningAction(
@@ -54,7 +58,8 @@ object LevelUtils {
       cost: Int,
       actionTime: ActionTime,
       initialAmountOfActions: AmountOfActions,
-      firstTimeUnlocksActions: Unit => Seq[ActionData] = _ => Seq.empty,
+      firstTimeUnlocksActions: GameState => Seq[ActionData] = _ => Seq.empty,
+      addStory: GameState => Option[StoryLine] = _ => None,
       changeInventoryExtra: InventoryState => InventoryState = identity,
   ): ActionData =
     ActionData(
@@ -75,6 +80,7 @@ object LevelUtils {
           ReasonLabel.NotEnoughCoins
         ),
       firstTimeUnlocksActions = firstTimeUnlocksActions,
+      addStory = addStory,
     )
 
   def sellItemAction(
@@ -85,7 +91,7 @@ object LevelUtils {
       coinsGain: Int,
       actionTime: ActionTime,
       initialAmountOfActions: AmountOfActions,
-      firstTimeUnlocksActions: Unit => Seq[ActionData] = _ => Seq.empty,
+      firstTimeUnlocksActions: GameState => Seq[ActionData] = _ => Seq.empty,
       changeInventoryExtra: InventoryState => InventoryState = identity,
   ): ActionData =
     ActionData(
@@ -114,7 +120,7 @@ object LevelUtils {
       cost: Int,
       inventoryMaxSize: Int,
       actionTime: ActionTime,
-      firstTimeUnlocksActions: Unit => Seq[ActionData] = _ => Seq(),
+      firstTimeUnlocksActions: GameState => Seq[ActionData] = _ => Seq(),
   ): ActionData =
     ActionData(
       actionDataType = actionDataType,
@@ -142,7 +148,7 @@ object LevelUtils {
       actionTime: ActionTime,
       initialAmountOfActions: AmountOfActions,
       actionSuccessType: ActionSuccessType = ActionSuccessType.Always,
-      firstTimeUnlocksActions: Unit => Seq[ActionData] = _ => Seq.empty,
+      firstTimeUnlocksActions: GameState => Seq[ActionData] = _ => Seq.empty,
       showWhenInvalid: Boolean = true,
   ): ActionData =
     ActionData(
@@ -183,7 +189,7 @@ object LevelUtils {
       actionTime: ActionTime,
       initialAmountOfActions: AmountOfActions,
       actionSuccessType: ActionSuccessType = ActionSuccessType.Always,
-      firstTimeUnlocksActions: Unit => Seq[ActionData] = _ => Seq.empty,
+      firstTimeUnlocksActions: GameState => Seq[ActionData] = _ => Seq.empty,
       showWhenInvalid: Boolean = true,
   ): ActionData =
     ActionData(

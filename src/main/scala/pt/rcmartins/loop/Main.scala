@@ -12,7 +12,8 @@ import pt.rcmartins.loop.Util._
 import pt.rcmartins.loop.data.Level1
 import pt.rcmartins.loop.model.{GameState, SkillsState}
 
-import scala.scalajs.js.timers.setInterval
+import scala.scalajs.js
+import scala.scalajs.js.timers.{setInterval, SetTimeoutHandle}
 
 object Main {
 
@@ -56,7 +57,7 @@ object Main {
           div(cls := "order-1 md:order-1", skillsSidebar(skillsView)),
           div(
             cls := "order-2 md:order-2",
-            centerColumn(currentActionView, nextActionsView, nextMoveActionsView)
+            centerColumn()
           ),
           div(cls := "order-3 md:order-3", rightSidebar(inventoryView, miscView))
         ),
@@ -171,31 +172,52 @@ object Main {
     )
 
   /** Center column: top (current) + bottom (next) */
-  private def centerColumn(
-      currentActionView: HtmlElement,
-      nextActionsView: HtmlElement,
-      nextMoveActionsView: HtmlElement,
-  ): HtmlElement =
+  private def centerColumn(): HtmlElement = {
     div(
       // two rows: auto (top) + 1fr (bottom)
       cls := "grid grid-rows-[auto,1fr] gap-4 min-h-[60dvh]",
       // top: current action
-      panelCard(
-        span("Current Action"),
-        // keep this compact; grows only as needed
-        div(cls := "space-y-3", currentActionView)
+      div(
+        cls := "grid grid-cols-2 gap-3",
+        panelCard(
+          span("Current Action"),
+          // keep this compact; grows only as needed
+          div(cls := "space-y-3 min-h-32 max-h-40", currentActionView)
+        ),
+        panelCard(
+          span("Story"),
+          div(
+            cls := "overflow-auto min-h-0 grow",
+            children <--
+              storyActionsHistory.map(_.take(6).zipWithIndex.reverse).map {
+                _.map {
+                  case (storyText, 5) =>
+                    p(span(cls := "text-slate-300/20", storyText))
+                  case (storyText, 4) =>
+                    p(span(cls := "text-slate-300/40", storyText))
+                  case (storyText, 0) =>
+                    p(
+                      cls("animate-fade-in"),
+                      span(storyText)
+                    )
+                  case (storyText, _) =>
+                    p(span(storyText))
+                }
+              }
+          )
+        )
       ),
       // bottom: next actions list with own scroll
       div(
         cls := "rounded-2xl p-4 bg-slate-800/60 ring-1 ring-slate-700 shadow flex flex-col min-h-0",
         h3(cls := "text-sm font-semibold tracking-tight mb-2", "Available Actions"),
-        div(cls := "overflow-auto min-h-0 grow", nextActionsView)
+        div(cls := "overflow-auto min-h-0 grow min-h-32", nextActionsView)
       ),
       // bottom: next actions list with own scroll
       div(
         cls := "rounded-2xl p-4 bg-slate-800/60 ring-1 ring-slate-700 shadow flex flex-col min-h-0",
         h3(cls := "text-sm font-semibold tracking-tight mb-2", "Move Actions"),
-        div(cls := "overflow-auto min-h-0 grow", nextMoveActionsView)
+        div(cls := "overflow-auto min-h-0 grow min-h-32", nextMoveActionsView)
       ),
       div(
         cls := "mt-3 relative", // allow absolute positioning inside
@@ -217,8 +239,9 @@ object Main {
             f"$energy%d / $maxEnergy%d"
           }
         )
-      )
+      ),
     )
+  }
 
   /** Right sidebar: inventory + other info stacked */
   private def rightSidebar(inventoryView: HtmlElement, miscView: HtmlElement): HtmlElement =

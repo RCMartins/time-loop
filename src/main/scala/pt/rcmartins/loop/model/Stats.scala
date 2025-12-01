@@ -18,7 +18,7 @@ object Stats {
 
   val initial: Stats =
     Stats(
-      loopNumber = 0,
+      loopNumber = 1,
       usedCheats = false,
     )
 
