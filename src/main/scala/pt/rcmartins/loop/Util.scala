@@ -12,12 +12,12 @@ object Util {
 
   private val owner = new Owner {}
 
-  def activeActionCard(vm: Signal[ActiveActionData]): HtmlElement = {
-    val base =
-      "rounded-2xl p-4 pb-5 bg-slate-800/60 ring-1 ring-slate-700 shadow transition " +
-        "hover:ring-emerald-400/60 hover:shadow-md focus:outline-none " +
-        "focus:ring-2 focus:ring-emerald-400 pointer-events-none shadow-lg"
+  private val baseCardClasses: String =
+    "rounded-2xl p-4 pb-5 bg-slate-800/60 ring-1 ring-slate-700 shadow transition " +
+      "hover:ring-emerald-400/60 hover:shadow-md focus:outline-none " +
+      "focus:ring-2 focus:ring-emerald-400"
 
+  def activeActionCard(vm: Signal[ActiveActionData]): HtmlElement = {
     val data: Signal[ActionData] = vm.distinctBy(_.id).map(_.data)
     val longSoFar: Signal[Long] = ActiveActionData.longSoFar(vm).distinct
     val microLeft: Signal[Long] = ActiveActionData.microLeft(vm).distinct
@@ -26,7 +26,8 @@ object Util {
 
     div(
       role := "button",
-      cls := base,
+      cls := baseCardClasses,
+      cls := "shadow-lg pointer-events-none",
       tabIndex := 0,
 
       // Content
@@ -105,11 +106,6 @@ object Util {
     val isSelected: Var[Boolean] = Var(false)
     val selectedLimit: Var[Int] = Var(-1)
 
-    val base =
-      "rounded-2xl p-4 pb-5 bg-slate-800/60 ring-1 ring-slate-700 shadow transition " +
-        "hover:ring-emerald-400/60 hover:shadow-md focus:outline-none " +
-        "focus:ring-2 focus:ring-emerald-400 m-2 mt-4 me-3"
-
     val selectedCls =
       " ring-2 ring-emerald-500 shadow-lg"
 
@@ -142,7 +138,8 @@ object Util {
     div(
       role := "button",
       tabIndex := 0,
-      cls := base,
+      cls := baseCardClasses,
+      cls := "m-2 mt-4 me-3",
       cls(selectedCls) <-- selectedNextAction.combineWith(actionSignal.map(_.id)).map {
         case (optId, actionId) => optId.contains(actionId)
       },

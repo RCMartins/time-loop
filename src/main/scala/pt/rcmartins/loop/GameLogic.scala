@@ -2,6 +2,7 @@ package pt.rcmartins.loop
 
 import com.softwaremill.quicklens.ModifyPimp
 import pt.rcmartins.loop.model.GameState._
+import pt.rcmartins.loop.model.StoryLine.StoryPart
 import pt.rcmartins.loop.model._
 
 import scala.util.Random
@@ -30,27 +31,65 @@ object GameLogic {
   ): (GameState, Long) = {
     initialGameState.currentAction match {
       case None =>
-        initialGameState.selectedNextAction.flatMap { case (id, limit) =>
-          initialGameState.visibleNextActions
-            .find(_.id == id)
-            .map((_, limit))
-            .orElse(initialGameState.visibleMoveActions.find(_.id == id).map((_, limit)))
-        } match {
-          case Some((nextAction, limit)) =>
-            (
-              initialGameState
-                .modify(_.selectedNextAction)
-                .setTo(None)
-                .modify(_.currentAction)
-                .setTo(Some(nextAction.copy(limitOfActions = limit)))
-                .modify(_.visibleNextActions)
-                .using(actions => actions.filterNot(_.id == nextAction.id))
-                .modify(_.visibleMoveActions)
-                .using(actions => actions.filterNot(_.id == nextAction.id)),
-              0L
-            )
+        initialGameState.inProgressStoryActions.headOption match {
+          case Some(RunTimeStoryAction(storyPart, requiredElapsedTimeMicro)) =>
+            val maxElapedTime: Long =
+              Math.min(
+                elapsedTimeMicro,
+                Math.max(0, requiredElapsedTimeMicro - initialGameState.timeElapsedMicro)
+              )
+            val currentTime: Long = initialGameState.timeElapsedMicro + maxElapedTime
+            println(("initialGameState.timeElapsedMicro", initialGameState.timeElapsedMicro))
+            println(("maxElapedTime", maxElapedTime))
+            println(("currentTime", currentTime))
+            println(("requiredElapsedTimeMicro", requiredElapsedTimeMicro))
+            val updatedGameState: GameState =
+              if (currentTime >= requiredElapsedTimeMicro)
+                initialGameState
+                  .modify(_.timeElapsedMicro)
+                  .setTo(currentTime)
+                  .modify(_.inProgressStoryActions)
+                  .using(_.tail)
+                  .pipe { currentGameState =>
+                    storyPart match {
+                      case StoryPart.StoryTextLine(text) =>
+                        currentGameState
+                          .modify(_.storyActionsHistory)
+                          .using(text.split("\n").toList.reverse ::: _)
+                      case StoryPart.ForceAction(actionData) =>
+                        currentGameState
+                          .modify(_.selectedNextAction)
+                          .setTo(None)
+                          .modify(_.currentAction)
+                          .setTo(Some(actionData.toActiveAction))
+                    }
+                  }
+              else
+                initialGameState
+            (updatedGameState, maxElapedTime)
           case None =>
-            (initialGameState, 0L)
+            initialGameState.selectedNextAction.flatMap { case (id, limit) =>
+              initialGameState.visibleNextActions
+                .find(_.id == id)
+                .map((_, limit))
+                .orElse(initialGameState.visibleMoveActions.find(_.id == id).map((_, limit)))
+            } match {
+              case Some((nextAction, limit)) =>
+                (
+                  initialGameState
+                    .modify(_.selectedNextAction)
+                    .setTo(None)
+                    .modify(_.currentAction)
+                    .setTo(Some(nextAction.copy(limitOfActions = limit)))
+                    .modify(_.visibleNextActions)
+                    .using(actions => actions.filterNot(_.id == nextAction.id))
+                    .modify(_.visibleMoveActions)
+                    .using(actions => actions.filterNot(_.id == nextAction.id)),
+                  0L
+                )
+              case None =>
+                (initialGameState, 0L)
+            }
         }
       case Some(currentAction) =>
         val initialSkillState: SkillState = initialGameState.skills.get(currentAction.data.kind)
@@ -159,14 +198,25 @@ object GameLogic {
           .using(_ :+ currentAction.data)
           .modify(_.deckActions)
           .usingIf(firstTimeComplete)(
-            _ ++ currentAction.data.firstTimeUnlocksActions(()).map(_.toActiveAction)
+            _ ++ currentAction.data.firstTimeUnlocksActions(state).map(_.toActiveAction)
           )
           .modify(_.deckActions)
           .using(
             _ ++
               currentAction.data
-                .everyTimeUnlocksActions(currentAction.numberOfCompletions + 1)
+                .everyTimeUnlocksActions(state, currentAction.numberOfCompletions + 1)
                 .map(_.toActiveAction)
+          )
+          .modify(_.inProgressStoryActions)
+          .using(inProgressStoryActions =>
+            currentAction.data.addStory(state) match {
+              case None =>
+                inProgressStoryActions
+              case Some(newStory) =>
+                inProgressStoryActions ++ newStory.seq.map { storyPart =>
+                  RunTimeStoryAction(storyPart, state.timeElapsedMicro)
+                }
+            }
           )
           .modify(_.inventory)
           .using(currentAction.data.changeInventory)
@@ -226,43 +276,38 @@ object GameLogic {
       state: GameState
   ): GameState = {
     // TODO stable shuffle based on seed (with a stable random generator)
-    val (allAvailableActions, allMoveActions) = {
+    val (allAvailableActions, allAvailableMoveActions) = {
       val allActions = state.deckActions ++ state.visibleNextActions ++ state.visibleMoveActions
       val (stardardActions, moveActions) = allActions.partition(_.data.moveToArea.isEmpty)
       (Random.shuffle(stardardActions), moveActions.sortBy(_.id.id))
     }
-    //    val (invisibleInvalid, visibleActions) =
-//      allAvailableActions.partition(action =>
-//        action.isInvalid(state) &&
-//          (!action.data.showWhenInvalid || !action.areaIsValid(state))
-//      )
-    val (invalid, valid) =
+
+    val (invalidStandardActions, validStandardActions) =
       allAvailableActions.partition(_.isInvalid(state))
     val (invisibleInvalid, visibleInvalid) =
-      invalid.partition(action => !action.data.showWhenInvalid || !action.areaIsValid(state))
-
-//    println(("state.deckActions", state.deckActions))
-//    println(("state.visibleNextActions", state.visibleNextActions))
-//    println(("visibleActions", visibleActions))
+      invalidStandardActions.partition(action =>
+        !action.data.showWhenInvalid || !action.areaIsValid(state)
+      )
 
     val (nextActions, remainingDeckActions) = {
       val (takenVisible, remainingVisible) =
-        (valid ++ visibleInvalid).splitAt(MaximumAmountOfVisibleActions)
+        (validStandardActions ++ visibleInvalid).splitAt(MaximumAmountOfVisibleActions)
       (
         takenVisible,
         remainingVisible ++ invisibleInvalid
       )
     }
 
-    //    println(("nextActions", nextActions))
+    val (remainingMoveActions, nextMoveActions) =
+      allAvailableMoveActions.partition(_.isInvalid(state))
 
     state
       .modify(_.visibleNextActions)
       .setTo(nextActions)
       .modify(_.visibleMoveActions)
-      .setTo(allMoveActions)
+      .setTo(nextMoveActions)
       .modify(_.deckActions)
-      .setTo(remainingDeckActions)
+      .setTo(remainingDeckActions ++ remainingMoveActions)
   }
 
   private def updateTiredness(

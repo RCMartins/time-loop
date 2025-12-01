@@ -34,12 +34,14 @@ final case class ActionData(
     actionSuccessType: ActionSuccessType = ActionSuccessType.Always,
     initialAmountOfActions: AmountOfActions = AmountOfActions.Standard(1),
     forceMaxAmountOfActions: Option[Int] = None,
-    firstTimeUnlocksActions: Unit => Seq[ActionData] = _ => Seq.empty,
-    everyTimeUnlocksActions: Int => Seq[ActionData] = _ => Seq.empty,
+    firstTimeUnlocksActions: GameState => Seq[ActionData] = _ => Seq.empty,
+    everyTimeUnlocksActions: (GameState, Int) => Seq[ActionData] = (_, _) => Seq.empty,
+    addStory: GameState => Option[StoryLine] = _ => None,
     invalidReason: GameState => Option[ReasonLabel] = _ => None,
     showWhenInvalid: Boolean = true,
     changeInventory: InventoryState => InventoryState = identity,
     moveToArea: Option[CharacterArea] = None,
+    difficultyModifier: ActionDifficultyModifier = ActionDifficultyModifier.empty,
 ) {
 
   val baseTimeMicro: Long = actionTime.baseTimeSec * 1_000_000L

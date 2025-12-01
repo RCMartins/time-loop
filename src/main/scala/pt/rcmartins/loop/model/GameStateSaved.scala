@@ -11,6 +11,7 @@ case class GameStateSaved(
     initialTiredMultSecond: Double,
     stats: Stats,
     skills: SkillsState,
+    storyActionsHistory: List[String],
 ) {
 
   def toGameState: GameState =
@@ -35,6 +36,8 @@ case class GameStateSaved(
       selectedNextAction = None,
       deckActions = Seq.empty,
       actionsHistory = Seq.empty,
+      storyActionsHistory = storyActionsHistory,
+      inProgressStoryActions = Seq.empty,
     )
 
 }
@@ -50,6 +53,7 @@ object GameStateSaved {
       initialTiredMultSecond = gameState.initialTiredMultSecond,
       stats = gameState.stats,
       skills = gameState.skills,
+      storyActionsHistory = gameState.storyActionsHistory,
     )
 
   implicit val decoder: JsonDecoder[GameStateSaved] = DeriveJsonDecoder.gen[GameStateSaved]

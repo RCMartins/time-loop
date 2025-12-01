@@ -3,6 +3,7 @@ package pt.rcmartins.loop.data
 import pt.rcmartins.loop.data.LevelUtils._
 import pt.rcmartins.loop.model.ActionDataType.Level1DataType
 import pt.rcmartins.loop.model.CharacterArea._
+import pt.rcmartins.loop.model.GameState.LoopCount
 import pt.rcmartins.loop.model._
 
 object Level1 {
@@ -20,7 +21,16 @@ object Level1 {
       effectLabel = EffectLabel.Empty,
       kind = ActionKind.Agility,
       actionTime = ActionTime.Standard(7),
-      firstTimeUnlocksActions = _ => Seq(SearchLivingRoom, SearchKitchen, SearchGarden),
+      firstTimeUnlocksActions = {
+        case LoopCount(1) => Seq(SearchLivingRoom, SearchKitchen)
+        case _            => Seq(SearchLivingRoom, SearchKitchen, SearchGarden)
+      },
+      addStory = {
+        case LoopCount(1) => Some(Story.FirstLoop.FirstWakeup)
+//      case LoopCount(2) => Some(Story.OtherLoops.SecondWakeup)
+//      case _ =>            Some(Story.OtherLoops.ThirdOrMoreWakeup)
+        case _ => None
+      },
     )
 
     def SearchLivingRoom: ActionData = ActionData(
@@ -30,7 +40,10 @@ object Level1 {
       effectLabel = EffectLabel.Explore,
       kind = ActionKind.Exploring,
       actionTime = ActionTime.Standard(5),
-      firstTimeUnlocksActions = _ => Seq(PickupSimpleSoapMold, PickupCoins),
+      firstTimeUnlocksActions = {
+        case LoopCount(1) => Seq(PickupSimpleSoapMold)
+        case _            => Seq(PickupSimpleSoapMold, PickupCoins)
+      },
     )
 
     def PickupSimpleSoapMold: ActionData = pickupToItem(
@@ -40,6 +53,14 @@ object Level1 {
       amount = 1,
       actionTime = ActionTime.Standard(5),
       initialAmountOfActions = AmountOfActions.Standard(1),
+      firstTimeUnlocksActions = {
+        case LoopCount(1) => Seq(PickupCoins)
+        case _            => Seq.empty
+      },
+      addStory = {
+        case LoopCount(1) => Some(Story.FirstLoop.NoGlycerinShouldbuyFromStore)
+        case _            => None
+      },
     )
 
     def PickupCoins: ActionData = pickupToItem(
@@ -49,6 +70,10 @@ object Level1 {
       amount = 1,
       actionTime = ActionTime.Standard(1),
       initialAmountOfActions = AmountOfActions.Standard(10),
+      everyTimeUnlocksActions = {
+        case (LoopCount(1), 10) => Seq(GoToGeneralStore)
+        case _                  => Seq()
+      },
     )
 
     def SearchKitchen: ActionData = ActionData(
@@ -80,7 +105,7 @@ object Level1 {
       effectLabel = EffectLabel.Explore,
       kind = ActionKind.Exploring,
       actionTime = ActionTime.Standard(20),
-      firstTimeUnlocksActions = _ => Seq(PickupHerbs, GoToGeneralStore),
+      firstTimeUnlocksActions = _ => Seq(PickupMint, GoToGeneralStore),
       invalidReason = state =>
         Option.unless(
           state.actionsHistory.exists(_.actionDataType == Level1DataType.SearchKitchen) &&
@@ -90,10 +115,10 @@ object Level1 {
       showWhenInvalid = false,
     )
 
-    def PickupHerbs: ActionData = gardeningAction(
-      actionDataType = Level1DataType.PickHerbsGarden,
+    def PickupMint: ActionData = gardeningAction(
+      actionDataType = Level1DataType.PickMintGarden,
       area = Seq(Area1_House),
-      itemType = ItemType.GardenHerb,
+      itemType = ItemType.Mint,
       amount = 1,
       actionTime = ActionTime.Standard(8),
       initialAmountOfActions = AmountOfActions.Unlimited,
@@ -107,24 +132,95 @@ object Level1 {
       kind = ActionKind.Agility,
       actionTime = ActionTime.ReduzedXP(20, 0.5),
       initialAmountOfActions = AmountOfActions.Unlimited,
-      firstTimeUnlocksActions = _ =>
-        Seq(
-          BuyGlycerin,
-          BuyRawMomo,
-          GoToBackToHouse
-        ),
+      firstTimeUnlocksActions = {
+        case LoopCount(1) => Seq(BuyGlycerinFirstLoop)
+        case _            => Seq(BuyGlycerin, BuyRawMomo, GoToBackToHouse)
+      },
       moveToArea = Some(Area3_Store),
     )
 
+    def BuyGlycerinFirstLoop: ActionData = buyItemAction(
+      actionDataType = Level1DataType.BuyGlycerin,
+      area = Seq(Area3_Store),
+      itemType = ItemType.Glycerin,
+      amount = 1,
+      cost = 5,
+      actionTime = ActionTime.Standard(20),
+      initialAmountOfActions = AmountOfActions.Standard(1),
+      firstTimeUnlocksActions = _ => Seq(FirstLoopGoToForest),
+      addStory = _ => Some(Story.FirstLoop.GoToForestGetLavender),
+    )
+
     def BuyGlycerin: ActionData = buyItemAction(
-      actionDataType = Level1DataType.GoToGeneralStore,
+      actionDataType = Level1DataType.BuyGlycerin,
       area = Seq(Area3_Store),
       itemType = ItemType.Glycerin,
       amount = 1,
       cost = 5,
       actionTime = ActionTime.Standard(20),
       initialAmountOfActions = AmountOfActions.Unlimited,
-      firstTimeUnlocksActions = _ => Seq(MeltGlycerin),
+      firstTimeUnlocksActions = _ => Seq(MeltGlycerin)
+    )
+
+    def FirstLoopGoToForest: ActionData = ActionData(
+      actionDataType = Level1DataType.GoToForest,
+      area = Seq(Area3_Store),
+      title = "Go to the Forest",
+      effectLabel = EffectLabel.Movement,
+      kind = ActionKind.Agility,
+      actionTime = ActionTime.Standard(30),
+      initialAmountOfActions = AmountOfActions.Standard(1),
+      firstTimeUnlocksActions = _ => Seq(ExploreForestForLavender),
+      moveToArea = Some(Area5_Forest),
+    )
+
+    def ExploreForestForLavender: ActionData = ActionData(
+      actionDataType = Level1DataType.ExploreForestForLavender,
+      area = Seq(Area5_Forest),
+      title = "Explore the forest for lavender",
+      effectLabel = EffectLabel.Explore,
+      kind = ActionKind.Exploring,
+      actionTime = ActionTime.Standard(25),
+      initialAmountOfActions = AmountOfActions.Standard(1),
+      firstTimeUnlocksActions = _ => Seq(FindMysteriousSorcerer),
+      addStory = _ => Some(Story.FirstLoop.MysteriousSorcererInTheForest),
+    )
+
+    def FindMysteriousSorcerer: ActionData = ActionData(
+      actionDataType = Level1DataType.FindMysteriousSorcerer,
+      area = Seq(Area5_Forest),
+      title = "Aproach Sorcerer",
+      effectLabel = EffectLabel.Empty,
+      kind = ActionKind.Agility,
+      actionTime = ActionTime.Standard(15),
+      initialAmountOfActions = AmountOfActions.Standard(1),
+      firstTimeUnlocksActions = _ => Seq(TalkMysteriousSorcerer),
+      addStory = _ => Some(Story.FirstLoop.FirstLineSorcerer),
+    )
+
+    def TalkMysteriousSorcerer: ActionData = ActionData(
+      actionDataType = Level1DataType.TalkMysteriousSorcerer,
+      area = Seq(Area5_Forest),
+      title = """Ask what is he talking about?""",
+      effectLabel = EffectLabel.Empty,
+      kind = ActionKind.Social,
+      actionTime = ActionTime.Standard(5),
+      initialAmountOfActions = AmountOfActions.Standard(1),
+      firstTimeUnlocksActions = _ => Seq(),
+      addStory = _ => Some(Story.FirstLoop.FinalLineSorcerer),
+    )
+
+    def FirstLoopFadingAway: ActionData = ActionData(
+      actionDataType = Level1DataType.FirstLoopFadingAway,
+      area = Seq(Area5_Forest),
+      title = """Fading away""",
+      effectLabel = EffectLabel.Empty,
+      kind = ActionKind.Social,
+      actionTime = ActionTime.Standard(30),
+      initialAmountOfActions = AmountOfActions.Standard(1),
+      firstTimeUnlocksActions = _ => Seq(),
+      difficultyModifier = ActionDifficultyModifier(increaseTirednessAbsoluteMicro = 3L),
+      addStory = _ => Some(Story.FirstLoop.FadingAway),
     )
 
     def BuyRawMomo: ActionData = buyItemAction(
@@ -138,18 +234,18 @@ object Level1 {
       firstTimeUnlocksActions = _ => Seq(CookMomo),
     )
 
-    // TODO how should this work?
-    def BuyGoodSoapMold: ActionData = buyItemAction(
-      actionDataType = Level1DataType.BuyRawMomo,
-      area = Seq(Area3_Store),
-      itemType = ItemType.GoodSoapMold,
-      amount = 5,
-      cost = 1,
-      actionTime = ActionTime.Standard(10),
-      initialAmountOfActions = AmountOfActions.Standard(1),
-      firstTimeUnlocksActions = _ => Seq(),
-      changeInventoryExtra = _.removeItem(ItemType.SimpleSoapMold, 1),
-    )
+//    // TODO how should this work?
+//    def BuyGoodSoapMold: ActionData = buyItemAction(
+//      actionDataType = Level1DataType.BuyRawMomo,
+//      area = Seq(Area3_Store),
+//      itemType = ItemType.GoodSoapMold,
+//      amount = 5,
+//      cost = 1,
+//      actionTime = ActionTime.Standard(10),
+//      initialAmountOfActions = AmountOfActions.Standard(1),
+//      firstTimeUnlocksActions = _ => Seq(),
+//      changeInventoryExtra = _.removeItem(ItemType.SimpleSoapMold, 1),
+//    )
 
     def CookMomo: ActionData = cookingAction(
       actionDataType = Level1DataType.CookMomo,
@@ -192,7 +288,7 @@ object Level1 {
       area = Seq(Area1_House),
       itemType = ItemType.HotMoldedSoap,
       amount = 1,
-      cost = Seq(ItemType.MeltedGlycerin -> 1, ItemType.GardenHerb -> 1),
+      cost = Seq(ItemType.MeltedGlycerin -> 1, ItemType.Mint -> 1),
       actionTime = ActionTime.Standard(10),
       initialAmountOfActions = AmountOfActions.Unlimited,
       firstTimeUnlocksActions = _ => Seq(CreateSoap),
@@ -235,7 +331,7 @@ object Level1 {
     )
 
     def SellSoapToPeople: ActionData = ActionData(
-      actionDataType = Level1DataType.TalkWithPeopleInTown,
+      actionDataType = Level1DataType.SellSoapToPeople,
       area = Seq(Area2_Town),
       title = "Try to sell Soap to people",
       effectLabel = EffectLabel.SellSoap,
@@ -261,10 +357,10 @@ object Level1 {
       initialAmountOfActions = AmountOfActions.Standard(3),
       forceMaxAmountOfActions = Some(1),
       everyTimeUnlocksActions = {
-        case 1 => Seq(GoToEquipmentStore)
-        case 2 => Seq(GoToForest)
-        case 3 => Seq(BuyEmptyStore)
-        case _ => Seq()
+        case (_, 1) => Seq(GoToEquipmentStore)
+        case (_, 2) => Seq(GoToForest)
+        case (_, 3) => Seq(BuyEmptyStore)
+        case _      => Seq()
       },
     )
 
@@ -368,19 +464,86 @@ object Level1 {
         effectLabel = EffectLabel.Empty,
         kind = ActionKind.Crafting,
         actionTime = ActionTime.Standard(60),
-        firstTimeUnlocksActions = _ => Seq(FinishLevel1),
-      )
-
-    def FinishLevel1: ActionData =
-      ActionData(
-        actionDataType = Level1DataType.FinishLevel1,
-        area = Seq(Area2_Town),
-        title = s"Win Level 1",
-        effectLabel = EffectLabel.Empty,
-        kind = ActionKind.Agility,
-        actionTime = ActionTime.Standard(1),
         firstTimeUnlocksActions = _ => Seq(),
       )
+
+  }
+
+  object Story {
+
+    case class StoryLineWithCondition(
+        storyLine: StoryLine,
+        actionDataType: ActionDataType,
+        loopCond: Int => Boolean,
+        stateCond: GameState => Boolean = _ => true,
+    )
+
+    object FirstLoop {
+
+      val FirstWakeup: StoryLine =
+        StoryLine.simple("""I wake up feeling unusually well-rested…
+                           |Let's make a lavander soap today!""".stripMargin)
+
+      val NoGlycerinShouldbuyFromStore: StoryLine =
+        StoryLine.simple(
+          """I don't have soap glycerin, I should pickup some coins and go buy it in the nearby general store.""".stripMargin
+        )
+
+      val GoToForestGetLavender: StoryLine =
+        StoryLine.simple(
+          """I have the soap glycerin, maybe I can pick some lavender from the nearby forest?""".stripMargin
+        )
+
+      val MysteriousSorcererInTheForest: StoryLine =
+        StoryLine.simple(
+          """I see a mysterious man, looks like a Sorcerer!""".stripMargin
+        )
+
+      val FirstLineSorcerer: StoryLine =
+        StoryLine.simple(
+          """A tall sorcerer appears out of nowhere, balancing a teacup with suspicious elegance.
+            |“You weren’t supposed to see me yet,” he mutters.
+            |""".stripMargin
+        )
+
+      val FinalLineSorcerer: StoryLine =
+        StoryLine
+          .simple(
+            """He scrambles for a spell — something about “resetting the timeline,” maybe?
+              |Reality starts quietly peeling away like badly applied wallpaper.
+              |You grab his arm; the teacup flips, dumping its contents all over you.
+              |The sorcerer freezes. “Oh. That’s… not ideal.”
+              |Before you can complain, everything politely fades to black.
+              |""".stripMargin
+          )
+          .join(
+            StoryLine.StoryPart.ForceAction(Level1.Data.FirstLoopFadingAway)
+          )
+
+      val FadingAway: StoryLine =
+        StoryLine.simple(
+          """You get very tired and go to sleep""".stripMargin
+        )
+
+    }
+
+    object OtherLoops {
+
+      val SecondWakeup: StoryLineWithCondition =
+        StoryLineWithCondition(
+          StoryLine.simple("She opens her eyes. The day looks… suspiciously familiar."),
+          Level1DataType.WakeUp,
+          _ == 2,
+        )
+
+      val ThirdOrMoreWakeup: StoryLineWithCondition =
+        StoryLineWithCondition(
+          StoryLine.simple("She wakes up with a single thought: “Not this loop again… or is it?”"),
+          Level1DataType.WakeUp,
+          _ >= 3,
+        )
+
+    }
 
   }
 

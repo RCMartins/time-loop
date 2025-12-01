@@ -4,40 +4,6 @@ sealed trait ActionDataType
 
 object ActionDataType {
 
-//  sealed trait Area1DataType extends ActionDataType
-//
-//  object Area1DataType {
-//
-//    case object WakeUp extends Area1DataType
-//
-//    case object ExploreHouse extends Area1DataType
-//
-//    case object GoToLivingRoom extends Area1DataType
-//
-//    case object ExploreLivingRoom extends Area1DataType
-//
-//    case object PickupBackpack extends Area1DataType
-//
-//    case object PickupCoins extends Area1DataType
-//
-//    case object GoToKitchen extends Area1DataType
-//
-//    case object ExploreKitchen extends Area1DataType
-//
-//    case object PickupMomo extends Area1DataType
-//
-//    case object GoToBackyard extends Area1DataType
-//
-//  }
-//
-//  sealed trait Area2DataType extends ActionDataType
-//
-//  object Area2DataType {
-//
-//    case object ExploreTown extends Area2DataType
-//
-//  }
-
   sealed trait Level1DataType extends ActionDataType
 
   object Level1DataType {
@@ -48,6 +14,14 @@ object ActionDataType {
 
     case object PickupSimpleSoapMold extends Level1DataType
 
+    case object ExploreForestForLavender extends Level1DataType
+
+    case object FindMysteriousSorcerer extends Level1DataType
+
+    case object TalkMysteriousSorcerer extends Level1DataType
+
+    case object FirstLoopFadingAway extends Level1DataType
+
     case object PickupCoins extends Level1DataType
 
     case object SearchKitchen extends Level1DataType
@@ -56,7 +30,7 @@ object ActionDataType {
 
     case object SearchGarden extends Level1DataType
 
-    case object PickHerbsGarden extends Level1DataType
+    case object PickMintGarden extends Level1DataType
 
     case object GoToGeneralStore extends Level1DataType
 
@@ -101,8 +75,6 @@ object ActionDataType {
     case object BuyEmptyStore extends Level1DataType
 
     case object PrepareStoreForBusiness extends Level1DataType
-
-    case object FinishLevel1 extends Level1DataType
 
   }
 

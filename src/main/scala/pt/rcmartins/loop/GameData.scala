@@ -36,6 +36,9 @@ object GameData {
   val selectedNextAction: Signal[Option[(ActionId, Option[Int])]] =
     gameState.map(_.selectedNextAction).distinct
 
+  val storyActionsHistory: Signal[List[String]] =
+    gameState.map(_.storyActionsHistory).distinct
+
   def runUpdateGameState(): Unit = {
     val initialGameState = gameStateVar.now()
     val newState = GameLogic.update(initialGameState)
