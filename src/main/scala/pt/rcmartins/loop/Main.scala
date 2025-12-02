@@ -10,7 +10,7 @@ import org.scalajs.dom.{HTMLDivElement, HTMLUListElement}
 import pt.rcmartins.loop.GameData._
 import pt.rcmartins.loop.Util._
 import pt.rcmartins.loop.data.Level1
-import pt.rcmartins.loop.model.{GameState, SkillsState, StoryLineHistory}
+import pt.rcmartins.loop.model.{GameState, StoryLineHistory}
 
 import scala.scalajs.js.timers
 import scala.scalajs.js.timers.setInterval
@@ -273,6 +273,7 @@ object Main {
     val owner: Owner = new OneTimeOwner(() => println("Debug view owner disposed"))
     val addEnergyBus: EventBus[Int] = new EventBus[Int]()
     val multiplyAllSkillsBus: EventBus[Double] = new EventBus[Double]()
+    val multiplySpeedBus: EventBus[Double] = new EventBus[Double]()
 
     addEnergyBus.events
       .withCurrentValueOf(GameData.gameState)
@@ -291,25 +292,27 @@ object Main {
     multiplyAllSkillsBus.events
       .withCurrentValueOf(GameData.gameState)
       .foreach { case (multiplier, state) =>
-        val newSkills =
-          state.skills.allSkillsSeq.map { skill =>
-            skill.modifyAll(_.initialBonusMultiplier, _.currentBonusMultiplier).setTo(multiplier)
-          }
-        val newState =
+        val newState: GameState =
           state
             .modify(_.skills)
-            .setTo(
-              SkillsState(
-                agility = newSkills(0),
-                explore = newSkills(1),
-                foraging = newSkills(2),
-                social = newSkills(3),
-                crafting = newSkills(4),
-                gardening = newSkills(5),
-                cooking = newSkills(6),
-                magic = newSkills(7),
-              )
+            .using(
+              _.mapSkills {
+                _.modifyAll(_.initialBonusMultiplier, _.currentBonusMultiplier)
+                  .setTo(multiplier)
+              }
             )
+            .modify(_.stats.usedCheats)
+            .setTo(true)
+        GameData.loadGameState(newState)
+      }(owner)
+
+    multiplySpeedBus.events
+      .withCurrentValueOf(GameData.gameState)
+      .foreach { case (multiplier, state) =>
+        val newState: GameState =
+          state
+            .modify(_.skills.globalGameSpeed)
+            .setTo(multiplier)
             .modify(_.stats.usedCheats)
             .setTo(true)
         GameData.loadGameState(newState)
@@ -328,6 +331,26 @@ object Main {
         cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",
         "Add 100 Energy",
         onClick --> { _ => addEnergyBus.writer.onNext(100) }
+      ),
+      button(
+        cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",
+        "x1 Speed",
+        onClick --> { _ => multiplySpeedBus.writer.onNext(1.0) }
+      ),
+      button(
+        cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",
+        "x2 Speed",
+        onClick --> { _ => multiplySpeedBus.writer.onNext(2.0) }
+      ),
+      button(
+        cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",
+        "x5 Speed",
+        onClick --> { _ => multiplySpeedBus.writer.onNext(5.0) }
+      ),
+      button(
+        cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",
+        "x10 Speed",
+        onClick --> { _ => multiplySpeedBus.writer.onNext(10.0) }
       ),
       button(
         cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",

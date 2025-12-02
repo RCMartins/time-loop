@@ -3,6 +3,7 @@ package pt.rcmartins.loop.model
 import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
 
 case class SkillsState(
+    globalGameSpeed: Double,
     agility: SkillState, // movement, etc.
     explore: SkillState, // exploration, etc.
     foraging: SkillState, // gathering resources, etc.
@@ -53,6 +54,7 @@ case class SkillsState(
 
   def resetLoopProgress: SkillsState =
     SkillsState(
+      globalGameSpeed = globalGameSpeed,
       agility = agility.resetLoopProgress,
       explore = explore.resetLoopProgress,
       foraging = foraging.resetLoopProgress,
@@ -63,11 +65,25 @@ case class SkillsState(
       magic = magic.resetLoopProgress,
     )
 
+  def mapSkills(function: SkillState => SkillState): SkillsState =
+    SkillsState(
+      globalGameSpeed = globalGameSpeed,
+      agility = function(agility),
+      explore = function(explore),
+      foraging = function(foraging),
+      social = function(social),
+      crafting = function(crafting),
+      gardening = function(gardening),
+      cooking = function(cooking),
+      magic = function(magic),
+    )
+
 }
 
 object SkillsState {
 
   val initial: SkillsState = SkillsState(
+    globalGameSpeed = 1.0,
     agility = SkillState.initial(ActionKind.Agility),
     explore = SkillState.initial(ActionKind.Exploring),
     cooking = SkillState.initial(ActionKind.Cooking),

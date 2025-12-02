@@ -5,6 +5,7 @@ import pt.rcmartins.loop.model.GameState._
 import pt.rcmartins.loop.model.StoryLine.StoryPart
 import pt.rcmartins.loop.model._
 
+import scala.annotation.tailrec
 import scala.util.Random
 import scala.util.chaining.scalaUtilChainingOps
 
@@ -16,7 +17,21 @@ object GameLogic {
     val currentTimeMicro = System.nanoTime() / 1000L
     val elapsedTimeMicro = Math.min(1_000_000L, currentTimeMicro - lastTimeMicro)
     lastTimeMicro = currentTimeMicro
-    auxUpdate(initialGameState, elapsedTimeMicro)
+    auxUpdate(initialGameState, elapsedTimeMicro, initialGameState.skills.globalGameSpeed)
+  }
+
+  @inline
+  @tailrec
+  private def auxUpdate(
+      initialGameState: GameState,
+      elapsedTimeMicro: Long,
+      speedLeft: Double,
+  ): GameState = {
+    val newState = auxUpdate(initialGameState, (elapsedTimeMicro * Math.min(1.0, speedLeft)).toLong)
+    if (speedLeft <= 1.0)
+      newState
+    else
+      auxUpdate(newState, elapsedTimeMicro, speedLeft - 1.0)
   }
 
   @inline
