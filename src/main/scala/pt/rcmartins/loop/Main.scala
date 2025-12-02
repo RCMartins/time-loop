@@ -10,10 +10,10 @@ import org.scalajs.dom.{HTMLDivElement, HTMLUListElement}
 import pt.rcmartins.loop.GameData._
 import pt.rcmartins.loop.Util._
 import pt.rcmartins.loop.data.Level1
-import pt.rcmartins.loop.model.{GameState, SkillsState}
+import pt.rcmartins.loop.model.{GameState, SkillsState, StoryLineHistory}
 
-import scala.scalajs.js
-import scala.scalajs.js.timers.{setInterval, SetTimeoutHandle}
+import scala.scalajs.js.timers
+import scala.scalajs.js.timers.setInterval
 
 object Main {
 
@@ -181,29 +181,31 @@ object Main {
         cls := "grid grid-cols-2 gap-3",
         panelCard(
           span("Current Action"),
-          // keep this compact; grows only as needed
-          div(cls := "space-y-3 min-h-32 max-h-40", currentActionView)
+          div(cls := "space-y-3 min-h-32 max-h-32", currentActionView)
         ),
         panelCard(
           span("Story"),
           div(
-            cls := "overflow-auto min-h-0 grow",
+            cls := "overflow-y-auto min-h-32 max-h-32",
             children <--
-              storyActionsHistory.map(_.take(6).zipWithIndex.reverse).map {
-                _.map {
-                  case (storyText, 5) =>
-                    p(span(cls := "text-slate-300/20", storyText))
-                  case (storyText, 4) =>
-                    p(span(cls := "text-slate-300/40", storyText))
-                  case (storyText, 0) =>
-                    p(
-                      cls("animate-fade-in"),
-                      span(storyText)
-                    )
-                  case (storyText, _) =>
-                    p(span(storyText))
+              storyActionsHistory.split(_.id) { case (_, StoryLineHistory(_, line), _) =>
+                p(
+                  cls("animate-fade-in"),
+                  span(line),
+                )
+              },
+            onMountCallback { ctx =>
+              implicit val owner: Owner = ctx.owner
+              val box = ctx.thisNode.ref
+
+              // Observe changes to the story list
+              storyActionsHistory.changes.foreach { _ =>
+                // 2) Defer scroll to the end of the JS tick so children are already updated
+                timers.setTimeout(0) {
+                  box.scrollTop = box.scrollHeight
                 }
               }
+            },
           )
         )
       ),

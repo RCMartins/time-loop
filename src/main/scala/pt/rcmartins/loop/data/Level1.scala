@@ -219,7 +219,7 @@ object Level1 {
       actionTime = ActionTime.Standard(30),
       initialAmountOfActions = AmountOfActions.Standard(1),
       firstTimeUnlocksActions = _ => Seq(),
-      difficultyModifier = ActionDifficultyModifier(increaseTirednessAbsoluteMicro = 3L),
+      difficultyModifier = ActionDifficultyModifier(increaseTirednessAbsoluteMicro = 10_000_000),
       addStory = _ => Some(Story.FirstLoop.FadingAway),
     )
 
@@ -502,7 +502,7 @@ object Level1 {
       val FirstLineSorcerer: StoryLine =
         StoryLine.simple(
           """A tall sorcerer appears out of nowhere, balancing a teacup with suspicious elegance.
-            |“You weren’t supposed to see me yet,” he mutters.
+            |“You weren’t supposed to see me yet” he mutters.
             |""".stripMargin
         )
 

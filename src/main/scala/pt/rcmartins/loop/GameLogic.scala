@@ -39,10 +39,6 @@ object GameLogic {
                 Math.max(0, requiredElapsedTimeMicro - initialGameState.timeElapsedMicro)
               )
             val currentTime: Long = initialGameState.timeElapsedMicro + maxElapedTime
-            println(("initialGameState.timeElapsedMicro", initialGameState.timeElapsedMicro))
-            println(("maxElapedTime", maxElapedTime))
-            println(("currentTime", currentTime))
-            println(("requiredElapsedTimeMicro", requiredElapsedTimeMicro))
             val updatedGameState: GameState =
               if (currentTime >= requiredElapsedTimeMicro)
                 initialGameState
@@ -55,7 +51,7 @@ object GameLogic {
                       case StoryPart.StoryTextLine(text) =>
                         currentGameState
                           .modify(_.storyActionsHistory)
-                          .using(text.split("\n").toList.reverse ::: _)
+                          .using(_ :+ StoryLineHistory(text))
                       case StoryPart.ForceAction(actionData) =>
                         currentGameState
                           .modify(_.selectedNextAction)
@@ -66,6 +62,8 @@ object GameLogic {
                   }
               else
                 initialGameState
+                  .modify(_.timeElapsedMicro)
+                  .setTo(currentTime)
             (updatedGameState, maxElapedTime)
           case None =>
             initialGameState.selectedNextAction.flatMap { case (id, limit) =>
@@ -106,10 +104,6 @@ object GameLogic {
         val percentActualTimePassed: Double =
           (currentActionMicroSoFar + elapsedWithMultiplier) / currentActionElapsedMicro.toDouble
         val actualElapsedMicro = (elapsedTimeMicro * percentActualTimePassed).toLong
-
-//        println("percentSec", percentSec)
-//        println("actualElapsedMicro", actualElapsedMicro)
-//        println("actualElapsedWithMultiplierMicro", actualElapsedWithMultiplierMicro)
 
         val skillsUpdated: SkillsState =
           initialGameState.skills.update(
@@ -213,9 +207,7 @@ object GameLogic {
               case None =>
                 inProgressStoryActions
               case Some(newStory) =>
-                inProgressStoryActions ++ newStory.seq.map { storyPart =>
-                  RunTimeStoryAction(storyPart, state.timeElapsedMicro)
-                }
+                inProgressStoryActions ++ addNewStory(newStory, state.timeElapsedMicro)
             }
           )
           .modify(_.inventory)
@@ -225,6 +217,19 @@ object GameLogic {
           .pipe(checkMultiAction(_, currentAction))
     } else
       state
+
+  private def addNewStory(newStory: StoryLine, timeElapsedMicro: Long): Seq[RunTimeStoryAction] =
+    newStory.seq.flatMap {
+      case storyPart @ StoryPart.ForceAction(_) =>
+        Seq(RunTimeStoryAction(storyPart, timeElapsedMicro))
+      case StoryPart.StoryTextLine(fullText) =>
+        fullText.trim.split("\n").toSeq.zipWithIndex.map { case (line, index) =>
+          RunTimeStoryAction(
+            StoryPart.StoryTextLine(line),
+            timeElapsedMicro + index * StoryLineDelayMicro
+          )
+        }
+    }
 
   private def checkMultiAction(
       state: GameState,
@@ -325,12 +330,24 @@ object GameLogic {
     }
   }
     .modify(_.energyMicro)
-    .using(energy =>
+    .using { energy =>
+      val additionalTiredness: Long =
+        initialGameState.currentAction match {
+          case None         => 0L
+          case Some(action) => action.data.difficultyModifier.increaseTirednessAbsoluteMicro
+        }
+      val totalTiredSecondMicro: Long =
+        additionalTiredness + initialGameState.currentTiredSecondMicro
+
+      println(
+        (additionalTiredness, initialGameState.currentTiredSecondMicro, totalTiredSecondMicro)
+      )
+
       Math.max(
         0,
-        energy - (initialGameState.currentTiredSecondMicro * (actualElapsedMicro / 1e6)).toLong
+        energy - (totalTiredSecondMicro * (actualElapsedMicro / 1e6)).toLong
       )
-    )
+    }
     .pipe(checkFoodConsumption)
     .pipe(checkDeathDueToTiredness)
 
