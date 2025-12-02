@@ -27,9 +27,8 @@ object Level1 {
       },
       addStory = {
         case LoopCount(1) => Some(Story.FirstLoop.FirstWakeup)
-//      case LoopCount(2) => Some(Story.OtherLoops.SecondWakeup)
-//      case _ =>            Some(Story.OtherLoops.ThirdOrMoreWakeup)
-        case _ => None
+        case LoopCount(2) => Some(Story.OtherLoops.SecondWakeup)
+        case _            => Some(Story.OtherLoops.ThirdOrMoreWakeup)
       },
     )
 
@@ -471,13 +470,6 @@ object Level1 {
 
   object Story {
 
-    case class StoryLineWithCondition(
-        storyLine: StoryLine,
-        actionDataType: ActionDataType,
-        loopCond: Int => Boolean,
-        stateCond: GameState => Boolean = _ => true,
-    )
-
     object FirstLoop {
 
       val FirstWakeup: StoryLine =
@@ -529,19 +521,11 @@ object Level1 {
 
     object OtherLoops {
 
-      val SecondWakeup: StoryLineWithCondition =
-        StoryLineWithCondition(
-          StoryLine.simple("She opens her eyes. The day looks… suspiciously familiar."),
-          Level1DataType.WakeUp,
-          _ == 2,
-        )
+      val SecondWakeup: StoryLine =
+        StoryLine.simple("She opens her eyes. The day looks… suspiciously familiar.")
 
-      val ThirdOrMoreWakeup: StoryLineWithCondition =
-        StoryLineWithCondition(
-          StoryLine.simple("She wakes up with a single thought: “Not this loop again… or is it?”"),
-          Level1DataType.WakeUp,
-          _ >= 3,
-        )
+      val ThirdOrMoreWakeup: StoryLine =
+        StoryLine.simple("She wakes up with a single thought: “Not this loop again… or is it?”")
 
     }
 
