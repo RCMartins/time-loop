@@ -25,7 +25,7 @@ case class GameState(
     selectedNextAction: Option[(ActionId, Option[Int])],
     deckActions: Seq[ActiveActionData],
     actionsHistory: Seq[ActionData],
-    storyActionsHistory: List[String],
+    storyActionsHistory: Seq[StoryLineHistory],
     inProgressStoryActions: Seq[RunTimeStoryAction],
 ) {
 
@@ -64,6 +64,8 @@ object GameState {
   val MaximumAmountOfVisibleActions = 4
   val FoodConsumptionIntervalMicro: Long = 5 * 1_000_000L
 
+  val StoryLineDelayMicro = 2_000_000
+
   val initial: GameState = GameState(
     version = CurrentVersion,
     seed = Random.nextLong(),
@@ -85,7 +87,7 @@ object GameState {
     selectedNextAction = None,
     deckActions = Seq(),
     actionsHistory = Seq(),
-    storyActionsHistory = Nil,
+    storyActionsHistory = Seq(),
     inProgressStoryActions = Seq(),
   )
 
