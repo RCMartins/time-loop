@@ -94,7 +94,6 @@ object Level1 {
       actionTime = ActionTime.Standard(4),
       initialAmountOfActions = AmountOfActions.Unlimited,
       firstTimeUnlocksActions = _ => Seq(),
-      showWhenInvalid = false,
     )
 
     def SearchGarden: ActionData = ActionData(
