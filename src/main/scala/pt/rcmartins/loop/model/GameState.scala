@@ -33,12 +33,18 @@ case class GameState(
   def maxEnergyMicro: Long = maxEnergyInt * 1_000_000L
 
   def resetForNewLoop: GameState =
-    this.copy(
+    GameState(
+      version = version,
+      seed = seed,
       timeElapsedMicro = 0L,
       energyMicro = maxEnergyInt * 1_000_000L,
+      maxEnergyInt = maxEnergyInt,
+      initialTiredSecond = initialTiredSecond,
+      initialTiredMultSecond = initialTiredMultSecond,
       currentTiredSecond = initialTiredSecond,
       currentTiredMultSecond = initialTiredMultSecond,
       nextTiredIncreaseMicro = 1_000_000L,
+      characterArea = Level1.Data.InitialCharacterArea,
       stats = stats.resetForNewLoop,
       skills = skills.resetLoopProgress,
       inventory = InventoryState.initial,
@@ -48,6 +54,7 @@ case class GameState(
       selectedNextAction = None,
       deckActions = Seq(),
       actionsHistory = Seq(),
+      storyActionsHistory = storyActionsHistory,
       inProgressStoryActions = Seq(),
     )
 

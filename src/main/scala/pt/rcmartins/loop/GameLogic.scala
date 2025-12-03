@@ -156,8 +156,6 @@ object GameLogic {
 
         val currentActionIsComplete: Boolean =
           currentActionElapsedMicro == currentAction.data.baseTimeMicro
-        val firstTimeComplete: Boolean =
-          currentAction.numberOfCompletions == 0
 
         (
           initialGameState
@@ -167,14 +165,7 @@ object GameLogic {
             .using(_ + actualElapsedMicro)
             .modify(_.skills)
             .setTo(skillsUpdated)
-            .pipe(
-              applyCurrentActionIfComplete(
-                _,
-                currentActionIsComplete,
-                firstTimeComplete,
-                currentAction
-              )
-            ),
+            .pipe(applyCurrentActionIfComplete(_, currentActionIsComplete, currentAction)),
           actualElapsedMicro
         )
     }
@@ -183,7 +174,6 @@ object GameLogic {
   private def applyCurrentActionIfComplete(
       state: GameState,
       currentActionIsComplete: Boolean,
-      firstTimeComplete: Boolean,
       currentAction: ActiveActionData
   ): GameState =
     if (currentActionIsComplete) {
@@ -201,7 +191,10 @@ object GameLogic {
                 .using(chance => Math.max(1.0, chance + currentAction.actionSuccessChanceIncrease))
             )
           )
-      else
+      else {
+        val firstTimeComplete: Boolean =
+          currentAction.numberOfCompletions == 0
+
         state
           .modify(_.actionsHistory)
           .using(_ :+ currentAction.data)
@@ -230,6 +223,7 @@ object GameLogic {
           .modify(_.characterArea)
           .using(currentAction.data.moveToArea.getOrElse(_))
           .pipe(checkMultiAction(_, currentAction))
+      }
     } else
       state
 
@@ -271,6 +265,13 @@ object GameLogic {
             case Some(limit) if limit >= 1 => Some(limit - 1)
             case other                     => other
           }
+          .modify(_.currentActionSuccessChance)
+          .setTo(
+            justCompletedAction.data.actionSuccessType match {
+              case ActionSuccessType.Always                     => 1.0
+              case ActionSuccessType.WithFailure(baseChance, _) => baseChance
+            }
+          )
 
       if (updatedAction.isInvalid(state) || updatedAction.limitOfActions.contains(0)) {
         state
