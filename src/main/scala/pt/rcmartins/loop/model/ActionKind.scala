@@ -80,11 +80,13 @@ case class ActiveActionData(
   override def toString: String =
     s"ActiveActionData(data=${data.title}, microSoFar=$microSoFar, amountOfActionsLeft=$amountOfActionsLeft)"
 
+  @inline
   def areaIsValid(state: GameState): Boolean =
-    data.area.contains(state.characterArea)
+    ActiveActionData.areaIsValid(state, data)
 
+  @inline
   def isInvalid(state: GameState): Boolean =
-    data.invalidReason(state).nonEmpty || !areaIsValid(state)
+    ActiveActionData.isInvalid(state, data)
 
 }
 
@@ -98,5 +100,13 @@ object ActiveActionData {
 
   def progressRatio(action: Signal[ActiveActionData]): Signal[Double] =
     action.map(action => action.microSoFar.toDouble / action.data.baseTimeMicro.toDouble)
+
+  def areaIsValid(state: GameState, data: ActionData): Boolean =
+    data.area.contains(
+      state.currentAction.flatMap(_.data.moveToArea).getOrElse(state.characterArea)
+    )
+
+  def isInvalid(state: GameState, data: ActionData): Boolean =
+    data.invalidReason(state).nonEmpty || !areaIsValid(state, data)
 
 }

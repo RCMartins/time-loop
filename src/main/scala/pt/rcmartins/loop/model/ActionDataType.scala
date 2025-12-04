@@ -40,7 +40,7 @@ object ActionDataType {
 
     case object BuyGlycerin extends Arc1DataType
 
-    case object BuyRawMomo extends Arc1DataType
+    case object BuyFrozenMomo extends Arc1DataType
 
     case object BuyGoodSoapMold extends Arc1DataType
 

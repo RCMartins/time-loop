@@ -322,8 +322,12 @@ object GameLogic {
       )
 
     val (nextActions, remainingDeckActions) = {
+      val validSorted: Seq[ActiveActionData] =
+        validStandardActions
+          .take(MaximumAmountOfVisibleActions)
+          .sortBy(action => (action.data.baseTimeMicro, action.id.id))
       val (takenVisible, remainingVisible) =
-        (validStandardActions ++ visibleInvalid).splitAt(MaximumAmountOfVisibleActions)
+        (validSorted ++ visibleInvalid).splitAt(MaximumAmountOfVisibleActions)
       (
         takenVisible,
         remainingVisible ++ invisibleInvalid

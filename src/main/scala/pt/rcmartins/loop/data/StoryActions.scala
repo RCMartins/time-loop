@@ -132,7 +132,7 @@ object StoryActions {
       initialAmountOfActions = AmountOfActions.Unlimited,
       firstTimeUnlocksActions = {
         case LoopCount(1) => Seq(BuyGlycerinFirstLoop)
-        case _            => Seq(BuyGlycerin, BuyRawMomo, GoToBackHome)
+        case _            => Seq(BuyGlycerin, BuyFrozenMomo, GoToBackHome)
       },
       moveToArea = Some(Area3_Store),
     )
@@ -217,17 +217,17 @@ object StoryActions {
       actionTime = ActionTime.Standard(30),
       initialAmountOfActions = AmountOfActions.Standard(1),
       firstTimeUnlocksActions = _ => Seq(),
-      difficultyModifier = ActionDifficultyModifier(increaseTirednessAbsoluteMicro = 10_000_000),
+      difficultyModifier = ActionDifficultyModifier(increaseTirednessAbsoluteMicro = 15_000_000),
       addStory = _ => Some(Story.FirstLoop.FadingAway),
     )
 
-    def BuyRawMomo: ActionData = buyItemAction(
-      actionDataType = Arc1DataType.BuyRawMomo,
+    def BuyFrozenMomo: ActionData = buyItemAction(
+      actionDataType = Arc1DataType.BuyFrozenMomo,
       area = Seq(Area3_Store),
-      itemType = ItemType.RawMomo,
+      itemType = ItemType.FrozenMomo,
       amount = 1,
       cost = 1,
-      actionTime = ActionTime.Standard(10),
+      actionTime = ActionTime.Standard(3),
       initialAmountOfActions = AmountOfActions.Unlimited,
       firstTimeUnlocksActions = _ => Seq(CookMomo),
     )
@@ -250,7 +250,7 @@ object StoryActions {
       area = Seq(Area1_Home),
       itemType = ItemType.Momo,
       amount = 1,
-      cost = Seq(ItemType.RawMomo -> 1),
+      cost = Seq(ItemType.FrozenMomo -> 1),
       actionTime = ActionTime.Standard(5),
       initialAmountOfActions = AmountOfActions.Unlimited,
       firstTimeUnlocksActions = _ => Seq(),

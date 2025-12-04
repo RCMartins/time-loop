@@ -72,10 +72,10 @@ object ItemType {
     val foodValueLong: Long = 0L
   }
 
-  // Raw Food Items
+  // Raw/Frozen Food Items
 
-  case object RawMomo extends ItemType {
-    val name: String = "Raw Momo"
+  case object FrozenMomo extends ItemType {
+    val name: String = "Frozen Momo"
     val inventoryOrder: Int = 11
     val foodValueLong: Long = 0L
   }
