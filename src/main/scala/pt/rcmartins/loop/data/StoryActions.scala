@@ -467,11 +467,12 @@ object StoryActions {
         kind = ActionKind.Crafting,
         actionTime = ActionTime.Standard(60),
         firstTimeUnlocksActions = _ => Seq(GoToMySoapStore),
-        addStory = {
-          case FirstTimeUnlook(Arc1DataType.PrepareShopForBusiness) =>
-            Some(Story.OtherLoops.PrepareStoreForBusiness)
-          case _ => None
-        },
+        addStory = state =>
+          Option.when(
+            state.stats.globalActionCount.getOrElse(Arc1DataType.PrepareShopForBusiness, 0) == 1
+          )(
+            Story.OtherLoops.PrepareShopForBusiness
+          ),
       )
 
     def GoToMySoapStore: ActionData = ActionData(
@@ -550,7 +551,7 @@ object StoryActions {
       val BuyEmptyStore: StoryLine =
         StoryLine.simple("Finally gathered enough money to buy my own soap where I can sell soap!")
 
-      val PrepareStoreForBusiness: StoryLine =
+      val PrepareShopForBusiness: StoryLine =
         StoryLine.simple("The shop is ready to receive clients!")
 
     }

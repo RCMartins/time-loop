@@ -36,14 +36,18 @@ object GameLogic {
 
   @inline
   private def auxUpdate(initialGameState: GameState, elapsedTimeMicro: Long): GameState = {
-    val (newState, actualElapsedMicro) = updateAction(initialGameState, elapsedTimeMicro)
-    updateTiredness(newState, actualElapsedMicro)
+    val (newState, actualElapsedMicro, shouldUpdateTiredness) =
+      updateAction(initialGameState, elapsedTimeMicro)
+    if (shouldUpdateTiredness)
+      updateTiredness(newState, actualElapsedMicro)
+    else
+      newState
   }
 
   private def updateAction(
       initialGameState: GameState,
       elapsedTimeMicro: Long,
-  ): (GameState, Long) = {
+  ): (GameState, Long, Boolean) = {
     initialGameState.currentAction match {
       case None =>
         initialGameState.inProgressStoryActions.headOption match {
@@ -79,7 +83,7 @@ object GameLogic {
                 initialGameState
                   .modify(_.timeElapsedMicro)
                   .setTo(currentTime)
-            (updatedGameState, maxElapedTime)
+            (updatedGameState, maxElapedTime, false)
           case None =>
             initialGameState.selectedNextAction.flatMap { case (id, limit) =>
               initialGameState.visibleNextActions
@@ -98,10 +102,11 @@ object GameLogic {
                     .using(actions => actions.filterNot(_.id == nextAction.id))
                     .modify(_.visibleMoveActions)
                     .using(actions => actions.filterNot(_.id == nextAction.id)),
-                  0L
+                  0L,
+                  false,
                 )
               case None =>
-                (initialGameState, 0L)
+                (initialGameState, 0L, false)
             }
         }
       case Some(currentAction) =>
@@ -166,7 +171,8 @@ object GameLogic {
             .modify(_.skills)
             .setTo(skillsUpdated)
             .pipe(applyCurrentActionIfComplete(_, currentActionIsComplete, currentAction)),
-          actualElapsedMicro
+          actualElapsedMicro,
+          true,
         )
     }
   }
