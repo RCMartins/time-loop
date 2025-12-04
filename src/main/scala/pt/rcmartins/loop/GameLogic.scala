@@ -195,27 +195,32 @@ object GameLogic {
         val firstTimeComplete: Boolean =
           currentAction.numberOfCompletions == 0
 
-        state
-          .modify(_.actionsHistory)
-          .using(_ :+ currentAction.data)
+        val stateWithHistory: GameState =
+          state
+            .modify(_.actionsHistory)
+            .using(_ :+ currentAction.data)
+            .modifyAll(_.stats.loopActionCount, _.stats.globalActionCount)
+            .using(_.updatedWith(currentAction.data.actionDataType)(_.map(_ + 1).orElse(Some(0))))
+
+        stateWithHistory
           .modify(_.deckActions)
           .usingIf(firstTimeComplete)(
-            _ ++ currentAction.data.firstTimeUnlocksActions(state).map(_.toActiveAction)
+            _ ++ currentAction.data.firstTimeUnlocksActions(stateWithHistory).map(_.toActiveAction)
           )
           .modify(_.deckActions)
           .using(
             _ ++
               currentAction.data
-                .everyTimeUnlocksActions(state, currentAction.numberOfCompletions + 1)
+                .everyTimeUnlocksActions(stateWithHistory, currentAction.numberOfCompletions + 1)
                 .map(_.toActiveAction)
           )
           .modify(_.inProgressStoryActions)
           .using(inProgressStoryActions =>
-            currentAction.data.addStory(state) match {
+            currentAction.data.addStory(stateWithHistory) match {
               case None =>
                 inProgressStoryActions
               case Some(newStory) =>
-                inProgressStoryActions ++ addNewStory(newStory, state.timeElapsedMicro)
+                inProgressStoryActions ++ addNewStory(newStory, stateWithHistory.timeElapsedMicro)
             }
           )
           .modify(_.inventory)

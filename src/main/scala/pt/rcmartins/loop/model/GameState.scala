@@ -1,6 +1,6 @@
 package pt.rcmartins.loop.model
 
-import pt.rcmartins.loop.data.Level1
+import pt.rcmartins.loop.data.StoryActions
 
 import scala.util.Random
 
@@ -44,13 +44,13 @@ case class GameState(
       currentTiredSecond = initialTiredSecond,
       currentTiredMultSecond = initialTiredMultSecond,
       nextTiredIncreaseMicro = 1_000_000L,
-      characterArea = Level1.Data.InitialCharacterArea,
+      characterArea = StoryActions.Data.InitialCharacterArea,
       stats = stats.resetForNewLoop,
       skills = skills.resetLoopProgress,
       inventory = InventoryState.initial,
       currentAction = None,
-      visibleNextActions = Level1.Data.InitialActions.map(_.toActiveAction),
-      visibleMoveActions = Level1.Data.InitialMoveActions.map(_.toActiveAction),
+      visibleNextActions = StoryActions.Data.InitialActions.map(_.toActiveAction),
+      visibleMoveActions = StoryActions.Data.InitialMoveActions.map(_.toActiveAction),
       selectedNextAction = None,
       deckActions = Seq(),
       actionsHistory = Seq(),
@@ -71,7 +71,7 @@ object GameState {
   val MaximumAmountOfVisibleActions = 4
   val FoodConsumptionIntervalMicro: Long = 5 * 1_000_000L
 
-  val StoryLineDelayMicro = 2_000_000
+  val StoryLineDelayMicro = 3_000_000
 
   val initial: GameState = GameState(
     version = CurrentVersion,
@@ -84,13 +84,13 @@ object GameState {
     currentTiredSecond = initialTiredSecond,
     currentTiredMultSecond = InitialTiredMultSecond,
     nextTiredIncreaseMicro = 1_000_000L,
-    characterArea = Level1.Data.InitialCharacterArea,
+    characterArea = StoryActions.Data.InitialCharacterArea,
     stats = Stats.initial,
     skills = SkillsState.initial,
     inventory = InventoryState.initial,
     currentAction = None,
-    visibleNextActions = Level1.Data.InitialActions.map(_.toActiveAction),
-    visibleMoveActions = Level1.Data.InitialMoveActions.map(_.toActiveAction),
+    visibleNextActions = StoryActions.Data.InitialActions.map(_.toActiveAction),
+    visibleMoveActions = StoryActions.Data.InitialMoveActions.map(_.toActiveAction),
     selectedNextAction = None,
     deckActions = Seq(),
     actionsHistory = Seq(),

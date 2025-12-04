@@ -2,7 +2,7 @@ package pt.rcmartins.loop.data
 
 import pt.rcmartins.loop.model._
 
-object LevelUtils {
+object ActionsUtils {
 
   def pickupToItem(
       actionDataType: ActionDataType,
