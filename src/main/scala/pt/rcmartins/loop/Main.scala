@@ -221,7 +221,13 @@ object Main {
             cls := "absolute left-1/2 -translate-x-1/2 bottom-full mb-1 px-2 py-1 " +
               "text-xs text-slate-100 bg-slate-700 rounded-md whitespace-nowrap shadow-lg " +
               "transition-opacity duration-150 opacity-100 pointer-events-none",
-            child.text <-- characterArea.map(_.name)
+            child.text <--
+              characterArea.combineWith(currentActionMovingArea).map {
+                case (characterArea, None) =>
+                  characterArea.name
+                case (characterArea, Some(actionMovingArea)) =>
+                  s"${characterArea.name} -> ${actionMovingArea.name}"
+              }
           ),
         ),
         div(cls := "overflow-auto min-h-0 grow min-h-32", nextActionsView),

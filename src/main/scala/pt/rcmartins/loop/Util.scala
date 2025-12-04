@@ -95,10 +95,6 @@ object Util {
     )
   }
 
-  private def calcWithSkillBonus(baseTime: Long, state: SkillState): Long = {
-    Math.ceil(baseTime.toDouble / state.finalSpeedMulti).toLong
-  }
-
   private def calcWithSkillDouble(baseTime: Long, state: SkillState): Double =
     baseTime.toDouble / state.finalSpeedMulti
 
@@ -112,10 +108,9 @@ object Util {
     val disabledCls =
       " opacity-50 grayscale pointer-events-none"
 
-    val isDisabled =
-      actionSignal.map(_.data.invalidReason).combineWith(GameData.gameState).map {
-        case (invalidReasonF, gameState) =>
-          invalidReasonF(gameState).isDefined
+    val isDisabled: Signal[Boolean] =
+      actionSignal.map(_.data).combineWith(GameData.gameState).map { case (actionData, gameState) =>
+        ActiveActionData.isInvalid(gameState, actionData)
       }
 
     isSelected.signal
@@ -129,7 +124,7 @@ object Util {
     val invalidTooltipText: Signal[String] =
       actionSignal.map(_.data.invalidReason).combineWith(GameData.gameState).map {
         case (invalidReasonF, gameState) =>
-          invalidReasonF(gameState).map(_.label).getOrElse("")
+          invalidReasonF(gameState).map(_.label).getOrElse("Different Area")
       }
 
     val numberOfActionsLeftSignal: Signal[AmountOfActions] =

@@ -30,6 +30,9 @@ object GameData {
   val skills: Signal[SkillsState] = gameState.map(_.skills).distinct
   val inventory: Signal[InventoryState] = gameState.map(_.inventory).distinct
   val currentAction: Signal[Option[ActiveActionData]] = gameState.map(_.currentAction).distinct
+  val currentActionMovingArea: Signal[Option[CharacterArea]] =
+    currentAction.map(_.flatMap(_.data.moveToArea))
+
   val nextActions: Signal[Seq[ActiveActionData]] = gameState.map(_.visibleNextActions).distinct
   val nextMoveActions: Signal[Seq[ActiveActionData]] = gameState.map(_.visibleMoveActions).distinct
   val deckActions: Signal[Seq[ActiveActionData]] = gameState.map(_.deckActions).distinct
