@@ -194,7 +194,7 @@ object GameLogic {
                 .modify(_.microSoFar)
                 .setTo(0L)
                 .modify(_.currentActionSuccessChance)
-                .using(chance => Math.max(1.0, chance + currentAction.actionSuccessChanceIncrease))
+                .using(chance => Math.min(1.0, chance + currentAction.actionSuccessChanceIncrease))
             )
           )
       else {

@@ -13,8 +13,10 @@ object Util {
   private val owner = new Owner {}
 
   private val baseCardClasses: String =
-    "rounded-2xl p-4 pb-5 bg-slate-800/60 ring-1 ring-slate-700 shadow transition " +
-      "hover:ring-emerald-400/60 hover:shadow-md focus:outline-none " +
+    "rounded-2xl p-4 pb-5 bg-slate-800/60 ring-1 ring-slate-700 shadow transition "
+
+  private val baseCardHoverClasses: String =
+    "hover:ring-emerald-400/60 hover:shadow-md focus:outline-none " +
       "focus:ring-2 focus:ring-emerald-400"
 
   def activeActionCard(vm: Signal[ActiveActionData]): HtmlElement = {
@@ -25,9 +27,8 @@ object Util {
     val numberOfActionsLeftSignal: Signal[AmountOfActions] = vm.map(_.amountOfActionsLeft)
 
     div(
-      role := "button",
       cls := baseCardClasses,
-      cls := "shadow-lg pointer-events-none",
+      cls := "shadow-lg",
       tabIndex := 0,
 
       // Content
@@ -72,6 +73,32 @@ object Util {
                   f"$currentTime%.1f s"
               },
             ),
+            child.maybe <--
+              data.map(_.actionSuccessType).distinct.map {
+                case ActionSuccessType.WithFailure(baseChance, increase) =>
+                  Some(
+                    div(
+                      cls := "relative group",
+                      span(
+                        cls := "px-2 py-0.5 text-xs rounded-full bg-slate-700/70 ring-1 ring-slate-600",
+                        "\u00A0",
+                        child.text <--
+                          vm.map(_.currentActionSuccessChance).map { currentActionSuccessChance =>
+                            f"${(currentActionSuccessChance * 100).toInt}%02d%%"
+                          },
+                        "\u00A0",
+                      ),
+                      div(
+                        cls := "absolute left-1/2 -translate-x-1/2 top-full mt-1 px-2 py-1 z-20 " +
+                          "text-xs bg-slate-900 text-white rounded shadow-lg whitespace-nowrap " +
+                          "opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none",
+                        f"This action has a base ${(baseChance * 100).toInt}%d%% of success + ${(increase * 100).toInt}%d%% for every failure"
+                      )
+                    )
+                  )
+                case _ =>
+                  None
+              }
           ),
           div(
             cls := "mt-3 mb-1",
@@ -134,9 +161,10 @@ object Util {
       role := "button",
       tabIndex := 0,
       cls := baseCardClasses,
+      cls := baseCardHoverClasses,
       cls := "m-2 mt-4 me-3",
       cls(selectedCls) <-- selectedNextAction.combineWith(actionSignal.map(_.id)).map {
-        case (optId, actionId) => optId.contains(actionId)
+        case (optId, actionId) => optId.map(_._1).contains(actionId)
       },
       cls(disabledCls) <-- isDisabled,
       onClick --> { _ =>
@@ -179,6 +207,29 @@ object Util {
               child.text <-- actionSignal.map(_.data.actionTime.baseTimeSec.toString),
               "\u00A0",
             ),
+            child.maybe <--
+              actionSignal.map(_.data.actionSuccessType match {
+                case ActionSuccessType.WithFailure(baseChance, increase) =>
+                  Some(
+                    div(
+                      cls := "relative group",
+                      span(
+                        cls := "px-2 py-0.5 text-xs rounded-full bg-slate-700/70 ring-1 ring-slate-600",
+                        "\u00A0",
+                        f"${(baseChance * 100).toInt}%02d%%",
+                        "\u00A0",
+                      ),
+                      div(
+                        cls := "absolute left-1/2 -translate-x-1/2 top-full mt-1 px-2 py-1 z-20 " +
+                          "text-xs bg-slate-900 text-white rounded shadow-lg whitespace-nowrap " +
+                          "opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none",
+                        f"This action has a base ${(baseChance * 100).toInt}%d%% of success + ${(increase * 100).toInt}%d%% for every failure"
+                      )
+                    )
+                  )
+                case _ =>
+                  None
+              })
           ),
         ),
 
