@@ -28,7 +28,8 @@ object StoryActions {
       addStory = {
         case LoopCount(1) => Some(Story.FirstLoop.FirstWakeup)
         case LoopCount(2) => Some(Story.OtherLoops.SecondWakeup)
-        case _            => Some(Story.OtherLoops.ThirdOrMoreWakeup)
+        case LoopCount(3) => Some(Story.OtherLoops.ThirdOrMoreWakeup)
+        case _            => None
       },
     )
 
