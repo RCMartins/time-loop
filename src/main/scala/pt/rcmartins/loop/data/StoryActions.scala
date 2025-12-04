@@ -102,7 +102,7 @@ object StoryActions {
       title = "Explore the Garden",
       effectLabel = EffectLabel.Explore,
       kind = ActionKind.Exploring,
-      actionTime = ActionTime.Standard(20),
+      actionTime = ActionTime.Standard(17),
       firstTimeUnlocksActions = _ => Seq(PickupMint, GoToGeneralStore),
       invalidReason = state =>
         Option.unless(
@@ -118,7 +118,7 @@ object StoryActions {
       area = Seq(Area1_Home),
       itemType = ItemType.Mint,
       amount = 1,
-      actionTime = ActionTime.Standard(8),
+      actionTime = ActionTime.Standard(6),
       initialAmountOfActions = AmountOfActions.Unlimited,
     )
 
@@ -143,7 +143,7 @@ object StoryActions {
       itemType = ItemType.Glycerin,
       amount = 1,
       cost = 5,
-      actionTime = ActionTime.Standard(20),
+      actionTime = ActionTime.Standard(5),
       initialAmountOfActions = AmountOfActions.Standard(1),
       firstTimeUnlocksActions = _ => Seq(FirstLoopGoToForest),
       addStory = _ => Some(Story.FirstLoop.GoToForestGetLavender),
@@ -155,7 +155,7 @@ object StoryActions {
       itemType = ItemType.Glycerin,
       amount = 1,
       cost = 5,
-      actionTime = ActionTime.Standard(20),
+      actionTime = ActionTime.Standard(5),
       initialAmountOfActions = AmountOfActions.Unlimited,
       firstTimeUnlocksActions = _ => Seq(MeltGlycerin)
     )
@@ -166,7 +166,7 @@ object StoryActions {
       title = "Go to the Forest",
       effectLabel = EffectLabel.Movement,
       kind = ActionKind.Agility,
-      actionTime = ActionTime.Standard(30),
+      actionTime = ActionTime.Standard(25),
       initialAmountOfActions = AmountOfActions.Standard(1),
       firstTimeUnlocksActions = _ => Seq(ExploreForestForLavender),
       moveToArea = Some(Area5_Forest),
@@ -287,7 +287,7 @@ object StoryActions {
       itemType = ItemType.HotMoldedSoap,
       amount = 1,
       cost = Seq(ItemType.MeltedGlycerin -> 1, ItemType.Mint -> 1),
-      actionTime = ActionTime.Standard(10),
+      actionTime = ActionTime.Standard(5),
       initialAmountOfActions = AmountOfActions.Unlimited,
       firstTimeUnlocksActions = _ => Seq(CreateSoap),
     )
@@ -311,7 +311,7 @@ object StoryActions {
       title = "Go to town",
       effectLabel = EffectLabel.Movement,
       kind = ActionKind.Agility,
-      actionTime = ActionTime.ReduzedXP(30, 0.5),
+      actionTime = ActionTime.ReduzedXP(25, 0.5),
       initialAmountOfActions = AmountOfActions.Unlimited,
       firstTimeUnlocksActions = _ => Seq(TalkWithPeopleInTown),
       moveToArea = Some(Area2_Town),
@@ -334,7 +334,7 @@ object StoryActions {
       title = "Try to sell Soap to people",
       effectLabel = EffectLabel.SellSoap,
       kind = ActionKind.Social,
-      actionTime = ActionTime.Standard(25),
+      actionTime = ActionTime.Standard(12),
       initialAmountOfActions = AmountOfActions.Unlimited,
       actionSuccessType = ActionSuccessType.WithFailure(0.5, 0.05),
       changeInventory = _.addItem(ItemType.Coins, 2).removeItem(ItemType.HerbSoap, 1),
@@ -351,7 +351,7 @@ object StoryActions {
       title = "Explore Town",
       effectLabel = EffectLabel.Explore,
       kind = ActionKind.Exploring,
-      actionTime = ActionTime.Standard(150),
+      actionTime = ActionTime.Standard(100),
       initialAmountOfActions = AmountOfActions.Standard(3),
       forceMaxAmountOfActions = Some(1),
       everyTimeUnlocksActions = {
@@ -383,7 +383,7 @@ object StoryActions {
       name = "Big Bag",
       cost = 10,
       inventoryMaxSize = 10,
-      actionTime = ActionTime.Standard(20),
+      actionTime = ActionTime.Standard(10),
       firstTimeUnlocksActions = _ => Seq(BuyHugeBag),
     )
 
@@ -393,7 +393,7 @@ object StoryActions {
       name = "Huge Bag",
       cost = 20,
       inventoryMaxSize = 15,
-      actionTime = ActionTime.Standard(20),
+      actionTime = ActionTime.Standard(10),
       firstTimeUnlocksActions = _ => Seq(),
     )
 
