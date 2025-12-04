@@ -1,15 +1,16 @@
 package pt.rcmartins.loop.model
 
-import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
-
 case class Stats(
     loopNumber: Int,
     usedCheats: Boolean,
+    loopActionCount: Map[ActionDataType, Int],
+    globalActionCount: Map[ActionDataType, Int],
 ) {
 
   def resetForNewLoop: Stats =
     this.copy(
       loopNumber = this.loopNumber + 1,
+      loopActionCount = Map.empty,
     )
 
 }
@@ -20,9 +21,8 @@ object Stats {
     Stats(
       loopNumber = 1,
       usedCheats = false,
+      loopActionCount = Map.empty,
+      globalActionCount = Map.empty,
     )
-
-  implicit val decoder: JsonDecoder[Stats] = DeriveJsonDecoder.gen[Stats]
-  implicit val encoder: JsonEncoder[Stats] = DeriveJsonEncoder.gen[Stats]
 
 }

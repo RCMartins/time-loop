@@ -9,7 +9,7 @@ import org.scalajs.dom
 import org.scalajs.dom.{HTMLDivElement, HTMLUListElement}
 import pt.rcmartins.loop.GameData._
 import pt.rcmartins.loop.Util._
-import pt.rcmartins.loop.data.Level1
+import pt.rcmartins.loop.data.StoryActions
 import pt.rcmartins.loop.model.{GameState, StoryLineHistory}
 
 import scala.scalajs.js.timers
@@ -83,7 +83,9 @@ object Main {
           case false => None
           case true  =>
             Some(
-              activeActionCard(currentAction.map(_.getOrElse(Level1.Data.WakeUp.toActiveAction)))
+              activeActionCard(
+                currentAction.map(_.getOrElse(StoryActions.Data.WakeUp.toActiveAction))
+              )
             )
         }
     )
@@ -211,9 +213,18 @@ object Main {
       ),
       // bottom: next actions list with own scroll
       div(
-        cls := "rounded-2xl p-4 bg-slate-800/60 ring-1 ring-slate-700 shadow flex flex-col min-h-0",
-        h3(cls := "text-sm font-semibold tracking-tight mb-2", "Available Actions"),
-        div(cls := "overflow-auto min-h-0 grow min-h-32", nextActionsView)
+        cls := "rounded-2xl p-4 bg-slate-800/60 ring-1 ring-slate-700 shadow flex flex-col min-h-0 ",
+        h3(
+          cls := "text-sm font-semibold tracking-tight mb-2 relative",
+          "Area Actions",
+          div(
+            cls := "absolute left-1/2 -translate-x-1/2 bottom-full mb-1 px-2 py-1 " +
+              "text-xs text-slate-100 bg-slate-700 rounded-md whitespace-nowrap shadow-lg " +
+              "transition-opacity duration-150 opacity-100 pointer-events-none",
+            child.text <-- characterArea.map(_.name)
+          ),
+        ),
+        div(cls := "overflow-auto min-h-0 grow min-h-32", nextActionsView),
       ),
       // bottom: next actions list with own scroll
       div(
@@ -254,7 +265,7 @@ object Main {
           "Inventory",
           child.text <-- inventory.map(inv => s" (max size: ${inv.maximumSize})"),
         ),
-        div(cls := "space-y-2 max-h-[40dvh] overflow-auto", inventoryView)
+        div(cls := "space-y-2 pb-1 max-h-[40dvh] overflow-auto", inventoryView)
       ),
       panelCard(
         span("Notes / Info"),
@@ -344,13 +355,13 @@ object Main {
       ),
       button(
         cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",
-        "x5 Speed",
-        onClick --> { _ => multiplySpeedBus.writer.onNext(5.0) }
+        "x10 Speed",
+        onClick --> { _ => multiplySpeedBus.writer.onNext(10.0) }
       ),
       button(
         cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",
-        "x10 Speed",
-        onClick --> { _ => multiplySpeedBus.writer.onNext(10.0) }
+        "x100 Speed",
+        onClick --> { _ => multiplySpeedBus.writer.onNext(100.0) }
       ),
       button(
         cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",

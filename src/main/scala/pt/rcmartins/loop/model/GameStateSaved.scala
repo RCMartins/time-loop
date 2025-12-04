@@ -1,6 +1,6 @@
 package pt.rcmartins.loop.model
 
-import pt.rcmartins.loop.data.Level1
+import pt.rcmartins.loop.data.StoryActions
 import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
 
 case class GameStateSaved(
@@ -9,7 +9,7 @@ case class GameStateSaved(
     maxEnergyInt: Int,
     initialTiredSecond: Double,
     initialTiredMultSecond: Double,
-    stats: Stats,
+    stats: StatsSaved,
     skills: SkillsState,
     storyActionsHistory: Seq[String],
 ) {
@@ -26,13 +26,13 @@ case class GameStateSaved(
       currentTiredSecond = initialTiredSecond,
       currentTiredMultSecond = initialTiredMultSecond,
       nextTiredIncreaseMicro = 1_000_000L,
-      characterArea = Level1.Data.InitialCharacterArea,
-      stats = stats,
+      characterArea = StoryActions.Data.InitialCharacterArea,
+      stats = stats.toStats,
       skills = skills.resetLoopProgress,
       inventory = InventoryState.initial,
       currentAction = None,
-      visibleNextActions = Level1.Data.InitialActions.map(_.toActiveAction),
-      visibleMoveActions = Level1.Data.InitialMoveActions.map(_.toActiveAction),
+      visibleNextActions = StoryActions.Data.InitialActions.map(_.toActiveAction),
+      visibleMoveActions = StoryActions.Data.InitialMoveActions.map(_.toActiveAction),
       selectedNextAction = None,
       deckActions = Seq.empty,
       actionsHistory = Seq.empty,
@@ -51,7 +51,7 @@ object GameStateSaved {
       maxEnergyInt = gameState.maxEnergyInt,
       initialTiredSecond = gameState.initialTiredSecond,
       initialTiredMultSecond = gameState.initialTiredMultSecond,
-      stats = gameState.stats,
+      stats = StatsSaved.fromStats( gameState.stats),
       skills = gameState.skills,
       storyActionsHistory = gameState.storyActionsHistory.map(_.line),
     )
