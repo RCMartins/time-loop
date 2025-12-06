@@ -44,11 +44,4 @@ object SaveLoad {
   private def base64ToJson(str: String): String =
     new String(java.util.Base64.getDecoder.decode(str.getBytes))
 
-  def reloadDataFromLoadedSave(
-      loadedAllData: GameState,
-//      messageAlert: Option[String] = Some("Game Loaded!"),
-  ): Unit = {
-    GameData.loadGameState(loadedAllData)
-  }
-
 }

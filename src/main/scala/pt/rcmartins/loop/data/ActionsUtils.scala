@@ -190,6 +190,7 @@ object ActionsUtils {
       initialAmountOfActions: AmountOfActions,
       actionSuccessType: ActionSuccessType = ActionSuccessType.Always,
       firstTimeUnlocksActions: GameState => Seq[ActionData] = _ => Seq.empty,
+      permanentBonusUnlocks: Seq[PermanentBonusUnlockType] = Seq.empty,
       showWhenInvalid: Boolean = true,
   ): ActionData =
     ActionData(
@@ -219,6 +220,7 @@ object ActionsUtils {
             )(ReasonLabel.InventoryFull),
           ),
       firstTimeUnlocksActions = firstTimeUnlocksActions,
+      permanentBonusUnlocks = permanentBonusUnlocks,
     )
 
 }

@@ -9,12 +9,9 @@ import scala.annotation.tailrec
 import scala.util.Random
 import scala.util.chaining.scalaUtilChainingOps
 
-object GameLogic {
+class GameLogic(private var lastTimeMicro: Long) {
 
-  private var lastTimeMicro: Long = System.nanoTime() / 1000L
-
-  def update(initialGameState: GameState): GameState = {
-    val currentTimeMicro = System.nanoTime() / 1000L
+  def update(initialGameState: GameState, currentTimeMicro: Long): GameState = {
     val elapsedTimeMicro = Math.min(1_000_000L, currentTimeMicro - lastTimeMicro)
     lastTimeMicro = currentTimeMicro
     auxUpdate(initialGameState, elapsedTimeMicro, initialGameState.skills.globalGameSpeed)
@@ -231,12 +228,45 @@ object GameLogic {
           )
           .modify(_.inventory)
           .using(currentAction.data.changeInventory)
+          .pipe(
+            checkPermanentBonus(
+              _,
+              currentAction.data.permanentBonusUnlocks,
+              currentAction.numberOfCompletions + 1,
+            )
+          )
           .modify(_.characterArea)
           .using(currentAction.data.moveToArea.getOrElse(_))
           .pipe(checkMultiAction(_, currentAction))
       }
     } else
       state
+
+  private def checkPermanentBonus(
+      state: GameState,
+      permanentBonusUnlocks: Seq[PermanentBonusUnlockType],
+      completitions: Int,
+  ): GameState = {
+    @tailrec
+    def multMatches(baseValue: Int, multiplier: Int): Boolean =
+      if (completitions == baseValue) true
+      else if (completitions < baseValue) false
+      else multMatches(baseValue * multiplier, multiplier)
+
+    val newBonus: Option[PermanentBonus] =
+      permanentBonusUnlocks.collectFirst {
+        case PermanentBonusUnlockType.ProgressiveActionCount(bonus, baseValue, multiplier)
+            if multMatches(baseValue, multiplier) =>
+          bonus
+      }
+
+    newBonus match {
+      case Some(PermanentBonus.HalfTiredness) =>
+        state.modify(_.currentTiredSecond).using(_ / 2.0)
+      case None =>
+        state
+    }
+  }
 
   private def addNewStory(newStory: StoryLine, timeElapsedMicro: Long): Seq[RunTimeStoryAction] =
     newStory.seq.flatMap {
