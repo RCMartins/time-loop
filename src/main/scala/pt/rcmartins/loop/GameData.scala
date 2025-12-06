@@ -5,9 +5,12 @@ import com.raquo.laminar.api.L.Signal
 import com.softwaremill.quicklens.ModifyPimp
 import pt.rcmartins.loop.model._
 
-object GameData {
+class GameData(
+    constructorGameState: GameState,
+    gameLogic: GameLogic,
+) {
 
-  private val gameStateVar: Var[GameState] = Var(GameState.initial)
+  private val gameStateVar: Var[GameState] = Var(constructorGameState)
 
   // TODO should this be private?
   val gameState: Signal[GameState] = gameStateVar.signal
@@ -47,7 +50,8 @@ object GameData {
 
   def runUpdateGameState(): Unit = {
     val initialGameState = gameStateVar.now()
-    val newState = GameLogic.update(initialGameState)
+    val currentTimeMicro = System.nanoTime() / 1000L
+    val newState = gameLogic.update(initialGameState, currentTimeMicro)
     gameStateVar.set(newState)
   }
 

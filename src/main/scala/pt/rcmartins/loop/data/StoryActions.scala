@@ -303,6 +303,8 @@ object StoryActions {
       actionTime = ActionTime.Standard(10),
       initialAmountOfActions = AmountOfActions.Unlimited,
       firstTimeUnlocksActions = _ => Seq(GoToTown),
+      permanentBonusUnlocks =
+        Seq(PermanentBonusUnlockType.ProgressiveActionCount(PermanentBonus.HalfTiredness, 1, 10)),
       showWhenInvalid = false,
     )
 
@@ -326,7 +328,6 @@ object StoryActions {
       kind = ActionKind.Social,
       actionTime = ActionTime.Standard(20),
       firstTimeUnlocksActions = _ => Seq(SellSoapToPeople),
-      moveToArea = Some(Area2_Town),
     )
 
     def SellSoapToPeople: ActionData = ActionData(
@@ -354,7 +355,7 @@ object StoryActions {
       kind = ActionKind.Exploring,
       actionTime = ActionTime.Standard(100),
       initialAmountOfActions = AmountOfActions.Standard(3),
-      forceMaxAmountOfActions = Some(1),
+      forceMaxAmountOfActionsIs1 = true,
       everyTimeUnlocksActions = {
         case (_, 1) => Seq(GoToEquipmentStore)
         case (_, 2) => Seq(GoToForest)

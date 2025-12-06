@@ -3,10 +3,7 @@ package pt.rcmartins.loop
 import com.raquo.laminar.api.L._
 import com.raquo.laminar.nodes.ReactiveHtmlElement
 import org.scalajs.dom.HTMLDivElement
-import pt.rcmartins.loop.GameData.selectedNextAction
 import pt.rcmartins.loop.model._
-
-import scala.util.chaining.scalaUtilChainingOps
 
 object Util {
 
@@ -19,7 +16,10 @@ object Util {
     "hover:ring-emerald-400/60 hover:shadow-md focus:outline-none " +
       "focus:ring-2 focus:ring-emerald-400"
 
-  def activeActionCard(vm: Signal[ActiveActionData]): HtmlElement = {
+  def activeActionCard(
+      vm: Signal[ActiveActionData],
+      skills: Signal[SkillsState],
+  ): HtmlElement = {
     val data: Signal[ActionData] = vm.distinctBy(_.id).map(_.data)
     val longSoFar: Signal[Long] = ActiveActionData.longSoFar(vm).distinct
     val microLeft: Signal[Long] = ActiveActionData.microLeft(vm).distinct
@@ -66,7 +66,7 @@ object Util {
             ),
             span(
               cls := "px-2 py-0.5 text-xs rounded-full bg-slate-900/70 ring-1 ring-slate-600",
-              child.text <-- microLeft.combineWith(data, GameData.skills).map {
+              child.text <-- microLeft.combineWith(data, skills).map {
                 case (timeSoFar, data, skills) =>
                   val currentTime: Double =
                     calcWithSkillDouble(timeSoFar, skills.get(data.kind)) / 1_000_000L
@@ -125,7 +125,10 @@ object Util {
   private def calcWithSkillDouble(baseTime: Long, state: SkillState): Double =
     baseTime.toDouble / state.finalSpeedMulti
 
-  def actionCard(actionSignal: Signal[ActiveActionData]): HtmlElement = {
+  def actionCard(
+      actionSignal: Signal[ActiveActionData],
+      gameData: GameData,
+  ): HtmlElement = {
     val isSelected: Var[Boolean] = Var(false)
     val selectedLimit: Var[Int] = Var(-1)
 
@@ -136,7 +139,7 @@ object Util {
       " opacity-50 grayscale pointer-events-none"
 
     val isDisabled: Signal[Boolean] =
-      actionSignal.map(_.data).combineWith(GameData.gameState).map { case (actionData, gameState) =>
+      actionSignal.map(_.data).combineWith(gameData.gameState).map { case (actionData, gameState) =>
         ActiveActionData.isInvalid(gameState, actionData)
       }
 
@@ -144,35 +147,50 @@ object Util {
       .sample(isSelected, selectedLimit, actionSignal, isDisabled)
       .foreach {
         case (true, limit, action, false) =>
-          GameData.selectNextAction(action.id, Some(limit).filter(_ != -1))
+          gameData.selectNextAction(
+            action.id,
+            Option
+              .when(action.data.forceMaxAmountOfActionsIs1)(1)
+              .orElse(Some(limit).filter(_ != -1))
+          )
         case _ =>
       }(owner)
 
     val invalidTooltipText: Signal[String] =
-      actionSignal.map(_.data.invalidReason).combineWith(GameData.gameState).map {
-        case (invalidReasonF, gameState) =>
+      actionSignal
+        .map(_.data.invalidReason)
+        .combineWith(gameData.gameState)
+        .map { case (invalidReasonF, gameState) =>
           invalidReasonF(gameState).map(_.label).getOrElse("Different Area")
-      }
+        }
+        .distinct
 
     val numberOfActionsLeftSignal: Signal[AmountOfActions] =
       actionSignal.map(_.amountOfActionsLeft)
+
+    val bonusIcon: Signal[Option[String]] =
+      actionSignal.map(_.data.permanentBonusUnlocks.headOption /* TODO multiple unlocks ? */ match {
+        case Some(_) => Some("public/icons/strong.svg")
+        case None    => None
+      })
 
     div(
       role := "button",
       tabIndex := 0,
       cls := baseCardClasses,
-      cls := baseCardHoverClasses,
-      cls := "m-2 mt-4 me-3",
-      cls(selectedCls) <-- selectedNextAction.combineWith(actionSignal.map(_.id)).map {
+      cls := "m-2 mt-8 me-3",
+      cls := "relative",
+      cls(selectedCls) <-- gameData.selectedNextAction.combineWith(actionSignal.map(_.id)).map {
         case (optId, actionId) => optId.map(_._1).contains(actionId)
       },
-      cls(disabledCls) <-- isDisabled,
+      cls(baseCardHoverClasses) <-- isDisabled.map(!_),
       onClick --> { _ =>
         isSelected.set(true)
       },
 
       // Content
       div(
+        cls(disabledCls) <-- isDisabled,
         cls := "relative inline-block",
         cls := "flex items-start gap-3",
         // Icon + kind accent
@@ -243,7 +261,20 @@ object Util {
         ),
         amountOfActionsTooltip(numberOfActionsLeftSignal),
         selectAmountOfActionsOverlay(actionSignal, selectedLimit),
-      )
+      ),
+      child.maybe <--
+        bonusIcon.map {
+          _.map { path =>
+            div(
+              img(
+                cls := "absolute -top-8 right-2",
+                cls := "inline-block bg-blue-500 rounded",
+                cls := "w-7 h-7",
+                src := path,
+              ),
+            )
+          }
+        }
     )
   }
 
@@ -264,30 +295,22 @@ object Util {
       selectedLimit: Var[Int],
   ): ReactiveHtmlElement[HTMLDivElement] = {
     val allowed = actionSignal.map(action =>
-      {
-
-        action.amountOfActionsLeft match {
-          case _
-              if action.data.moveToArea.nonEmpty ||
-                action.data.initialAmountOfActions.singleAction ||
-                action.data.forceMaxAmountOfActions.contains(1) =>
-            Nil
-          case AmountOfActions.Unlimited =>
-            List(1, 5, 10, -1)
-          case AmountOfActions.Standard(1) =>
-            List(1)
-          case AmountOfActions.Standard(amount) if amount < 5 =>
-            List(1, 2, 3, -1).filter(_ <= amount)
-          case AmountOfActions.Standard(amount) if amount < 10 =>
-            List(1, 2, 5, -1).filter(_ <= amount)
-          case AmountOfActions.Standard(amount) =>
-            List(1, 5, 10, -1).filter(_ <= amount)
-        }
-      }.pipe { actions =>
-        action.data.forceMaxAmountOfActions match {
-          case None            => actions
-          case Some(maxAmount) => actions.filter(_ <= maxAmount)
-        }
+      action.amountOfActionsLeft match {
+        case _
+            if action.data.moveToArea.nonEmpty ||
+              action.data.initialAmountOfActions.singleAction ||
+              action.data.forceMaxAmountOfActionsIs1 =>
+          Nil
+        case AmountOfActions.Unlimited =>
+          List(1, 5, 10, -1)
+        case AmountOfActions.Standard(1) =>
+          List(1)
+        case AmountOfActions.Standard(amount) if amount < 5 =>
+          List(1, 2, 3, -1).filter(_ <= amount)
+        case AmountOfActions.Standard(amount) if amount < 10 =>
+          List(1, 2, 5, -1).filter(_ <= amount)
+        case AmountOfActions.Standard(amount) =>
+          List(1, 5, 10, -1).filter(_ <= amount)
       }
     )
     val hideDiv = actionSignal.map(action =>
