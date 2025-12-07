@@ -1,5 +1,7 @@
 package pt.rcmartins.loop.model
 
+import pt.rcmartins.loop.model.ItemType.Coins
+
 sealed trait EffectLabel {
 
   def label: String
@@ -29,7 +31,7 @@ object EffectLabel {
   }
 
   case class Cooking(itemType: ItemType, amount: Int) extends EffectLabel {
-    override val label: String = s"Cook $amount ${itemType.name}."
+    override val label: String = s"Cook ${itemType.amountFormatInv(amount)} ${itemType.name}."
   }
 
   case class GetInventoryIncrease(name: String, maxSize: Int) extends EffectLabel {
@@ -37,23 +39,23 @@ object EffectLabel {
   }
 
   case class BuyInventoryIncrease(name: String, cost: Int, maxSize: Int) extends EffectLabel {
-    override val label: String = s"Cost: $cost coin${plural(cost)}, max size $maxSize."
+    override val label: String = s"Cost: ${Coins.amountFormatInv(cost)}, max size $maxSize."
   }
 
   case class GetItem(itemType: ItemType, amount: Int) extends EffectLabel {
-    override val label: String = s"Get $amount ${itemType.name}."
+    override val label: String = s"Get ${itemType.amountFormatInv(amount)} ${itemType.name}."
   }
 
   case class BuyItem(itemType: ItemType, amount: Int, cost: Int) extends EffectLabel {
-    override val label: String = s"Cost: $cost coin${plural(cost)}."
+    override val label: String = s"Cost: ${Coins.amountFormatInv(cost)}"
   }
 
   case class SellItem(itemType: ItemType, amount: Int, coinsGain: Int) extends EffectLabel {
-    override val label: String = s"Sell for $coinsGain coin${plural(coinsGain)}."
+    override val label: String = s"Sell for ${Coins.amountFormatInv(coinsGain)}."
   }
 
-  case class BuyEmptyStore(cost: Int) extends EffectLabel {
-    override val label: String = s"Cost: $cost coin${plural(cost)}."
+  case class BuyUpgrade(cost: Int) extends EffectLabel {
+    override val label: String = s"Cost: ${Coins.amountFormatInv(cost)}"
   }
 
   case class CraftItem(itemType: ItemType, amount: Int, cost: Seq[(ItemType, Int)])

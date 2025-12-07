@@ -5,6 +5,8 @@ sealed trait ItemType {
   val noInventoyLimit: Boolean = false
   val name: String
   val inventoryOrder: Int
+  val amountFormat: Int => String = n => s"$n"
+  val amountFormatInv: Int => String = n => s"$n"
 
   def foodValueLong: Long
   lazy val isFoodItem: Boolean = foodValueLong > 0
@@ -20,6 +22,8 @@ object ItemType {
     override val noInventoyLimit: Boolean = true
     val inventoryOrder: Int = 1
     val foodValueLong: Long = 0L
+    override val amountFormat: Int => String = n => f"$$${n / 100.0}%.2f"
+    override val amountFormatInv: Int => String = n => amountFormat(n)
   }
 
   // Misc Items

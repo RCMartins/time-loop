@@ -17,7 +17,7 @@ object ActionsUtils {
   ): ActionData = ActionData(
     actionDataType = actionDataType,
     area = area,
-    title = s"Pick up $amount ${itemType.name}",
+    title = s"Pick up ${itemType.amountFormat(amount)} ${itemType.name}",
     effectLabel = EffectLabel.GetItem(itemType, amount),
     kind = ActionKind.Foraging,
     actionTime = actionTime,

@@ -90,7 +90,7 @@ class UI(
         _.filter(_._2 > 0).sortBy(_._1.inventoryOrder).map { case (item, qty, cooldownTimeMicro) =>
           li(
             cls := "rounded-lg p-2 bg-slate-800/60 ring-1 ring-slate-700 flex justify-between items-center m-1",
-            span(cls := "font-mono", s"$qty "),
+            span(cls := "font-mono", item.amountFormatInv(qty)),
             span(item.name),
             span(
               child.text <-- timeElapsedMicro.map(elapsed =>
