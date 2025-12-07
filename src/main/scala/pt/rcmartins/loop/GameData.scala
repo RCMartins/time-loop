@@ -48,6 +48,8 @@ class GameData(
   val characterArea: Signal[CharacterArea] =
     gameState.map(_.characterArea).distinct
 
+  val stats: Signal[Stats] = gameState.map(_.stats).distinct
+
   def runUpdateGameState(): Unit = {
     val initialGameState = gameStateVar.now()
     val currentTimeMicro = System.nanoTime() / 1000L

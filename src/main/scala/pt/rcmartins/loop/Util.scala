@@ -5,6 +5,8 @@ import com.raquo.laminar.nodes.ReactiveHtmlElement
 import org.scalajs.dom.HTMLDivElement
 import pt.rcmartins.loop.model._
 
+import scala.annotation.tailrec
+
 object Util {
 
   private val owner = new Owner {}
@@ -129,6 +131,7 @@ object Util {
       actionSignal: Signal[ActiveActionData],
       gameData: GameData,
   ): HtmlElement = {
+    val data: Signal[ActionData] = actionSignal.map(_.data).distinct
     val isSelected: Var[Boolean] = Var(false)
     val selectedLimit: Var[Int] = Var(-1)
 
@@ -139,7 +142,7 @@ object Util {
       " opacity-50 grayscale pointer-events-none"
 
     val isDisabled: Signal[Boolean] =
-      actionSignal.map(_.data).combineWith(gameData.gameState).map { case (actionData, gameState) =>
+      data.combineWith(gameData.gameState).map { case (actionData, gameState) =>
         ActiveActionData.isInvalid(gameState, actionData)
       }
 
@@ -157,8 +160,8 @@ object Util {
       }(owner)
 
     val invalidTooltipText: Signal[String] =
-      actionSignal
-        .map(_.data.invalidReason)
+      data
+        .map(_.invalidReason)
         .combineWith(gameData.gameState)
         .map { case (invalidReasonF, gameState) =>
           invalidReasonF(gameState).map(_.label).getOrElse("Different Area")
@@ -168,110 +171,142 @@ object Util {
     val numberOfActionsLeftSignal: Signal[AmountOfActions] =
       actionSignal.map(_.amountOfActionsLeft)
 
-    val bonusIcon: Signal[Option[String]] =
-      actionSignal.map(_.data.permanentBonusUnlocks.headOption /* TODO multiple unlocks ? */ match {
-        case Some(_) => Some("public/icons/strong.svg")
-        case None    => None
-      })
+    val bonusIcon: Signal[Seq[(HtmlElement, String)]] = {
+      @tailrec
+      def calcNextMultBonus(completitions: Int, baseValue: Int, multiplier: Int): Int =
+        if (completitions >= baseValue)
+          calcNextMultBonus(completitions, baseValue * multiplier, multiplier)
+        else
+          baseValue
+
+      data.combineWith(gameData.stats).map { case (data, stats) =>
+        data.permanentBonusUnlocks.map {
+          case PermanentBonusUnlockType.ProgressiveActionCount(bonus, baseValue, multiplier) =>
+            val count = stats.getLoopCount(data.actionDataType)
+            (
+              span(
+                p(
+                  s"Completing this action $count/${calcNextMultBonus(count, baseValue, multiplier)}x will:"
+                ),
+                bonus.description.split("\n").toSeq.map(p(_))
+              ),
+              permanentBonusToIcon(bonus)
+            )
+        }
+      }
+    }
 
     div(
-      role := "button",
-      tabIndex := 0,
-      cls := baseCardClasses,
-      cls := "m-2 mt-8 me-3",
       cls := "relative",
-      cls(selectedCls) <-- gameData.selectedNextAction.combineWith(actionSignal.map(_.id)).map {
-        case (optId, actionId) => optId.map(_._1).contains(actionId)
-      },
-      cls(baseCardHoverClasses) <-- isDisabled.map(!_),
-      onClick --> { _ =>
-        isSelected.set(true)
-      },
-
-      // Content
+      cls := "m-2 mt-8 me-3",
       div(
-        cls(disabledCls) <-- isDisabled,
-        cls := "relative inline-block",
-        cls := "flex items-start gap-3",
-        // Icon + kind accent
-        div(
-          cls := "mt-0.5 shrink-0 rounded-xl bg-slate-700/60 ring-1 ring-slate-600 p-2",
-          child <-- actionSignal.map(action => actionIcon(action.data.kind)),
-        ),
+        role := "button",
+        tabIndex := 0,
+        cls := baseCardClasses,
+        cls := "relative",
+        cls(selectedCls) <-- gameData.selectedNextAction.combineWith(actionSignal.map(_.id)).map {
+          case (optId, actionId) => optId.map(_._1).contains(actionId)
+        },
+        cls(baseCardHoverClasses) <-- isDisabled.map(!_),
+        onClick --> { _ =>
+          isSelected.set(true)
+        },
 
-        // Title + subtitle + badges
+        // Content
         div(
-          cls := "min-w-0 flex-1",
+          cls(disabledCls) <-- isDisabled,
+          cls := "relative inline-block",
+          cls := "flex items-start gap-3",
+          // Icon + kind accent
           div(
-            cls := "flex items-start justify-between gap-3",
-            div(
-              h3(
-                cls := "text-base font-semibold tracking-tight",
-                child.text <-- actionSignal.map(_.data.title),
-              ),
-              p(
-                cls := "text-xs text-slate-300/90",
-                child.text <-- actionSignal.map(_.data.effectLabel.label),
-              )
-            ),
+            cls := "mt-0.5 shrink-0 rounded-xl bg-slate-700/60 ring-1 ring-slate-600 p-2",
+            child <-- actionSignal.map(action => actionIcon(action.data.kind)),
           ),
 
-          // Badges row
+          // Title + subtitle + badges
           div(
-            cls := "mt-2 flex flex-wrap items-center gap-2",
-            span(
-              cls := "px-2 py-0.5 text-xs rounded-full bg-slate-700/70 ring-1 ring-slate-600",
-              "\u00A0",
-              child.text <-- actionSignal.map(_.data.actionTime.baseTimeSec.toString),
-              "\u00A0",
+            cls := "min-w-0 flex-1",
+            div(
+              cls := "flex items-start justify-between gap-3",
+              div(
+                h3(
+                  cls := "text-base font-semibold tracking-tight",
+                  child.text <-- actionSignal.map(_.data.title),
+                ),
+                p(
+                  cls := "text-xs text-slate-300/90",
+                  child.text <-- actionSignal.map(_.data.effectLabel.label),
+                )
+              ),
             ),
-            child.maybe <--
-              actionSignal.map(_.data.actionSuccessType match {
-                case ActionSuccessType.WithFailure(baseChance, increase) =>
-                  Some(
-                    div(
-                      cls := "relative group",
-                      span(
-                        cls := "px-2 py-0.5 text-xs rounded-full bg-slate-700/70 ring-1 ring-slate-600",
-                        "\u00A0",
-                        f"${(baseChance * 100).toInt}%02d%%",
-                        "\u00A0",
-                      ),
+
+            // Badges row
+            div(
+              cls := "mt-2 flex flex-wrap items-center gap-2",
+              span(
+                cls := "px-2 py-0.5 text-xs rounded-full bg-slate-700/70 ring-1 ring-slate-600",
+                "\u00A0",
+                child.text <-- actionSignal.map(_.data.actionTime.baseTimeSec.toString),
+                "\u00A0",
+              ),
+              child.maybe <--
+                actionSignal.map(_.data.actionSuccessType match {
+                  case ActionSuccessType.WithFailure(baseChance, increase) =>
+                    Some(
                       div(
-                        cls := "absolute left-1/2 -translate-x-1/2 top-full mt-1 px-2 py-1 z-20 " +
-                          "text-xs bg-slate-900 text-white rounded shadow-lg whitespace-nowrap " +
-                          "opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none",
-                        f"This action has a base ${(baseChance * 100).toInt}%d%% of success + ${(increase * 100).toInt}%d%% for every failure"
+                        cls := "relative group",
+                        span(
+                          cls := "px-2 py-0.5 text-xs rounded-full bg-slate-700/70 ring-1 ring-slate-600",
+                          "\u00A0",
+                          f"${(baseChance * 100).toInt}%02d%%",
+                          "\u00A0",
+                        ),
+                        div(
+                          cls := "absolute left-1/2 -translate-x-1/2 top-full mt-1 px-2 py-1 z-20 " +
+                            "text-xs bg-slate-900 text-white rounded shadow-lg whitespace-nowrap " +
+                            "opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none",
+                          f"This action has a base ${(baseChance * 100).toInt}%d%% of success + ${(increase * 100).toInt}%d%% for every failure"
+                        )
                       )
                     )
-                  )
-                case _ =>
-                  None
-              })
+                  case _ =>
+                    None
+                })
+            ),
           ),
-        ),
 
-        // Invalid reason tooltip (top center)
-        div(
-          cls := "absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-2 py-1 " +
-            "text-xs text-slate-100 bg-slate-700 rounded-md whitespace-nowrap shadow-lg " +
-            "transition-opacity duration-150 opacity-0 pointer-events-none",
-          child.text <-- invalidTooltipText,
-          cls("opacity-100") <-- isDisabled
+          // Invalid reason tooltip (top center)
+          div(
+            cls := "absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-2 py-1 " +
+              "text-xs text-slate-100 bg-slate-700 rounded-md whitespace-nowrap shadow-lg " +
+              "transition-opacity duration-150 opacity-0 pointer-events-none",
+            child.text <-- invalidTooltipText,
+            cls("opacity-100") <-- isDisabled
+          ),
+          amountOfActionsTooltip(numberOfActionsLeftSignal),
+          selectAmountOfActionsOverlay(actionSignal, selectedLimit),
         ),
-        amountOfActionsTooltip(numberOfActionsLeftSignal),
-        selectAmountOfActionsOverlay(actionSignal, selectedLimit),
       ),
-      child.maybe <--
+      children <--
         bonusIcon.map {
-          _.map { path =>
+          _.map { case (tooltipDescription, iconPath) =>
             div(
-              img(
-                cls := "absolute -top-8 right-2",
-                cls := "inline-block bg-blue-500 rounded",
-                cls := "w-7 h-7",
-                src := path,
-              ),
+              cls := "absolute -top-8 right-2",
+              div(
+                // inline-block so the wrapper is just the icon's size
+                cls := "relative inline-block group",
+                img(
+                  cls := "inline-block bg-blue-500 rounded w-7 h-7",
+                  src := iconPath
+                ),
+                // Tooltip
+                div(
+                  cls := "absolute right-0 top-full mt-1 px-2 py-1 z-20 " +
+                    "text-xs bg-slate-900 text-white rounded shadow-lg whitespace-nowrap " +
+                    "hidden group-hover:block pointer-events-none z-10",
+                  tooltipDescription
+                )
+              )
             )
           }
         }
@@ -467,6 +502,11 @@ object Util {
         i(
           cls := "fa-solid fa-question h-5 w-5 opacity-90"
         )
+    }
+
+  private def permanentBonusToIcon(permanentBonus: PermanentBonus): String =
+    permanentBonus match {
+      case PermanentBonus.HalfTiredness => "public/icons/strong.svg"
     }
 
 }

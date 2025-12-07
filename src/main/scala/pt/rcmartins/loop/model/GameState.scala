@@ -1,5 +1,6 @@
 package pt.rcmartins.loop.model
 
+import com.softwaremill.quicklens.ModifyPimp
 import pt.rcmartins.loop.data.StoryActions
 
 import scala.util.Random
@@ -57,6 +58,9 @@ case class GameState(
       storyActionsHistory = storyActionsHistory,
       inProgressStoryActions = Seq(),
     )
+
+  def addElapedTimeMicro(actualElapsedMicro: Long): GameState =
+    this.modifyAll(_.timeElapsedMicro, _.stats.totalElapedTimeMicro).using(_ + actualElapsedMicro)
 
 }
 
