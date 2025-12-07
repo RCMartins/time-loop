@@ -8,8 +8,6 @@ case class Stats(
     globalActionCount: Map[ActionDataType, Int],
 ) {
 
-  println((loopNumber, usedCheats, loopActionCount, globalActionCount))
-
   def resetForNewLoop: Stats =
     this.copy(
       loopNumber = this.loopNumber + 1,

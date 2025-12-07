@@ -67,7 +67,7 @@ object StoryActions {
       actionDataType = Arc1DataType.PickupCoins,
       area = Seq(Area1_Home),
       itemType = ItemType.Coins,
-      amount = 1,
+      amount = 100,
       actionTime = ActionTime.Standard(1),
       initialAmountOfActions = AmountOfActions.Standard(10),
       everyTimeUnlocksActions = {
@@ -143,7 +143,7 @@ object StoryActions {
       area = Seq(Area3_Store),
       itemType = ItemType.Glycerin,
       amount = 1,
-      cost = 5,
+      cost = 500,
       actionTime = ActionTime.Standard(5),
       initialAmountOfActions = AmountOfActions.Standard(1),
       firstTimeUnlocksActions = _ => Seq(FirstLoopGoToForest),
@@ -155,7 +155,7 @@ object StoryActions {
       area = Seq(Area3_Store),
       itemType = ItemType.Glycerin,
       amount = 1,
-      cost = 5,
+      cost = 500,
       actionTime = ActionTime.Standard(5),
       initialAmountOfActions = AmountOfActions.Unlimited,
       firstTimeUnlocksActions = _ => Seq(MeltGlycerin)
@@ -227,7 +227,7 @@ object StoryActions {
       area = Seq(Area3_Store),
       itemType = ItemType.FrozenMomo,
       amount = 1,
-      cost = 1,
+      cost = 50,
       actionTime = ActionTime.Standard(3),
       initialAmountOfActions = AmountOfActions.Unlimited,
       firstTimeUnlocksActions = _ => Seq(CookMomo),
@@ -446,7 +446,7 @@ object StoryActions {
         actionDataType = Arc1DataType.BuyEmptyStore,
         area = Seq(Area2_Town),
         title = s"Buy Empty Store",
-        effectLabel = EffectLabel.BuyEmptyStore(25),
+        effectLabel = EffectLabel.BuyUpgrade(2500),
         kind = ActionKind.Social,
         actionTime = ActionTime.Standard(60),
         invalidReason = state =>
@@ -456,7 +456,7 @@ object StoryActions {
         firstTimeUnlocksActions = _ => Seq(PrepareStoreForBusiness),
         addStory = state =>
           Option.when(state.stats.globalActionCount.getOrElse(Arc1DataType.BuyEmptyStore, 0) == 1)(
-            Story.OtherLoops.BuyEmptyStore
+            Story.OtherLoops.BuyEmptyStop
           )
       )
 
@@ -550,7 +550,7 @@ object StoryActions {
       val ThirdOrMoreWakeup: StoryLine =
         StoryLine.simple("She wakes up with a single thought: “Not this loop again… or is it?”")
 
-      val BuyEmptyStore: StoryLine =
+      val BuyEmptyStop: StoryLine =
         StoryLine.simple("Finally gathered enough money to buy my own soap where I can sell soap!")
 
       val PrepareShopForBusiness: StoryLine =

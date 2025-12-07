@@ -200,7 +200,7 @@ class GameLogic(private var lastTimeMicro: Long) {
             .modify(_.actionsHistory)
             .using(_ :+ currentAction.data)
             .modifyAll(_.stats.loopActionCount, _.stats.globalActionCount)
-            .using(_.updatedWith(currentAction.data.actionDataType)(_.map(_ + 1).orElse(Some(0))))
+            .using(_.updatedWith(currentAction.data.actionDataType)(_.map(_ + 1).orElse(Some(1))))
 
         stateWithHistory
           .modify(_.deckActions)
