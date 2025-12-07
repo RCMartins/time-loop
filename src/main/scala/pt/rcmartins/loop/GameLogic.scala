@@ -58,8 +58,7 @@ class GameLogic(private var lastTimeMicro: Long) {
             val updatedGameState: GameState =
               if (currentTime >= requiredElapsedTimeMicro)
                 initialGameState
-                  .modify(_.timeElapsedMicro)
-                  .setTo(currentTime)
+                  .addElapedTimeMicro(maxElapedTime)
                   .modify(_.inProgressStoryActions)
                   .using(_.tail)
                   .pipe { currentGameState =>
@@ -78,8 +77,7 @@ class GameLogic(private var lastTimeMicro: Long) {
                   }
               else
                 initialGameState
-                  .modify(_.timeElapsedMicro)
-                  .setTo(currentTime)
+                  .addElapedTimeMicro(maxElapedTime)
             (updatedGameState, maxElapedTime, false)
           case None =>
             initialGameState.selectedNextAction.flatMap { case (id, limit) =>
@@ -163,8 +161,7 @@ class GameLogic(private var lastTimeMicro: Long) {
           initialGameState
             .modify(_.currentAction)
             .using(_.map(_.copy(microSoFar = currentActionElapsedMicro)))
-            .modify(_.timeElapsedMicro)
-            .using(_ + actualElapsedMicro)
+            .addElapedTimeMicro(actualElapsedMicro)
             .modify(_.skills)
             .setTo(skillsUpdated)
             .pipe(applyCurrentActionIfComplete(_, currentActionIsComplete, currentAction)),
