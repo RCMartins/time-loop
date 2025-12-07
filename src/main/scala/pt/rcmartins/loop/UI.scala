@@ -4,6 +4,7 @@ import com.raquo.airstream.ownership.OneTimeOwner
 import com.raquo.laminar.api.L._
 import com.raquo.laminar.nodes.ReactiveHtmlElement
 import com.softwaremill.quicklens.ModifyPimp
+import org.scalajs.dom
 import org.scalajs.dom.{HTMLDivElement, HTMLUListElement}
 import pt.rcmartins.loop.Util._
 import pt.rcmartins.loop.data.StoryActions
@@ -11,19 +12,28 @@ import pt.rcmartins.loop.model.{GameState, StoryLineHistory}
 
 import scala.scalajs.js.timers
 import scala.scalajs.js.timers.setInterval
+import scala.util.Random
 
 class UI(
     gameData: GameData,
 ) {
 
+  private val owner = new Owner {}
   private val DEBUG_MODE: Boolean = true
 
   import gameData._
+
+  val toastBus = new EventBus[Toast]
+  val toastsVar = Var(List.empty[Toast])
 
   def run(): ReactiveHtmlElement[HTMLDivElement] = {
     setInterval(25) {
       gameData.runUpdateGameState()
     }
+
+    toastBus.events.foreach { toast =>
+      toastsVar.update(_ :+ toast)
+    }(owner)
 
     div(
       // page padding & responsive grid
@@ -39,6 +49,7 @@ class UI(
         ),
         div(cls := "order-3 md:order-3", rightSidebar(inventoryView, miscView))
       ),
+      toastContainer
     )
   }
 
@@ -271,6 +282,8 @@ class UI(
     val addEnergyBus: EventBus[Int] = new EventBus[Int]()
     val multiplyAllSkillsBus: EventBus[Double] = new EventBus[Double]()
     val multiplySpeedBus: EventBus[Double] = new EventBus[Double]()
+    val exportSaveStringToClipboard: EventBus[Unit] = new EventBus[Unit]()
+    val importStringFromClipboard: EventBus[Unit] = new EventBus[Unit]()
 
     addEnergyBus.events
       .withCurrentValueOf(gameData.gameState)
@@ -314,6 +327,26 @@ class UI(
             .setTo(true)
         gameData.loadGameState(newState)
       }(owner)
+
+    exportSaveStringToClipboard.events
+      .withCurrentValueOf(gameData.gameState)
+      .foreach { state =>
+        dom.window.navigator.clipboard.writeText(SaveLoad.saveString(state))
+        showToast("Copied to clipboard!")
+      }(owner)
+
+    importStringFromClipboard.events.foreach { _ =>
+      dom.window.navigator.clipboard
+        .readText()
+        .toFuture
+        .foreach { str =>
+          SaveLoad.loadString(str).foreach { loadedState =>
+            gameData.loadGameState(loadedState)
+            SaveLoad.saveToLocalStorage(loadedState)
+            showToast("Game loaded!")
+          }
+        }(scala.scalajs.concurrent.JSExecutionContext.queue)
+    }(owner)
 
     div(
       cls := "flex flex-col gap-2",
@@ -371,6 +404,20 @@ class UI(
       ),
       button(
         cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",
+        "Export",
+        onClick --> { _ =>
+          exportSaveStringToClipboard.writer.onNext(())
+        }
+      ),
+      button(
+        cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",
+        "Import",
+        onClick --> { _ =>
+          importStringFromClipboard.writer.onNext(())
+        }
+      ),
+      button(
+        cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",
         "Hard Reset!",
         onClick --> { _ =>
           gameData.DebugHardReset()
@@ -378,5 +425,47 @@ class UI(
       )
     )
   }
+
+  case class Toast(id: Long, message: String)
+
+  def showToast(msg: String): Unit = {
+    val toast = Toast(
+      id = Random.nextLong(),
+      message = msg
+    )
+    toastBus.emit(toast)
+  }
+
+  def toastContainer =
+    div(
+      cls := "fixed top-4 right-4 space-y-2 z-50",
+      children <-- toastsVar.signal.map(_.map(renderToast))
+    )
+
+  def renderToast(t: Toast): HtmlElement =
+    div(
+      idAttr := t.id.toString,
+      cls := "bg-slate-900 text-white text-sm px-4 py-2 rounded shadow-lg " +
+        "opacity-0 transition-opacity duration-300",
+      onMountCallback { ctx =>
+        // fade in
+        ctx.thisNode.ref.classList.add("opacity-100")
+
+        // schedule auto-remove
+        dom.window.setTimeout(
+          () => {
+            ctx.thisNode.ref.classList.remove("opacity-100")
+            dom.window.setTimeout(
+              () => {
+                toastsVar.update(_.filterNot(_.id == t.id))
+              },
+              300
+            ) // wait for fade-out transition
+          },
+          2000
+        ) // toast visible for 2s
+      },
+      t.message
+    )
 
 }

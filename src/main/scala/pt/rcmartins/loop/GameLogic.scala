@@ -397,10 +397,6 @@ class GameLogic(private var lastTimeMicro: Long) {
       val totalTiredSecondMicro: Long =
         additionalTiredness + initialGameState.currentTiredSecondMicro
 
-      println(
-        (additionalTiredness, initialGameState.currentTiredSecondMicro, totalTiredSecondMicro)
-      )
-
       Math.max(
         0,
         energy - (totalTiredSecondMicro * (actualElapsedMicro / 1e6)).toLong
