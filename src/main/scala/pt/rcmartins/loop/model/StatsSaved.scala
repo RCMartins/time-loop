@@ -6,7 +6,6 @@ case class StatsSaved(
     loopNumber: Int,
     totalElapedTimeMicro: Long,
     usedCheats: Boolean,
-    loopActionCount: Seq[(ActionDataType, Int)],
     globalActionCount: Seq[(ActionDataType, Int)],
 ) {
   def toStats: Stats =
@@ -14,7 +13,7 @@ case class StatsSaved(
       loopNumber = loopNumber,
       totalElapedTimeMicro = totalElapedTimeMicro,
       usedCheats = usedCheats,
-      loopActionCount = loopActionCount.toMap,
+      loopActionCount = Map.empty,
       globalActionCount = globalActionCount.toMap,
     )
 
@@ -27,7 +26,6 @@ object StatsSaved {
       loopNumber = stats.loopNumber,
       totalElapedTimeMicro = stats.totalElapedTimeMicro,
       usedCheats = stats.usedCheats,
-      loopActionCount = stats.loopActionCount.toSeq,
       globalActionCount = stats.globalActionCount.toSeq,
     )
 
