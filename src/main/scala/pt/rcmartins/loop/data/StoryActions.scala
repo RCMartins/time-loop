@@ -104,7 +104,7 @@ object StoryActions {
       effectLabel = EffectLabel.Explore,
       kind = ActionKind.Exploring,
       actionTime = ActionTime.Standard(17),
-      firstTimeUnlocksActions = _ => Seq(PickupMint, GoToGeneralStore),
+      firstTimeUnlocksActions = _ => Seq(PickupRosemary, GoToGeneralStore),
       invalidReason = state =>
         Option.unless(
           state.actionsHistory.exists(_.actionDataType == Arc1DataType.SearchKitchen) &&
@@ -114,10 +114,10 @@ object StoryActions {
       showWhenInvalid = false,
     )
 
-    def PickupMint: ActionData = gardeningAction(
-      actionDataType = Arc1DataType.PickMintGarden,
+    def PickupRosemary: ActionData = gardeningAction(
+      actionDataType = Arc1DataType.PickRosemaryGarden,
       area = Seq(Area1_Home),
-      itemType = ItemType.Mint,
+      itemType = ItemType.Rosemary,
       amount = 1,
       actionTime = ActionTime.Standard(6),
       initialAmountOfActions = AmountOfActions.Unlimited,
@@ -287,7 +287,7 @@ object StoryActions {
       area = Seq(Area1_Home),
       itemType = ItemType.HotMoldedSoap,
       amount = 1,
-      cost = Seq(ItemType.MeltedGlycerin -> 1, ItemType.Mint -> 1),
+      cost = Seq(ItemType.MeltedGlycerin -> 1, ItemType.Rosemary -> 1),
       actionTime = ActionTime.Standard(5),
       initialAmountOfActions = AmountOfActions.Unlimited,
       firstTimeUnlocksActions = _ => Seq(CreateSoap),
@@ -339,7 +339,7 @@ object StoryActions {
       actionTime = ActionTime.Standard(12),
       initialAmountOfActions = AmountOfActions.Unlimited,
       actionSuccessType = ActionSuccessType.WithFailure(0.5, 0.05),
-      changeInventory = _.addItem(ItemType.Coins, 2).removeItem(ItemType.HerbSoap, 1),
+      changeInventory = _.addItem(ItemType.Coins, 200).removeItem(ItemType.HerbSoap, 1),
       invalidReason = state =>
         Option.unless(state.inventory.canRemoveItem(ItemType.HerbSoap, 1))(
           ReasonLabel.NotEnoughSoapToSell
@@ -359,7 +359,7 @@ object StoryActions {
       everyTimeUnlocksActions = {
         case (_, 1) => Seq(GoToEquipmentStore)
         case (_, 2) => Seq(GoToForest)
-        case (_, 3) => Seq(BuyEmptyStore)
+        case (_, 3) => Seq(BuyEmptyShop)
         case _      => Seq()
       },
     )
@@ -435,27 +435,27 @@ object StoryActions {
       area = Seq(Area3_Store),
       itemType = ItemType.PrettyFlower,
       amount = 1,
-      coinsGain = 1,
+      coinsGain = 100,
       actionTime = ActionTime.Standard(10),
       initialAmountOfActions = AmountOfActions.Standard(10),
       firstTimeUnlocksActions = _ => Seq(),
     )
 
-    def BuyEmptyStore: ActionData =
+    def BuyEmptyShop: ActionData =
       ActionData(
-        actionDataType = Arc1DataType.BuyEmptyStore,
+        actionDataType = Arc1DataType.BuyEmptyShop,
         area = Seq(Area2_Town),
         title = s"Buy Empty Store",
         effectLabel = EffectLabel.BuyUpgrade(2500),
         kind = ActionKind.Social,
         actionTime = ActionTime.Standard(60),
         invalidReason = state =>
-          Option.unless(state.inventory.canRemoveItem(ItemType.Coins, 25))(
+          Option.unless(state.inventory.canRemoveItem(ItemType.Coins, 2500))(
             ReasonLabel.NotEnoughCoins
           ),
         firstTimeUnlocksActions = _ => Seq(PrepareStoreForBusiness),
         addStory = state =>
-          Option.when(state.stats.globalActionCount.getOrElse(Arc1DataType.BuyEmptyStore, 0) == 1)(
+          Option.when(state.stats.globalActionCount.getOrElse(Arc1DataType.BuyEmptyShop, 0) == 1)(
             Story.OtherLoops.BuyEmptyStop
           )
       )
