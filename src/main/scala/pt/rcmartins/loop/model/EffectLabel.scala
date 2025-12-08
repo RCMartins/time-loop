@@ -30,6 +30,10 @@ object EffectLabel {
     override val label: String = "Sell your soaps."
   }
 
+  case object GetSoapMold extends EffectLabel {
+    override val label: String = "Allows making soaps from glycerin."
+  }
+
   case class Cooking(itemType: ItemType, amount: Int) extends EffectLabel {
     override val label: String = s"Cook ${itemType.amountFormatInv(amount)} ${itemType.name}."
   }

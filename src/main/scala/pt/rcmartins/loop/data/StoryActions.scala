@@ -46,11 +46,12 @@ object StoryActions {
       },
     )
 
-    def PickupSimpleSoapMold: ActionData = pickupToItem(
+    def PickupSimpleSoapMold: ActionData = ActionData(
       actionDataType = Arc1DataType.PickupSimpleSoapMold,
       area = Seq(Area1_Home),
-      itemType = ItemType.SimpleSoapMold,
-      amount = 1,
+      title = "Get Soap Mold",
+      effectLabel = EffectLabel.GetSoapMold,
+      kind = ActionKind.Foraging,
       actionTime = ActionTime.Standard(5),
       initialAmountOfActions = AmountOfActions.Standard(1),
       firstTimeUnlocksActions = {
@@ -278,19 +279,8 @@ object StoryActions {
       cost = Seq(ItemType.Glycerin -> 1),
       actionTime = ActionTime.Standard(15),
       initialAmountOfActions = AmountOfActions.Unlimited,
-      firstTimeUnlocksActions = _ => Seq(MoldSoap),
-      showWhenInvalid = false,
-    )
-
-    def MoldSoap: ActionData = craftItem(
-      actionDataType = Arc1DataType.MoldSoap,
-      area = Seq(Area1_Home),
-      itemType = ItemType.HotMoldedSoap,
-      amount = 1,
-      cost = Seq(ItemType.MeltedGlycerin -> 1, ItemType.Rosemary -> 1),
-      actionTime = ActionTime.Standard(5),
-      initialAmountOfActions = AmountOfActions.Unlimited,
       firstTimeUnlocksActions = _ => Seq(CreateSoap),
+      showWhenInvalid = false,
     )
 
     def CreateSoap: ActionData = craftItem(
@@ -299,8 +289,8 @@ object StoryActions {
       itemType = ItemType.HerbSoap,
       amount = 1,
       actionSuccessType = ActionSuccessType.WithFailure(0.5, 0.05),
-      cost = Seq(ItemType.HotMoldedSoap -> 1),
-      actionTime = ActionTime.Standard(10),
+      cost = Seq(ItemType.MeltedGlycerin -> 1, ItemType.Rosemary -> 1),
+      actionTime = ActionTime.Standard(15),
       initialAmountOfActions = AmountOfActions.Unlimited,
       firstTimeUnlocksActions = _ => Seq(GoToTown),
       permanentBonusUnlocks =

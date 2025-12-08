@@ -190,7 +190,7 @@ object Util {
                 ),
                 bonus.description.split("\n").toSeq.map(p(_))
               ),
-              permanentBonusToIcon(bonus)
+              permanentBonusToSVGPath(bonus)
             )
         }
       }
@@ -295,9 +295,9 @@ object Util {
               div(
                 // inline-block so the wrapper is just the icon's size
                 cls := "relative inline-block group",
-                img(
+                div(
                   cls := "inline-block bg-blue-500 rounded w-7 h-7",
-                  src := iconPath
+                  Constants.Icons.CreateIconElement(Val(iconPath), Val(""))
                 ),
                 // Tooltip
                 div(
@@ -504,9 +504,9 @@ object Util {
         )
     }
 
-  private def permanentBonusToIcon(permanentBonus: PermanentBonus): String =
+  private def permanentBonusToSVGPath(permanentBonus: PermanentBonus): String =
     permanentBonus match {
-      case PermanentBonus.HalfTiredness => "public/icons/strong.svg"
+      case PermanentBonus.HalfTiredness => Constants.Icons.Strong
     }
 
 }

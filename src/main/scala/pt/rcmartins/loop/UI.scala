@@ -21,10 +21,10 @@ class UI(
   private val owner = new Owner {}
   private val DEBUG_MODE: Boolean = true
 
-  import gameData._
+  private val toastBus = new EventBus[Toast]
+  private val toastsVar = Var(List.empty[Toast])
 
-  val toastBus = new EventBus[Toast]
-  val toastsVar = Var(List.empty[Toast])
+  import gameData._
 
   def run(): ReactiveHtmlElement[HTMLDivElement] = {
     setInterval(25) {
@@ -47,7 +47,7 @@ class UI(
           cls := "order-2 md:order-2",
           centerColumn()
         ),
-        div(cls := "order-3 md:order-3", rightSidebar(inventoryView, miscView))
+        div(cls := "order-3 md:order-3", rightSidebar())
       ),
       toastContainer
     )
@@ -97,25 +97,47 @@ class UI(
   private val inventoryView: ReactiveHtmlElement[HTMLUListElement] =
     ul(
       cls := "space-y-2",
-      children <-- inventory.map(_.items).map {
-        _.filter(_._2 > 0).sortBy(_._1.inventoryOrder).map { case (item, qty, cooldownTimeMicro) =>
+      children <-- inventory.map(_.items.filter(_._2 > 0)).split(_._1) {
+        case (_, (item, _, _), itemSignal) =>
           li(
-            cls := "rounded-lg p-2 bg-slate-800/60 ring-1 ring-slate-700 flex justify-between items-center m-1",
-            span(cls := "font-mono", item.amountFormatInv(qty)),
-            span(item.name),
-            span(
-              child.text <-- timeElapsedMicro.map(elapsed =>
-                if (elapsed > cooldownTimeMicro)
-                  ""
-                else {
-                  val remainingMicro = cooldownTimeMicro - elapsed
-                  val remainingSec = remainingMicro.toDouble / 1e6
-                  f"$remainingSec%.1f"
-                }
+            cls := "rounded-lg p-2 bg-slate-800/60 ring-1 ring-slate-700 flex items-center m-1",
+
+            // ICON (10%)
+            div(
+              cls := "w-[10%] flex justify-center",
+              Constants.Icons.CreateIconElement(
+                itemSignal.map(_._1.iconPath),
+                itemSignal.map(_._1.iconColor),
               )
             ),
+
+            // QTY (20%)
+            div(
+              cls := "w-[20%] text-xs font-mono text-right",
+              child.text <-- itemSignal.map(_._2).distinct.map(qty => item.amountFormatInv(qty)),
+            ),
+
+            // NAME (50%)
+            div(
+              cls := "w-[50%] text-xs pl-2 truncate",
+              item.name
+            ),
+
+            // COOLDOWN (20%)
+            div(
+              cls := "w-[20%] text-xs text-right",
+              child.text <-- itemSignal.map(_._3).distinct.combineWith(timeElapsedMicro).map {
+                case (cooldownTimeMicro, elapsed) =>
+                  if (elapsed > cooldownTimeMicro)
+                    ""
+                  else {
+                    val remainingSec = (cooldownTimeMicro - elapsed).toDouble / 1e6
+                    f"$remainingSec%.1f"
+                  }
+              }
+            )
           )
-        }
+
       }
     )
 
@@ -254,7 +276,7 @@ class UI(
   }
 
   /** Right sidebar: inventory + other info stacked */
-  private def rightSidebar(inventoryView: HtmlElement, miscView: HtmlElement): HtmlElement =
+  private def rightSidebar(): HtmlElement =
     div(
       cls := "space-y-3 sticky top-4 self-start",
       panelCard(
@@ -426,9 +448,9 @@ class UI(
     )
   }
 
-  case class Toast(id: Long, message: String)
+  private case class Toast(id: Long, message: String)
 
-  def showToast(msg: String): Unit = {
+  private def showToast(msg: String): Unit = {
     val toast = Toast(
       id = Random.nextLong(),
       message = msg
@@ -436,13 +458,13 @@ class UI(
     toastBus.emit(toast)
   }
 
-  def toastContainer =
+  private def toastContainer: ReactiveHtmlElement[HTMLDivElement] =
     div(
       cls := "fixed top-4 right-4 space-y-2 z-50",
       children <-- toastsVar.signal.map(_.map(renderToast))
     )
 
-  def renderToast(t: Toast): HtmlElement =
+  private def renderToast(t: Toast): HtmlElement =
     div(
       idAttr := t.id.toString,
       cls := "bg-slate-900 text-white text-sm px-4 py-2 rounded shadow-lg " +
