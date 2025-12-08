@@ -52,8 +52,8 @@ object ItemType {
     val foodValueLong: Long = 0L
   }
 
-  case object Mint extends ItemType {
-    val name: String = "Garden Herb"
+  case object Rosemary extends ItemType {
+    val name: String = "Rosemary"
     val inventoryOrder: Int = 5
     val foodValueLong: Long = 0L
   }

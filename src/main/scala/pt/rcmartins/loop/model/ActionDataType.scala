@@ -32,7 +32,7 @@ object ActionDataType {
 
     case object SearchGarden extends Arc1DataType
 
-    case object PickMintGarden extends Arc1DataType
+    case object PickRosemaryGarden extends Arc1DataType
 
     case object GoToGeneralStore extends Arc1DataType
 
@@ -74,7 +74,7 @@ object ActionDataType {
 
     case object SellFlowerInStore extends Arc1DataType
 
-    case object BuyEmptyStore extends Arc1DataType
+    case object BuyEmptyShop extends Arc1DataType
 
     case object PrepareShopForBusiness extends Arc1DataType
 
