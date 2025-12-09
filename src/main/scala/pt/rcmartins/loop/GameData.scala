@@ -65,6 +65,20 @@ class GameData(
       _.modify(_.selectedNextAction).setTo(Some((actionId, limitOfActions)))
     )
 
+  def selectNextMoveAction(area: CharacterArea): Unit = {
+    if (gameStateVar.now().visibleMoveActions.exists(_.data.moveToArea.contains(area))) {
+      val actionIdOpt: Option[ActionId] =
+        gameStateVar
+          .now()
+          .visibleMoveActions
+          .find(_.data.moveToArea.contains(area))
+          .map(_.id)
+      actionIdOpt.foreach { actionId =>
+        selectNextAction(actionId, None)
+      }
+    }
+  }
+
   def DebugLoopNow(): Unit = {
     gameStateVar.update { state =>
       val newState: GameState =

@@ -395,7 +395,7 @@ object Util {
 
   def skillRow(skillSig: Signal[SkillState]): HtmlElement =
     div(
-      cls := "rounded-xl p-3 bg-slate-800/60 ring-1 ring-slate-700 flex items-center gap-3",
+      cls := "rounded-xl p-2 bg-slate-800/60 ring-1 ring-slate-700 flex items-center gap-3",
       // Dot accent
       div(
         cls := "h-2.5 w-2.5 rounded-full",
@@ -435,7 +435,7 @@ object Util {
             )
           ),
           div(
-            cls := "mt-1 text-[11px] text-slate-300/80",
+            cls := "text-[10px] text-slate-300/80",
             child.text <-- skillSig.map(sk => s"${sk.loopXPLong} / ${sk.nextLoopXP} XP")
           )
         ),
@@ -457,7 +457,7 @@ object Util {
             )
           ),
           div(
-            cls := "mt-1 text-[11px] text-slate-300/80",
+            cls := "text-[10px] text-slate-300/80",
             child.text <-- skillSig.map(sk => s"${sk.permXPLong} / ${sk.nextPermXP} XP")
           )
         )

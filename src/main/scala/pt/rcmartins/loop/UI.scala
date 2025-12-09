@@ -8,7 +8,7 @@ import org.scalajs.dom
 import org.scalajs.dom.{HTMLDivElement, HTMLUListElement}
 import pt.rcmartins.loop.Util._
 import pt.rcmartins.loop.data.StoryActions
-import pt.rcmartins.loop.model.{GameState, StoryLineHistory}
+import pt.rcmartins.loop.model.{ActionTime, CharacterArea, Dir8, GameState, StoryLineHistory}
 
 import scala.scalajs.js.timers
 import scala.scalajs.js.timers.setInterval
@@ -88,11 +88,90 @@ class UI(
 
   private val nextMoveActionsView: ReactiveHtmlElement[HTMLDivElement] =
     div(
-      cls := "grid gap-5 sm:grid-cols-2",
-      children <-- nextMoveActions.split(_.id) { case (_, _, action) =>
-        actionCard(action, gameData)
-      }
+      cls := "flex items-center justify-center",
+      worldMiniMap(
+        characterArea,
+        area => gameData.selectNextMoveAction(area)
+      )
     )
+
+  private def worldMiniMap(
+      currentArea: Signal[CharacterArea],
+      onMove: CharacterArea => Unit
+  ): ReactiveHtmlElement[HTMLDivElement] = {
+
+    // Center (current location)
+    def cellCenter(): HtmlElement =
+      div(
+        cls := "flex items-center justify-center w-32 h-10",
+        div(
+          cls := "px-3 py-1 rounded-full text-[11px] font-semibold " +
+            "bg-emerald-600 text-white shadow whitespace-nowrap",
+          div(
+            cls := "w-5 h-5 inline-block mr-1 align-middle",
+            Constants.Icons.CreateIconElement(currentArea.map(_.iconPath), Val("")),
+          ),
+          child.text <-- currentArea.map(_.name),
+        )
+      )
+
+    // Neighbor cell in a given direction
+    def cellDir(dir: CharacterArea => Option[CharacterArea]): HtmlElement =
+      div(
+        cls := "flex items-center justify-center w-32 h-10",
+        child.maybe <-- currentArea.combineWith(nextMoveActions).map { case (loc, moveActions) =>
+          val targetAreaOpt: Option[CharacterArea] = dir(loc)
+          moveActions
+            .find(_.data.moveToArea == targetAreaOpt)
+            .flatMap(action => action.data.moveToArea.map(_ -> action))
+            .map { case (targetArea, action) =>
+              button(
+                tpe := "button",
+                cls := "px-3 py-1 rounded-full text-[11px] " +
+                  "border border-slate-600 bg-slate-800/80 text-slate-200 " +
+                  "hover:bg-slate-700/80 hover:text-white transition " +
+                  "whitespace-nowrap",
+                onClick --> { _ => onMove(targetArea) },
+                div(
+                  cls := "w-5 h-5 inline-block mr-1 align-middle",
+                  Constants.Icons.CreateIconElement(Val(targetArea.iconPath), Val("")),
+                ),
+                div(
+                  span(targetArea.name),
+                  " (",
+                  action.data.actionTime match {
+                    case ActionTime.Standard(baseTimeSec)     => baseTimeSec.toString
+                    case ActionTime.ReduzedXP(baseTimeSec, _) => baseTimeSec.toString
+                  },
+                  ")",
+                )
+              )
+            }
+        }
+      )
+
+    div(
+      cls := "relative inline-block p-2 rounded-2xl bg-slate-900/80 " +
+        "ring-1 ring-slate-700 shadow",
+
+      // The 3x3 grid
+      div(
+        cls := "grid grid-cols-3 grid-rows-3 gap-1",
+        // top row
+        cellDir(_.connection(Dir8.TopLeft)),
+        cellDir(_.connection(Dir8.Top)),
+        cellDir(_.connection(Dir8.TopRight)),
+        // middle row
+        cellDir(_.connection(Dir8.Left)),
+        cellCenter(),
+        cellDir(_.connection(Dir8.Right)),
+        // bottom row
+        cellDir(_.connection(Dir8.BottomLeft)),
+        cellDir(_.connection(Dir8.Bottom)),
+        cellDir(_.connection(Dir8.BottomRight)),
+      ),
+    )
+  }
 
   private val inventoryView: ReactiveHtmlElement[HTMLUListElement] =
     ul(

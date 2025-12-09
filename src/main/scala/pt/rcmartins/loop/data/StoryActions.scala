@@ -17,7 +17,7 @@ object StoryActions {
     def WakeUp: ActionData = ActionData(
       actionDataType = Arc1DataType.WakeUp,
       area = Seq(Area1_Home),
-      title = "Wake Up from bed",
+      title = "Wake up from bed",
       effectLabel = EffectLabel.Empty,
       kind = ActionKind.Agility,
       actionTime = ActionTime.Standard(7),
@@ -126,22 +126,22 @@ object StoryActions {
 
     def GoToGeneralStore: ActionData = ActionData(
       actionDataType = Arc1DataType.GoToGeneralStore,
-      area = Seq(Area1_Home, Area2_Town, Area4_EquipmentStore),
+      area = Area3_GeneralStore.allConnections,
       title = "Go to the General Store",
       effectLabel = EffectLabel.Movement,
       kind = ActionKind.Agility,
-      actionTime = ActionTime.ReduzedXP(20, 0.5),
+      actionTime = ActionTime.ReduzedXP(15, 0.5),
       initialAmountOfActions = AmountOfActions.Unlimited,
       firstTimeUnlocksActions = {
         case LoopCount(1) => Seq(BuyGlycerinFirstLoop)
         case _            => Seq(BuyGlycerin, BuyFrozenMomo, GoToBackHome)
       },
-      moveToArea = Some(Area3_Store),
+      moveToArea = Some(Area3_GeneralStore),
     )
 
     def BuyGlycerinFirstLoop: ActionData = buyItemAction(
       actionDataType = Arc1DataType.BuyGlycerin,
-      area = Seq(Area3_Store),
+      area = Seq(Area3_GeneralStore),
       itemType = ItemType.Glycerin,
       amount = 1,
       cost = 500,
@@ -153,7 +153,7 @@ object StoryActions {
 
     def BuyGlycerin: ActionData = buyItemAction(
       actionDataType = Arc1DataType.BuyGlycerin,
-      area = Seq(Area3_Store),
+      area = Seq(Area3_GeneralStore),
       itemType = ItemType.Glycerin,
       amount = 1,
       cost = 500,
@@ -164,7 +164,7 @@ object StoryActions {
 
     def FirstLoopGoToForest: ActionData = ActionData(
       actionDataType = Arc1DataType.GoToForest,
-      area = Seq(Area3_Store),
+      area = Seq(Area3_GeneralStore),
       title = "Go to the Forest",
       effectLabel = EffectLabel.Movement,
       kind = ActionKind.Agility,
@@ -225,7 +225,7 @@ object StoryActions {
 
     def BuyFrozenMomo: ActionData = buyItemAction(
       actionDataType = Arc1DataType.BuyFrozenMomo,
-      area = Seq(Area3_Store),
+      area = Seq(Area3_GeneralStore),
       itemType = ItemType.FrozenMomo,
       amount = 1,
       cost = 50,
@@ -261,11 +261,11 @@ object StoryActions {
 
     def GoToBackHome: ActionData = ActionData(
       actionDataType = Arc1DataType.GoToBackHome,
-      area = Seq(Area2_Town, Area3_Store, Area4_EquipmentStore),
+      area = Area1_Home.allConnections,
       title = "Go back home",
       effectLabel = EffectLabel.Movement,
       kind = ActionKind.Agility,
-      actionTime = ActionTime.ReduzedXP(20, 0.5),
+      actionTime = ActionTime.ReduzedXP(15, 0.5),
       initialAmountOfActions = AmountOfActions.Unlimited,
       firstTimeUnlocksActions = _ => Seq(),
       moveToArea = Some(Area1_Home),
@@ -300,7 +300,7 @@ object StoryActions {
 
     def GoToTown: ActionData = ActionData(
       actionDataType = Arc1DataType.GoToTown,
-      area = Seq(Area1_Home, Area3_Store, Area4_EquipmentStore, Area5_Forest, Area6_My_Soap_Shop),
+      area = Area2_Town.allConnections,
       title = "Go to town",
       effectLabel = EffectLabel.Movement,
       kind = ActionKind.Agility,
@@ -356,11 +356,11 @@ object StoryActions {
 
     def GoToEquipmentStore: ActionData = ActionData(
       actionDataType = Arc1DataType.GoToEquipamentStore,
-      area = Seq(Area2_Town),
+      area = Area4_EquipmentStore.allConnections,
       title = "Go to the Equipment Store",
       effectLabel = EffectLabel.Movement,
       kind = ActionKind.Agility,
-      actionTime = ActionTime.ReduzedXP(50, 0.5),
+      actionTime = ActionTime.ReduzedXP(40, 0.5),
       initialAmountOfActions = AmountOfActions.Unlimited,
       firstTimeUnlocksActions = _ =>
         Seq(
@@ -391,7 +391,7 @@ object StoryActions {
 
     def GoToForest: ActionData = ActionData(
       actionDataType = Arc1DataType.GoToForest,
-      area = Seq(Area2_Town),
+      area = Area5_Forest.allConnections,
       title = "Go to the Forest",
       effectLabel = EffectLabel.Movement,
       kind = ActionKind.Agility,
@@ -422,7 +422,7 @@ object StoryActions {
 
     def SellFlowerInGeneralStore: ActionData = sellItemAction(
       actionDataType = Arc1DataType.SellFlowerInStore,
-      area = Seq(Area3_Store),
+      area = Seq(Area3_GeneralStore),
       itemType = ItemType.PrettyFlower,
       amount = 1,
       coinsGain = 100,
@@ -469,14 +469,14 @@ object StoryActions {
 
     def GoToMySoapStore: ActionData = ActionData(
       actionDataType = Arc2DataType.GoToMySoapShop,
-      area = Seq(Area2_Town),
+      area = Area6_MySoapShop.allConnections,
       title = "Go to my Soap Shop",
       effectLabel = EffectLabel.Movement,
       kind = ActionKind.Agility,
       actionTime = ActionTime.ReduzedXP(25, 0.5),
       initialAmountOfActions = AmountOfActions.Unlimited,
       firstTimeUnlocksActions = _ => Seq(),
-      moveToArea = Some(Area6_My_Soap_Shop),
+      moveToArea = Some(Area6_MySoapShop),
     )
 
   }
