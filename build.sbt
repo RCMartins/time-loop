@@ -69,24 +69,24 @@ val copyPath: String = "public/js/"
 
 fastOptCompileCopy := {
   val frontendJSFile = (frontend / copyFrontendFastOpt).value
-  val targetFile = baseDirectory.value / copyPath / "time-loop-scala.js"
+  val targetFile = baseDirectory.value / copyPath / "time-loop.js"
   if (frontendJSFile.hashString != targetFile.hashString) {
     IO.copyFile(frontendJSFile, targetFile)
     IO.copyFile(
-      frontendJSFile.getParentFile / "time-loop-fastopt.js.map",
-      baseDirectory.value / copyPath / "time-loop-fastopt.js.map"
+      frontendJSFile.getParentFile / "time-loop.js.map",
+      baseDirectory.value / copyPath / "time-loop.js.map"
     )
   }
 }
 
 fullOptCompileCopy := {
   val frontendJSFile = (frontend / copyFrontendFullOpt).value
-  val targetFile = baseDirectory.value / copyPath / "time-loop-scala.js"
+  val targetFile = baseDirectory.value / copyPath / "time-loop.js"
   if (frontendJSFile.hashString != targetFile.hashString) {
     IO.copyFile(frontendJSFile, targetFile)
     IO.copyFile(
-      frontendJSFile.getParentFile / "time-loop-fastopt.js.map",
-      baseDirectory.value / copyPath / "time-loop-fastopt.js.map"
+      frontendJSFile.getParentFile / "time-loop.js.map",
+      baseDirectory.value / copyPath / "time-loop.js.map"
     )
   }
 }
