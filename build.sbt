@@ -73,7 +73,7 @@ fastOptCompileCopy := {
   if (frontendJSFile.hashString != targetFile.hashString) {
     IO.copyFile(frontendJSFile, targetFile)
     IO.copyFile(
-      frontendJSFile.getParentFile / "time-loop.js.map",
+      frontendJSFile.getParentFile / "time-loop-fastopt.js.map",
       baseDirectory.value / copyPath / "time-loop.js.map"
     )
   }
@@ -85,7 +85,7 @@ fullOptCompileCopy := {
   if (frontendJSFile.hashString != targetFile.hashString) {
     IO.copyFile(frontendJSFile, targetFile)
     IO.copyFile(
-      frontendJSFile.getParentFile / "time-loop.js.map",
+      frontendJSFile.getParentFile / "time-loop-opt.js.map",
       baseDirectory.value / copyPath / "time-loop.js.map"
     )
   }
