@@ -3,6 +3,10 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+#  pull_request:
+#    branches:
+#      - main
 
 permissions:
   contents: write   # allow pushing to gh-pages
@@ -21,14 +25,13 @@ jobs:
           java-version: adopt@1.11
 
       - name: Build project
-        run: sbt fullOptJS
+        run: sbt fullOptCompileCopy
 
       - name: Prepare files for GitHub Pages
         run: |
-          mkdir ./publish-folder
-          sed -i 's|target/scala-2.13/time-loop-fastopt/||g' index.html
+          mkdir -p ./publish-folder/public/js
           cp ./index.html ./publish-folder/
-          find ./target/scala-2.13/ -type f \( -name "*.js" -o -name "*.js.map" \) -exec cp {} ./publish-folder/ \;
+          cp -r ./public/* ./publish-folder/public/
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
