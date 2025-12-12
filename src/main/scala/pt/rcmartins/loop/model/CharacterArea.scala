@@ -86,6 +86,7 @@ object CharacterArea {
         addConnection(Area2_Town, Area3_GeneralStore, TopLeft)
         addConnection(Area2_Town, Area4_EquipmentStore, Bottom)
         addConnection(Area2_Town, Area6_MySoapShop, Right)
+        addConnection(Area3_GeneralStore, Area5_Forest, BottomLeft)
 
         connections
       }
