@@ -4,7 +4,7 @@ import scala.util.Random
 
 final case class ActionData(
     actionDataType: ActionDataType,
-    area: Seq[CharacterArea],
+    area: GameState => Seq[CharacterArea],
     title: String,
     effectLabel: EffectLabel,
     kind: ActionKind,

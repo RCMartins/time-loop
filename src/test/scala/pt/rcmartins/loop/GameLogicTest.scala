@@ -19,7 +19,7 @@ object GameLogicTest extends ZIOSpecDefault {
 
   private val DummyWakeUpAction: ActionData = ActionData(
     actionDataType = Arc1DataType.WakeUp,
-    area = Seq(Area1_Home),
+    area = _ => Seq(Area1_Home),
     title = "Test wake Up",
     effectLabel = EffectLabel.Empty,
     kind = ActionKind.Agility,

@@ -18,6 +18,8 @@ class UI(
     gameData: GameData,
 ) {
 
+  // TODO Hide map until first move action is available
+
   private val owner = new Owner {}
   private val DEBUG_MODE: Boolean = true
 

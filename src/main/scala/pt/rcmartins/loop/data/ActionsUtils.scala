@@ -6,7 +6,7 @@ object ActionsUtils {
 
   def pickupToItem(
       actionDataType: ActionDataType,
-      area: Seq[CharacterArea],
+      area: GameState => Seq[CharacterArea],
       itemType: ItemType,
       amount: Int,
       actionTime: ActionTime,
@@ -32,7 +32,7 @@ object ActionsUtils {
 
   def gardeningAction(
       actionDataType: ActionDataType,
-      area: Seq[CharacterArea],
+      area: GameState => Seq[CharacterArea],
       itemType: ItemType,
       amount: Int,
       actionTime: ActionTime,
@@ -52,7 +52,7 @@ object ActionsUtils {
 
   def buyItemAction(
       actionDataType: ActionDataType,
-      area: Seq[CharacterArea],
+      area: GameState => Seq[CharacterArea],
       itemType: ItemType,
       amount: Int,
       cost: Int,
@@ -85,7 +85,7 @@ object ActionsUtils {
 
   def sellItemAction(
       actionDataType: ActionDataType,
-      area: Seq[CharacterArea],
+      area: GameState => Seq[CharacterArea],
       itemType: ItemType,
       amount: Int,
       coinsGain: Int,
@@ -115,7 +115,7 @@ object ActionsUtils {
 
   def buyInventoryIncrease(
       actionDataType: ActionDataType,
-      area: Seq[CharacterArea],
+      area: GameState => Seq[CharacterArea],
       name: String,
       cost: Int,
       inventoryMaxSize: Int,
@@ -141,7 +141,7 @@ object ActionsUtils {
 
   def cookingAction(
       actionDataType: ActionDataType,
-      area: Seq[CharacterArea],
+      area: GameState => Seq[CharacterArea],
       itemType: ItemType,
       amount: Int,
       cost: Seq[(ItemType, Int)],
@@ -182,7 +182,7 @@ object ActionsUtils {
 
   def craftItem(
       actionDataType: ActionDataType,
-      area: Seq[CharacterArea],
+      area: GameState => Seq[CharacterArea],
       itemType: ItemType,
       amount: Int,
       cost: Seq[(ItemType, Int)],

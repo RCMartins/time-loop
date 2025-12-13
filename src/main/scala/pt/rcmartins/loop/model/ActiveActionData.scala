@@ -39,9 +39,11 @@ object ActiveActionData {
     action.map(action => action.microSoFar.toDouble / action.data.baseTimeMicro.toDouble)
 
   def areaIsValid(state: GameState, data: ActionData): Boolean =
-    data.area.contains(
-      state.currentAction.flatMap(_.data.moveToArea).getOrElse(state.characterArea)
-    )
+    data
+      .area(state)
+      .contains(
+        state.currentAction.flatMap(_.data.moveToArea).getOrElse(state.characterArea)
+      )
 
   def isInvalid(state: GameState, data: ActionData): Boolean =
     data.invalidReason(state).nonEmpty || !areaIsValid(state, data)
