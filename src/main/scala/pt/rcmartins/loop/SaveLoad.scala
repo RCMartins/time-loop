@@ -1,6 +1,7 @@
 package pt.rcmartins.loop
 
 import org.scalajs.dom.window.localStorage
+import pt.rcmartins.loop.model.migrations._
 import pt.rcmartins.loop.model.{GameState, GameStateSaved}
 import zio.json.{DecoderOps, EncoderOps}
 
@@ -41,9 +42,9 @@ object SaveLoad {
   private val versionsToTry: LazyList[String => Option[GameState]] =
     LazyList[String => Option[GameState]](
       _.fromJson[GameStateSaved].toOption.map(_.toGameState),
-      _.fromJson[GameStateSaved].toOption.map(_.toGameState),
-      _.fromJson[GameStateSaved].toOption.map(_.toGameState),
-      _.fromJson[GameStateSaved].toOption.map(_.toGameState),
+      _.fromJson[GameStateMinimal].toOption.map(_.toGameState),
+      _.fromJson[GameStateSkillsOnly].toOption.map(_.toGameState),
+      _.fromJson[GameStateVersionOnly].toOption.map(_.toGameState),
     )
 
   private def loadFromJson(str: String): Option[GameState] =
