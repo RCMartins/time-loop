@@ -3,7 +3,6 @@ package pt.rcmartins.loop.model
 import com.raquo.laminar.api.L.Signal
 
 case class ActiveActionData(
-    id: ActionId,
     data: ActionData,
     microSoFar: Long,
     xpMultiplier: Double,
@@ -13,6 +12,8 @@ case class ActiveActionData(
     limitOfActions: Option[Int] = None,
     numberOfCompletions: Int = 0,
 ) {
+
+  val id: ActionId = data.actionDataType.id
 
   override def toString: String =
     s"ActiveActionData(data=${data.title}, microSoFar=$microSoFar, amountOfActionsLeft=$amountOfActionsLeft)"

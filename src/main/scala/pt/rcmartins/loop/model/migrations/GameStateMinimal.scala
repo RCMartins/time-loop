@@ -1,10 +1,10 @@
-package pt.rcmartins.loop.model
+package pt.rcmartins.loop.model.migrations
 
 import pt.rcmartins.loop.data.StoryActions
-import pt.rcmartins.loop.model.migrations.GameSatedSavedVersion
-import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
+import pt.rcmartins.loop.model._
+import zio.json.{DeriveJsonDecoder, JsonDecoder}
 
-case class GameStateSaved(
+case class GameStateMinimal(
     version: Int,
     seed: Long,
     maxEnergyInt: Int,
@@ -43,21 +43,9 @@ case class GameStateSaved(
 
 }
 
-object GameStateSaved {
+object GameStateMinimal {
 
-  def fromGameState(gameState: GameState): GameStateSaved =
-    GameStateSaved(
-      version = gameState.version,
-      seed = gameState.seed,
-      maxEnergyInt = gameState.maxEnergyInt,
-      initialTiredSecond = gameState.initialTiredSecond,
-      initialTiredMultSecond = gameState.initialTiredMultSecond,
-      stats = StatsSaved.fromStats(gameState.stats),
-      skills = gameState.skills,
-      storyActionsHistory = gameState.storyActionsHistory.map(_.line),
-    )
-
-  implicit val decoder: JsonDecoder[GameStateSaved] = DeriveJsonDecoder.gen[GameStateSaved]
-  implicit val encoder: JsonEncoder[GameStateSaved] = DeriveJsonEncoder.gen[GameStateSaved]
+  implicit val decoder: JsonDecoder[GameStateMinimal] =
+    DeriveJsonDecoder.gen[GameStateMinimal]
 
 }

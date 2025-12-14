@@ -108,9 +108,9 @@ object StoryActions {
       firstTimeUnlocksActions = _ => Seq(PickupRosemary, GoToGeneralStore),
       invalidReason = state =>
         Option.unless(
-          state.actionsHistory.exists(_.actionDataType == Arc1DataType.SearchKitchen) &&
-            state.actionsHistory.exists(_.actionDataType == Arc1DataType.SearchLivingRoom) &&
-            state.actionsHistory.exists(_.actionDataType == Arc1DataType.PickupSimpleSoapMold)
+          state.actionsHistory.contains(Arc1DataType.SearchKitchen) &&
+            state.actionsHistory.contains(Arc1DataType.SearchLivingRoom) &&
+            state.actionsHistory.contains(Arc1DataType.PickupSimpleSoapMold)
         )(ReasonLabel.Empty),
       showWhenInvalid = false,
     )
@@ -554,5 +554,43 @@ object StoryActions {
     object Arc2Story {}
 
   }
+
+  val allActions: Map[ActionId, ActionData] = Seq(
+    Data.WakeUp,
+    Data.SearchLivingRoom,
+    Data.PickupSimpleSoapMold,
+    Data.PickupCoins,
+    Data.SearchKitchen,
+    Data.CookRice,
+    Data.SearchGarden,
+    Data.PickupRosemary,
+    Data.GoToGeneralStore,
+    Data.BuyGlycerinFirstLoop,
+    Data.BuyGlycerin,
+    Data.FirstLoopGoToForest,
+    Data.ExploreForestForLavender,
+    Data.FindMysteriousSorcerer,
+    Data.TalkMysteriousSorcerer,
+    Data.FirstLoopFadingAway,
+    Data.BuyFrozenMomo,
+    Data.CookMomo,
+    Data.GoToBackHome,
+    Data.MeltGlycerin,
+    Data.CreateSoap,
+    Data.GoToTown,
+    Data.TalkWithPeopleInTown,
+    Data.SellSoapToPeople,
+    Data.ExploreTown,
+    Data.GoToEquipmentStore,
+    Data.BuyBigBag,
+    Data.BuyHugeBag,
+    Data.GoToForest,
+    Data.PickupBerries,
+    Data.PickupPrettyFlower,
+    Data.SellFlowerInGeneralStore,
+    Data.BuyEmptyShop,
+    Data.PrepareStoreForBusiness,
+    Data.GoToMySoapStore,
+  ).map(a => a.actionDataType.id -> a).toMap
 
 }

@@ -1,7 +1,5 @@
 package pt.rcmartins.loop.model
 
-import scala.util.Random
-
 final case class ActionData(
     actionDataType: ActionDataType,
     area: GameState => Seq[CharacterArea],
@@ -27,7 +25,6 @@ final case class ActionData(
 
   def toActiveAction: ActiveActionData =
     new ActiveActionData(
-      id = ActionId(Random.nextLong()),
       data = this,
       microSoFar = 0L,
       xpMultiplier = 1.0,

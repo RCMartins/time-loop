@@ -25,7 +25,7 @@ case class GameState(
     visibleMoveActions: Seq[ActiveActionData],
     selectedNextAction: Option[(ActionId, Option[Int])],
     deckActions: Seq[ActiveActionData],
-    actionsHistory: Seq[ActionData],
+    actionsHistory: Seq[ActionDataType],
     storyActionsHistory: Seq[StoryLineHistory],
     inProgressStoryActions: Seq[RunTimeStoryAction],
 ) {

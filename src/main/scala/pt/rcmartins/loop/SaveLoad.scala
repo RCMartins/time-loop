@@ -38,8 +38,16 @@ object SaveLoad {
       loadFromJson(base64ToJson(strTrimmed))
   }
 
+  private val versionsToTry: LazyList[String => Option[GameState]] =
+    LazyList[String => Option[GameState]](
+      _.fromJson[GameStateSaved].toOption.map(_.toGameState),
+      _.fromJson[GameStateSaved].toOption.map(_.toGameState),
+      _.fromJson[GameStateSaved].toOption.map(_.toGameState),
+      _.fromJson[GameStateSaved].toOption.map(_.toGameState),
+    )
+
   private def loadFromJson(str: String): Option[GameState] =
-    str.fromJson[GameStateSaved].toOption.map(_.toGameState)
+    versionsToTry.map(_(str)).collectFirst { case Some(gs) => gs }
 
   private def base64ToJson(str: String): String =
     new String(java.util.Base64.getDecoder.decode(str.getBytes))
