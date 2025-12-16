@@ -5,12 +5,14 @@ import zio.json.{DeriveJsonDecoder, JsonDecoder}
 
 case class GameStateSkillsOnly(
     version: Int,
+    seed: Long,
     skills: SkillsState,
 ) extends GameSatedSavedVersion {
 
   def toGameState: GameState =
     GameState.initial.copy(
       version = version,
+      seed = seed,
       skills = skills.resetLoopProgress,
     )
 

@@ -1,5 +1,9 @@
 package pt.rcmartins.loop.model
 
+import pt.rcmartins.loop.data.StoryActions
+import pt.rcmartins.loop.model.ActionDataType.all
+import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
+
 final case class ActionData(
     actionDataType: ActionDataType,
     area: GameState => Seq[CharacterArea],
@@ -38,5 +42,20 @@ final case class ActionData(
         case ActionSuccessType.WithFailure(_, increase) => increase
       },
     )
+
+}
+
+object ActionData {
+
+  implicit val decoder: JsonDecoder[ActionData] =
+    ActionDataType.decoder.mapOrFail { actionDataType =>
+      StoryActions.allActions.get(actionDataType.id) match {
+        case Some(data) => Right(data)
+        case None       => Left(s"Unknown DataAction: ${actionDataType.id}")
+      }
+    }
+
+  implicit val encoder: JsonEncoder[ActionData] =
+    JsonEncoder.long.contramap[ActionData](_.actionDataType.id.id)
 
 }

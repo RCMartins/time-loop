@@ -1,5 +1,7 @@
 package pt.rcmartins.loop.model
 
+import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
+
 sealed trait AmountOfActions {
 
   def moreThanOne: Boolean
@@ -23,5 +25,9 @@ object AmountOfActions {
     val reduceOne: AmountOfActions = Unlimited
     val singleAction: Boolean = false
   }
+
+
+  implicit val decoder: JsonDecoder[AmountOfActions] = DeriveJsonDecoder.gen[AmountOfActions]
+  implicit val encoder: JsonEncoder[AmountOfActions] = DeriveJsonEncoder.gen[AmountOfActions]
 
 }

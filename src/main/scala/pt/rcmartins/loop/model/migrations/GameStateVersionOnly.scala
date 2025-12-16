@@ -4,12 +4,14 @@ import pt.rcmartins.loop.model.GameState
 import zio.json.{DeriveJsonDecoder, JsonDecoder}
 
 case class GameStateVersionOnly(
-    version: Int
+    version: Int,
+    seed: Long,
 ) extends GameSatedSavedVersion {
 
   def toGameState: GameState =
     GameState.initial.copy(
       version = version,
+      seed = seed,
     )
 
 }

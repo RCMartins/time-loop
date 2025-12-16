@@ -1,6 +1,7 @@
 package pt.rcmartins.loop.model
 
 import com.raquo.laminar.api.L.Signal
+import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
 
 case class ActiveActionData(
     data: ActionData,
@@ -29,6 +30,9 @@ case class ActiveActionData(
 }
 
 object ActiveActionData {
+
+  implicit val decoder: JsonDecoder[ActiveActionData] = DeriveJsonDecoder.gen[ActiveActionData]
+  implicit val encoder: JsonEncoder[ActiveActionData] = DeriveJsonEncoder.gen[ActiveActionData]
 
   def longSoFar(action: Signal[ActiveActionData]): Signal[Long] =
     action.map(_.microSoFar / 1_000_000L)

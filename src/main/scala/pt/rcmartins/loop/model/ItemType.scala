@@ -1,8 +1,10 @@
 package pt.rcmartins.loop.model
 
 import pt.rcmartins.loop.Constants
+import zio.json.{JsonDecoder, JsonEncoder}
 
 sealed trait ItemType {
+  val id: Int
   val name: String
   val iconPath: String = ""
   val iconColor: String = "text-stone-50"
@@ -22,6 +24,7 @@ object ItemType {
   // Coins
 
   case object Coins extends ItemType {
+    val id: Int = 1
     val name: String = "Coins"
     override val iconPath: String = Constants.Icons.TwoCoins
     override val iconColor: String = "text-yellow-300"
@@ -35,6 +38,7 @@ object ItemType {
   // Misc Items
 
   case object Rosemary extends ItemType {
+    val id: Int = 2
     val name: String = "Rosemary"
     override val iconPath: String = Constants.Icons.Olive
     override val iconColor: String = "text-green-500"
@@ -43,6 +47,7 @@ object ItemType {
   }
 
   case object Glycerin extends ItemType {
+    val id: Int = 3
     val name: String = "Glycerin Based Soap"
     override val iconPath: String = Constants.Icons.StoneBlock
     val inventoryOrder: Int = 3
@@ -50,6 +55,7 @@ object ItemType {
   }
 
   case object MeltedGlycerin extends ItemType {
+    val id: Int = 4
     val name: String = "Melted Glycerin"
     override val iconPath: String = Constants.Icons.BubblingBowl
     override val iconColor: String = "text-neutral-300"
@@ -58,6 +64,7 @@ object ItemType {
   }
 
   case object HerbSoap extends ItemType {
+    val id: Int = 5
     val name: String = "Herb Soap"
     override val iconPath: String = Constants.Icons.Soap
     override val iconColor: String = "text-green-300"
@@ -66,6 +73,7 @@ object ItemType {
   }
 
   case object PrettyFlower extends ItemType {
+    val id: Int = 6
     val name: String = "Pretty Flower"
     val inventoryOrder: Int = 6
     val foodValueLong: Long = 0L
@@ -74,6 +82,7 @@ object ItemType {
   // Raw/Frozen Food Items
 
   case object FrozenMomo extends ItemType {
+    val id: Int = 7
     val name: String = "Frozen Momo"
     override val iconPath: String = Constants.Icons.DumplingBao
     override val iconColor: String = "text-cyan-500"
@@ -84,6 +93,7 @@ object ItemType {
   // Food Items
 
   case object Rice extends ItemType {
+    val id: Int = 8
     val name: String = "Rice"
     override val iconPath: String = Constants.Icons.BowlOfRice
     val inventoryOrder: Int = 31
@@ -91,12 +101,14 @@ object ItemType {
   }
 
   case object Berries extends ItemType {
+    val id: Int = 9
     val name: String = "Berries"
     val inventoryOrder: Int = 32
     val foodValueLong: Long = 6L
   }
 
   case object Momo extends ItemType {
+    val id: Int = 10
     val name: String = "Momo"
     override val iconPath: String = Constants.Icons.DumplingBao
     override val iconColor: String = "text-yellow-100"
@@ -105,21 +117,54 @@ object ItemType {
   }
 
   case object Curry extends ItemType {
+    val id: Int = 11
     val name: String = "Curry"
     val inventoryOrder: Int = 34
     val foodValueLong: Long = 12L
   }
 
   case object Chatpate extends ItemType {
+    val id: Int = 12
     val name: String = "Chatpate"
     val inventoryOrder: Int = 35
     val foodValueLong: Long = 15L
   }
 
   case object Panipuri extends ItemType {
+    val id: Int = 13
     val name: String = "Panipuri"
     val inventoryOrder: Int = 36
     val foodValueLong: Long = 20L
   }
+
+  private val allItems: Seq[ItemType] = Seq(
+    Coins,
+    Rosemary,
+    Glycerin,
+    MeltedGlycerin,
+    HerbSoap,
+    PrettyFlower,
+    FrozenMomo,
+    Rice,
+    Berries,
+    Momo,
+    Curry,
+    Chatpate,
+    Panipuri,
+  )
+
+  private[model] val allMap: Map[Int, ItemType] =
+    allItems.map(item => item.id -> item).toMap
+
+  implicit val decoder: JsonDecoder[ItemType] =
+    JsonDecoder.int.mapOrFail { id =>
+      allMap.get(id) match {
+        case Some(itemType) => Right(itemType)
+        case None           => Left(s"Unknown ItemType id: $id")
+      }
+    }
+
+  implicit val encoder: JsonEncoder[ItemType] =
+    JsonEncoder.int.contramap[ItemType](_.id)
 
 }
