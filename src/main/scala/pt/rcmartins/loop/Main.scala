@@ -34,12 +34,15 @@ object Main {
         case Some(save) => save
       }
 
-    val gameData: GameData =
+    val gameData: GameData = {
+      val gameUtils = new GameUtils()
       new GameData(
-        currentGameState,
+        constructorGameState = currentGameState,
         // TODO add some kind of offline progress ?
-        gameLogic = new GameLogic(System.currentTimeMillis())
+        gameLogic = new GameLogic(System.currentTimeMillis(), gameUtils),
+        utils = gameUtils,
       )
+    }
 
     render(
       dom.document.getElementById("main-div"),

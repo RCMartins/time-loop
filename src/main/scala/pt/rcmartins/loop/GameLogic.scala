@@ -9,7 +9,10 @@ import scala.annotation.tailrec
 import scala.util.Random
 import scala.util.chaining.scalaUtilChainingOps
 
-class GameLogic(private var lastTimeMicro: Long) {
+class GameLogic(
+    private var lastTimeMicro: Long,
+    private val gameUtils: GameUtils,
+) {
 
   def update(initialGameState: GameState, currentTimeMicro: Long): GameState = {
     val elapsedTimeMicro = Math.min(1_000_000L, currentTimeMicro - lastTimeMicro)
@@ -171,13 +174,6 @@ class GameLogic(private var lastTimeMicro: Long) {
         )
     }
   }
-
-  private def checkIfCanBeSaved(gameState: GameState): GameState =
-    if (gameState.timeElapsedMicroLastSave != gameState.timeElapsedMicro) {
-      SaveLoad.saveToLocalStorage(gameState)
-      gameState.copy(timeElapsedMicroLastSave = gameState.timeElapsedMicro)
-    } else
-      gameState
 
   private def applyCurrentActionIfComplete(
       state: GameState,
@@ -443,11 +439,28 @@ class GameLogic(private var lastTimeMicro: Long) {
         )
     }
 
+  private def checkIfCanBeSaved(gameState: GameState): GameState =
+    if (gameState.timeElapsedMicroLastSave != gameState.timeElapsedMicro) {
+      SaveLoad.saveToLocalStorage(gameState) match {
+        case Left(_) =>
+          gameState
+        case Right(_) =>
+          gameUtils.showToast("Game Saved!")
+          gameState.copy(timeElapsedMicroLastSave = gameState.timeElapsedMicro)
+      }
+    } else
+      gameState
+
   private def checkDeathDueToTiredness(state: GameState): GameState =
     if (state.energyMicro == 0L) {
-      val newState = state.resetForNewLoop
-      SaveLoad.saveToLocalStorage(newState)
-      newState
+      val resetState: GameState = state.resetForNewLoop
+      SaveLoad.saveToLocalStorage(resetState) match {
+        case Left(_) =>
+          resetState
+        case Right(_) =>
+          gameUtils.showToast("Game Saved!")
+          resetState.copy(timeElapsedMicroLastSave = resetState.timeElapsedMicro)
+      }
     } else {
       state
     }
