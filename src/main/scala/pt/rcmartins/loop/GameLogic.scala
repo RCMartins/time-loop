@@ -80,15 +80,16 @@ class GameLogic(private var lastTimeMicro: Long) {
                   .addElapedTimeMicro(maxElapedTime)
             (updatedGameState, maxElapedTime, false)
           case None =>
-            initialGameState.selectedNextAction.flatMap { case (id, limit) =>
-              initialGameState.visibleNextActions
+            val savedState: GameState = checkIfCanBeSaved(initialGameState)
+            savedState.selectedNextAction.flatMap { case (id, limit) =>
+              savedState.visibleNextActions
                 .find(_.id == id)
                 .map((_, limit))
-                .orElse(initialGameState.visibleMoveActions.find(_.id == id).map((_, limit)))
+                .orElse(savedState.visibleMoveActions.find(_.id == id).map((_, limit)))
             } match {
               case Some((nextAction, limit)) =>
                 (
-                  initialGameState
+                  savedState
                     .modify(_.selectedNextAction)
                     .setTo(None)
                     .modify(_.currentAction)
@@ -101,7 +102,7 @@ class GameLogic(private var lastTimeMicro: Long) {
                   false,
                 )
               case None =>
-                (initialGameState, 0L, false)
+                (savedState, 0L, false)
             }
         }
       case Some(currentAction) =>
@@ -170,6 +171,13 @@ class GameLogic(private var lastTimeMicro: Long) {
         )
     }
   }
+
+  private def checkIfCanBeSaved(gameState: GameState): GameState =
+    if (gameState.timeElapsedMicroLastSave != gameState.timeElapsedMicro) {
+      SaveLoad.saveToLocalStorage(gameState)
+      gameState.copy(timeElapsedMicroLastSave = gameState.timeElapsedMicro)
+    } else
+      gameState
 
   private def applyCurrentActionIfComplete(
       state: GameState,

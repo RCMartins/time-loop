@@ -1,8 +1,7 @@
 package pt.rcmartins.loop.model
 
 import pt.rcmartins.loop.data.StoryActions
-import pt.rcmartins.loop.model.ActionDataType.all
-import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
+import zio.json.{JsonDecoder, JsonEncoder}
 
 final case class ActionData(
     actionDataType: ActionDataType,

@@ -1,6 +1,5 @@
 package pt.rcmartins.loop.model
 
-import pt.rcmartins.loop.data.StoryActions
 import pt.rcmartins.loop.model.migrations.GameSatedSavedVersion
 import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
 
@@ -26,12 +25,12 @@ case class GameStateSaved(
     storyActionsHistory: Seq[String],
 ) extends GameSatedSavedVersion {
 
-  // TODO here
   def toGameState: GameState =
     GameState(
       version = version,
       seed = seed,
       timeElapsedMicro = timeElapsedMicro,
+      timeElapsedMicroLastSave = timeElapsedMicro,
       energyMicro = energyMicro,
       maxEnergyInt = maxEnergyInt,
       initialTiredSecond = initialTiredSecond,
