@@ -1,41 +1,53 @@
 package pt.rcmartins.loop.model
 
-import pt.rcmartins.loop.data.StoryActions
+import pt.rcmartins.loop.model.migrations.GameSatedSavedVersion
 import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
 
 case class GameStateSaved(
     version: Int,
     seed: Long,
+    timeElapsedMicro: Long,
+    energyMicro: Long,
     maxEnergyInt: Int,
     initialTiredSecond: Double,
     initialTiredMultSecond: Double,
+    currentTiredSecond: Double,
+    currentTiredMultSecond: Double,
+    nextTiredIncreaseMicro: Long,
+    characterArea: CharacterArea,
     stats: StatsSaved,
     skills: SkillsState,
+    inventory: InventoryState,
+    visibleNextActions: Seq[ActiveActionData],
+    visibleMoveActions: Seq[ActiveActionData],
+    deckActions: Seq[ActiveActionData],
+    actionsHistory: Seq[ActionDataType],
     storyActionsHistory: Seq[String],
-) {
+) extends GameSatedSavedVersion {
 
   def toGameState: GameState =
     GameState(
       version = version,
       seed = seed,
-      timeElapsedMicro = 0L,
-      energyMicro = maxEnergyInt * 1_000_000L,
+      timeElapsedMicro = timeElapsedMicro,
+      timeElapsedMicroLastSave = timeElapsedMicro,
+      energyMicro = energyMicro,
       maxEnergyInt = maxEnergyInt,
       initialTiredSecond = initialTiredSecond,
       initialTiredMultSecond = initialTiredMultSecond,
-      currentTiredSecond = initialTiredSecond,
-      currentTiredMultSecond = initialTiredMultSecond,
-      nextTiredIncreaseMicro = 1_000_000L,
-      characterArea = StoryActions.Data.InitialCharacterArea,
+      currentTiredSecond = currentTiredSecond,
+      currentTiredMultSecond = currentTiredMultSecond,
+      nextTiredIncreaseMicro = nextTiredIncreaseMicro,
+      characterArea = characterArea,
       stats = stats.toStats,
-      skills = skills.resetLoopProgress,
-      inventory = InventoryState.initial,
+      skills = skills,
+      inventory = inventory,
       currentAction = None,
-      visibleNextActions = StoryActions.Data.InitialActions.map(_.toActiveAction),
-      visibleMoveActions = StoryActions.Data.InitialMoveActions.map(_.toActiveAction),
+      visibleNextActions = visibleNextActions,
+      visibleMoveActions = visibleMoveActions,
       selectedNextAction = None,
-      deckActions = Seq.empty,
-      actionsHistory = Seq.empty,
+      deckActions = deckActions,
+      actionsHistory = actionsHistory,
       storyActionsHistory = storyActionsHistory.map(StoryLineHistory.apply),
       inProgressStoryActions = Seq.empty,
     )
@@ -48,11 +60,22 @@ object GameStateSaved {
     GameStateSaved(
       version = gameState.version,
       seed = gameState.seed,
+      timeElapsedMicro = gameState.timeElapsedMicro,
+      energyMicro = gameState.energyMicro,
       maxEnergyInt = gameState.maxEnergyInt,
       initialTiredSecond = gameState.initialTiredSecond,
       initialTiredMultSecond = gameState.initialTiredMultSecond,
-      stats = StatsSaved.fromStats( gameState.stats),
+      currentTiredSecond = gameState.currentTiredSecond,
+      currentTiredMultSecond = gameState.currentTiredMultSecond,
+      nextTiredIncreaseMicro = gameState.nextTiredIncreaseMicro,
+      characterArea = gameState.characterArea,
+      stats = StatsSaved.fromStats(gameState.stats),
       skills = gameState.skills,
+      inventory = gameState.inventory,
+      visibleNextActions = gameState.visibleNextActions,
+      visibleMoveActions = gameState.visibleMoveActions,
+      deckActions = gameState.deckActions,
+      actionsHistory = gameState.actionsHistory,
       storyActionsHistory = gameState.storyActionsHistory.map(_.line),
     )
 

@@ -5,19 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Time Loop</title>
 
-    <!-- Tailwind Play CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        // Optional: small config & a safelist if you construct class names dynamically
-        tailwind.config = {
-          theme: { extend: {} },
-          // safelist: ["text-sm","text-base","text-lg","text-xl","bg-emerald-500","bg-slate-800","ring-2","ring-red-500"]
-        }
-    </script>
-
-    <!-- Optional: font -->
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <!--  TODO eventually just replace this icons  -->
     <link href="https://use.fontawesome.com/releases/v7.1.0/css/all.css" rel="stylesheet">
     <link href="public/custom.css" rel="stylesheet">
     <style>
@@ -26,9 +14,28 @@
     </style>
 </head>
 <body class="min-h-dvh bg-slate-900 text-slate-100">
+<div class="hidden
+  ring-emerald-400 bg-emerald-600/60 text-white min-h-dvh text-slate-100 ring-emerald-400
+  p-4 md:py-6 md:px-20 gap-4 md:grid-cols-[260px,1fr,300px] order-1 md:order-1 space-y-3
+  top-4 self-start rounded-2xl ring-1 ring-slate-700 shadow text-sm font-semibold
+  tracking-tight mb-2 space-y-2 rounded-xl p-2 items-center gap-3 h-2.5 w-2.5
+  rounded-full min-w-0 flex-1 justify-between h-5 w-5 text-xs mt-1 h-1.5 overflow-hidden
+  origin-left will-change-transform text-[10px] order-2 md:order-2 grid-rows-[auto,1fr]
+  min-h-[60dvh] grid-cols-2 min-h-32 max-h-32 items-start overflow-y-auto flex-col
+  min-h-0 left-1/2 bottom-full mb-1 px-2 py-1 rounded-md whitespace-nowrap shadow-lg
+  transition-opacity duration-150 opacity-100 pointer-events-none overflow-auto
+  grow gap-5 sm:grid-cols-2 m-2 mt-8 me-3 pb-5 transition hover:ring-emerald-400/60
+  hover:shadow-md focus:outline-none focus:ring-2 focus:ring-emerald-400 mt-0.5
+  shrink-0 ring-slate-600 text-base mt-2 flex-wrap gap-2 py-0.5 right-0 top-full
+  top-2 right-2 gap-1 hover:bg-slate-600/60 cursor-pointer select-none justify-center
+  grid-cols-3 grid-rows-3 w-32 h-10 px-3 text-[11px] border-slate-600 hover:bg-slate-700/80
+  hover:text-white mr-1 align-middle mt-3 inset-0 order-3 md:order-3 pb-1 max-h-[40dvh]
+  rounded-lg m-1 w-[10%] w-[20%] font-mono text-right w-[50%] pl-2 truncate max-h-[30dvh]
+  rounded hover:bg-slate-600 right-4 z-50
+  "></div>
 <div id="main-div"></div>
 
-<!-- Your Scala.js output (adjust path/name to your project) -->
 <script src="public/js/time-loop.js"></script>
+<script src="public/tailwind.3.4.17.js"></script>
 </body>
 </html>

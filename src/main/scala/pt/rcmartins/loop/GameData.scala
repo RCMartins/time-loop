@@ -8,6 +8,7 @@ import pt.rcmartins.loop.model._
 class GameData(
     constructorGameState: GameState,
     gameLogic: GameLogic,
+    val utils: GameUtils,
 ) {
 
   private val gameStateVar: Var[GameState] = Var(constructorGameState)

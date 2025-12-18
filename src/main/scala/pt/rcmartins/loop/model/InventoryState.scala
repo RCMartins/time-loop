@@ -1,5 +1,7 @@
 package pt.rcmartins.loop.model
 
+import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
+
 case class InventoryState(
     maximumSize: Int,
     items: Seq[(ItemType, Int, Long)],
@@ -61,5 +63,8 @@ object InventoryState {
     maximumSize = 5,
     items = Seq(),
   )
+
+  implicit val decoder: JsonDecoder[InventoryState] = DeriveJsonDecoder.gen[InventoryState]
+  implicit val encoder: JsonEncoder[InventoryState] = DeriveJsonEncoder.gen[InventoryState]
 
 }

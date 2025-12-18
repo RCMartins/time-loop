@@ -6,6 +6,8 @@ import pt.rcmartins.loop.model.CharacterArea._
 import pt.rcmartins.loop.model.GameState._
 import pt.rcmartins.loop.model._
 
+import scala.util.chaining.scalaUtilChainingOps
+
 object StoryActions {
 
   object Data {
@@ -108,9 +110,9 @@ object StoryActions {
       firstTimeUnlocksActions = _ => Seq(PickupRosemary, GoToGeneralStore),
       invalidReason = state =>
         Option.unless(
-          state.actionsHistory.exists(_.actionDataType == Arc1DataType.SearchKitchen) &&
-            state.actionsHistory.exists(_.actionDataType == Arc1DataType.SearchLivingRoom) &&
-            state.actionsHistory.exists(_.actionDataType == Arc1DataType.PickupSimpleSoapMold)
+          state.actionsHistory.contains(Arc1DataType.SearchKitchen) &&
+            state.actionsHistory.contains(Arc1DataType.SearchLivingRoom) &&
+            state.actionsHistory.contains(Arc1DataType.PickupSimpleSoapMold)
         )(ReasonLabel.Empty),
       showWhenInvalid = false,
     )
@@ -136,22 +138,10 @@ object StoryActions {
       actionTime = ActionTime.ReduzedXP(15, 0.5),
       initialAmountOfActions = AmountOfActions.Unlimited,
       firstTimeUnlocksActions = {
-        case LoopCount(1) => Seq(BuyGlycerinFirstLoop)
+        case LoopCount(1) => Seq(BuyGlycerin, BuyFrozenMomo)
         case _            => Seq(BuyGlycerin, BuyFrozenMomo, GoToBackHome)
       },
       moveToArea = Some(Area3_GeneralStore),
-    )
-
-    def BuyGlycerinFirstLoop: ActionData = buyItemAction(
-      actionDataType = Arc1DataType.BuyGlycerin,
-      area = _ => Seq(Area3_GeneralStore),
-      itemType = ItemType.Glycerin,
-      amount = 1,
-      cost = 500,
-      actionTime = ActionTime.Standard(5),
-      initialAmountOfActions = AmountOfActions.Standard(1),
-      firstTimeUnlocksActions = _ => Seq(FirstLoopGoToForest),
-      addStory = _ => Some(Story.FirstLoop.GoToForestGetLavender),
     )
 
     def BuyGlycerin: ActionData = buyItemAction(
@@ -162,18 +152,31 @@ object StoryActions {
       cost = 500,
       actionTime = ActionTime.Standard(5),
       initialAmountOfActions = AmountOfActions.Unlimited,
-      firstTimeUnlocksActions = _ => Seq(MeltGlycerin)
+      firstTimeUnlocksActions = {
+        case LoopCount(1) => Seq(GoToForest)
+        case _            => Seq(MeltGlycerin)
+      },
+      addStory = {
+        case LoopCount(1) => Some(Story.FirstLoop.GoToForestGetLavender)
+        case _            => None
+      },
     )
 
-    def FirstLoopGoToForest: ActionData = ActionData(
+    def GoToForest: ActionData = ActionData(
       actionDataType = Arc1DataType.GoToForest,
-      area = _ => Seq(Area3_GeneralStore),
+      area = {
+        case LoopCount(1) => Seq(Area3_GeneralStore)
+        case _            => Area5_Forest.allConnections
+      },
       title = "Go to the Forest",
       effectLabel = EffectLabel.Movement,
       kind = ActionKind.Agility,
-      actionTime = ActionTime.Standard(25),
-      initialAmountOfActions = AmountOfActions.Standard(1),
-      firstTimeUnlocksActions = _ => Seq(ExploreForestForLavender),
+      actionTime = ActionTime.ReduzedXP(25, 0.5),
+      initialAmountOfActions = AmountOfActions.Unlimited,
+      firstTimeUnlocksActions = {
+        case LoopCount(1) => Seq(ExploreForestForLavender)
+        case _            => Seq(PickupBerries, PickupPrettyFlower)
+      },
       moveToArea = Some(Area5_Forest),
     )
 
@@ -392,18 +395,6 @@ object StoryActions {
       firstTimeUnlocksActions = _ => Seq(),
     )
 
-    def GoToForest: ActionData = ActionData(
-      actionDataType = Arc1DataType.GoToForest,
-      area = _ => Area5_Forest.allConnections,
-      title = "Go to the Forest",
-      effectLabel = EffectLabel.Movement,
-      kind = ActionKind.Agility,
-      actionTime = ActionTime.ReduzedXP(50, 0.5),
-      initialAmountOfActions = AmountOfActions.Unlimited,
-      firstTimeUnlocksActions = _ => Seq(PickupBerries, PickupPrettyFlower),
-      moveToArea = Some(Area5_Forest),
-    )
-
     def PickupBerries: ActionData = pickupToItem(
       actionDataType = Arc1DataType.PickupBerries,
       area = _ => Seq(Area5_Forest),
@@ -553,6 +544,47 @@ object StoryActions {
 
     object Arc2Story {}
 
+  }
+
+  val allActions: Map[ActionId, ActionData] = Seq(
+    Data.WakeUp,
+    Data.SearchLivingRoom,
+    Data.PickupSimpleSoapMold,
+    Data.PickupCoins,
+    Data.SearchKitchen,
+    Data.CookRice,
+    Data.SearchGarden,
+    Data.PickupRosemary,
+    Data.GoToGeneralStore,
+    Data.BuyGlycerin,
+    Data.ExploreForestForLavender,
+    Data.FindMysteriousSorcerer,
+    Data.TalkMysteriousSorcerer,
+    Data.FirstLoopFadingAway,
+    Data.BuyFrozenMomo,
+    Data.CookMomo,
+    Data.GoToBackHome,
+    Data.MeltGlycerin,
+    Data.CreateSoap,
+    Data.GoToTown,
+    Data.TalkWithPeopleInTown,
+    Data.SellSoapToPeople,
+    Data.ExploreTown,
+    Data.GoToEquipmentStore,
+    Data.BuyBigBag,
+    Data.BuyHugeBag,
+    Data.GoToForest,
+    Data.PickupBerries,
+    Data.PickupPrettyFlower,
+    Data.SellFlowerInGeneralStore,
+    Data.BuyEmptyShop,
+    Data.PrepareStoreForBusiness,
+    Data.GoToMySoapStore,
+  ).pipe { seq =>
+    val result = seq.map(a => a.actionDataType.id -> a).toMap
+    if (result.size != seq.size)
+      throw new IllegalStateException("Duplicate ActionData ids found")
+    result
   }
 
 }

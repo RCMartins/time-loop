@@ -13,9 +13,10 @@ object GameLogicTest extends ZIOSpecDefault {
     visibleMoveActions = Seq(),
   )
 
-  private val GameLogicBasic = new GameLogic(0L)
+  private val GameUtils = new GameUtils()
+  private val GameLogicBasic = new GameLogic(0L, GameUtils)
 
-  private val GameDataEmpty = new GameData(GameStateEmpty, GameLogicBasic)
+  private val GameDataEmpty = new GameData(GameStateEmpty, GameLogicBasic, GameUtils)
 
   private val DummyWakeUpAction: ActionData = ActionData(
     actionDataType = Arc1DataType.WakeUp,

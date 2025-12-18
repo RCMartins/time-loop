@@ -362,13 +362,15 @@ object Util {
 
           button(
             cls := "px-2 py-0.5 text-[10px] rounded-md " +
-              "bg-slate-700/60 ring-1 ring-slate-600 " +
+              "ring-1 " +
               "hover:bg-slate-600/60 transition cursor-pointer " +
               "select-none text-base",
 
             // highlight if selected
             cls("ring-emerald-400 bg-emerald-600/60 text-white") <--
               selectedLimit.signal.map(_ == amount),
+            cls("ring-slate-600 bg-slate-700/60") <--
+              selectedLimit.signal.map(_ != amount),
             label,
             onClick --> { e =>
               e.stopPropagation()

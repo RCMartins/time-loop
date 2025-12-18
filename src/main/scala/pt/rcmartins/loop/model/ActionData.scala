@@ -1,6 +1,7 @@
 package pt.rcmartins.loop.model
 
-import scala.util.Random
+import pt.rcmartins.loop.data.StoryActions
+import zio.json.{JsonDecoder, JsonEncoder}
 
 final case class ActionData(
     actionDataType: ActionDataType,
@@ -27,7 +28,6 @@ final case class ActionData(
 
   def toActiveAction: ActiveActionData =
     new ActiveActionData(
-      id = ActionId(Random.nextLong()),
       data = this,
       microSoFar = 0L,
       xpMultiplier = 1.0,
@@ -41,5 +41,20 @@ final case class ActionData(
         case ActionSuccessType.WithFailure(_, increase) => increase
       },
     )
+
+}
+
+object ActionData {
+
+  implicit val decoder: JsonDecoder[ActionData] =
+    ActionDataType.decoder.mapOrFail { actionDataType =>
+      StoryActions.allActions.get(actionDataType.id) match {
+        case Some(data) => Right(data)
+        case None       => Left(s"Unknown DataAction: ${actionDataType.id}")
+      }
+    }
+
+  implicit val encoder: JsonEncoder[ActionData] =
+    JsonEncoder.long.contramap[ActionData](_.actionDataType.id.id)
 
 }

@@ -6,13 +6,13 @@ import com.raquo.laminar.nodes.ReactiveHtmlElement
 import com.softwaremill.quicklens.ModifyPimp
 import org.scalajs.dom
 import org.scalajs.dom.{HTMLDivElement, HTMLUListElement}
+import pt.rcmartins.loop.GameUtils.Toast
 import pt.rcmartins.loop.Util._
 import pt.rcmartins.loop.data.StoryActions
-import pt.rcmartins.loop.model.{ActionTime, CharacterArea, Dir8, GameState, StoryLineHistory}
+import pt.rcmartins.loop.model._
 
 import scala.scalajs.js.timers
 import scala.scalajs.js.timers.setInterval
-import scala.util.Random
 
 class UI(
     gameData: GameData,
@@ -23,9 +23,6 @@ class UI(
   private val owner = new Owner {}
   private val DEBUG_MODE: Boolean = true
 
-  private val toastBus = new EventBus[Toast]
-  private val toastsVar = Var(List.empty[Toast])
-
   import gameData._
 
   def run(): ReactiveHtmlElement[HTMLDivElement] = {
@@ -33,8 +30,8 @@ class UI(
       gameData.runUpdateGameState()
     }
 
-    toastBus.events.foreach { toast =>
-      toastsVar.update(_ :+ toast)
+    gameData.utils.toastBus.events.foreach { toast =>
+      gameData.utils.toastsVar.update(_ :+ toast)
     }(owner)
 
     div(
@@ -435,7 +432,7 @@ class UI(
       .withCurrentValueOf(gameData.gameState)
       .foreach { state =>
         dom.window.navigator.clipboard.writeText(SaveLoad.saveString(state))
-        showToast("Copied to clipboard!")
+        gameData.utils.showToast("Copied to clipboard!")
       }(owner)
 
     importStringFromClipboard.events.foreach { _ =>
@@ -446,7 +443,7 @@ class UI(
           SaveLoad.loadString(str).foreach { loadedState =>
             gameData.loadGameState(loadedState)
             SaveLoad.saveToLocalStorage(loadedState)
-            showToast("Game loaded!")
+            gameData.utils.showToast("Game loaded!")
           }
         }(scala.scalajs.concurrent.JSExecutionContext.queue)
     }(owner)
@@ -529,20 +526,10 @@ class UI(
     )
   }
 
-  private case class Toast(id: Long, message: String)
-
-  private def showToast(msg: String): Unit = {
-    val toast = Toast(
-      id = Random.nextLong(),
-      message = msg
-    )
-    toastBus.emit(toast)
-  }
-
   private def toastContainer: ReactiveHtmlElement[HTMLDivElement] =
     div(
       cls := "fixed top-4 right-4 space-y-2 z-50",
-      children <-- toastsVar.signal.map(_.map(renderToast))
+      children <-- gameData.utils.toastsVar.signal.map(_.map(renderToast))
     )
 
   private def renderToast(t: Toast): HtmlElement =
@@ -560,7 +547,7 @@ class UI(
             ctx.thisNode.ref.classList.remove("opacity-100")
             dom.window.setTimeout(
               () => {
-                toastsVar.update(_.filterNot(_.id == t.id))
+                gameData.utils.toastsVar.update(_.filterNot(_.id == t.id))
               },
               300
             ) // wait for fade-out transition
