@@ -1,7 +1,6 @@
 package pt.rcmartins.loop.model
 
 import pt.rcmartins.loop.Constants
-import pt.rcmartins.loop.model.Dir8._
 import zio.json.{JsonDecoder, JsonEncoder}
 
 import scala.util.chaining.scalaUtilChainingOps
