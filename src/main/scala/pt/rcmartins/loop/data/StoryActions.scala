@@ -440,7 +440,7 @@ object StoryActions {
         firstTimeUnlocksActions = _ => Seq(PrepareStoreForBusiness),
         addStory = state =>
           Option.when(state.stats.globalActionCount.getOrElse(Arc1DataType.BuyEmptyShop, 0) == 1)(
-            Story.OtherLoops.BuyEmptyStop
+            Story.OtherLoops.BuyEmptyShop
           )
       )
 
@@ -529,13 +529,15 @@ object StoryActions {
     object OtherLoops {
 
       val SecondWakeup: StoryLine =
-        StoryLine.simple("She opens her eyes. The day looks… suspiciously familiar.")
+        StoryLine.simple("I open my eyes. The day looks… suspiciously familiar.")
 
       val ThirdOrMoreWakeup: StoryLine =
-        StoryLine.simple("She wakes up with a single thought: “Not this loop again… or is it?”")
+        StoryLine.simple("I wake up with a single thought: “Not this loop again… or is it?”")
 
-      val BuyEmptyStop: StoryLine =
-        StoryLine.simple("Finally gathered enough money to buy my own soap where I can sell soap!")
+      val BuyEmptyShop: StoryLine =
+        StoryLine.simple(
+          "I finally gathered enough money to buy my own soap shop where I can sell soap!"
+        )
 
       val PrepareShopForBusiness: StoryLine =
         StoryLine.simple("The shop is ready to receive clients!")
