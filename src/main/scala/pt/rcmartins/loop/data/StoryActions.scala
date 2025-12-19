@@ -135,7 +135,7 @@ object StoryActions {
       title = "Go to the General Store",
       effectLabel = EffectLabel.Movement,
       kind = ActionKind.Agility,
-      actionTime = ActionTime.ReduzedXP(15, 0.5),
+      actionTime = ActionTime.ReduzedXP(15, 0.8),
       initialAmountOfActions = AmountOfActions.Unlimited,
       firstTimeUnlocksActions = {
         case LoopCount(1) => Seq(BuyGlycerin, BuyFrozenMomo)
@@ -171,7 +171,7 @@ object StoryActions {
       title = "Go to the Forest",
       effectLabel = EffectLabel.Movement,
       kind = ActionKind.Agility,
-      actionTime = ActionTime.ReduzedXP(25, 0.5),
+      actionTime = ActionTime.ReduzedXP(25, 0.8),
       initialAmountOfActions = AmountOfActions.Unlimited,
       firstTimeUnlocksActions = {
         case LoopCount(1) => Seq(ExploreForestForLavender)
@@ -271,7 +271,7 @@ object StoryActions {
       title = "Go back home",
       effectLabel = EffectLabel.Movement,
       kind = ActionKind.Agility,
-      actionTime = ActionTime.ReduzedXP(15, 0.5),
+      actionTime = ActionTime.ReduzedXP(15, 0.8),
       initialAmountOfActions = AmountOfActions.Unlimited,
       firstTimeUnlocksActions = _ => Seq(),
       moveToArea = Some(Area1_Home),
@@ -310,7 +310,7 @@ object StoryActions {
       title = "Go to town",
       effectLabel = EffectLabel.Movement,
       kind = ActionKind.Agility,
-      actionTime = ActionTime.ReduzedXP(25, 0.5),
+      actionTime = ActionTime.ReduzedXP(25, 0.8),
       initialAmountOfActions = AmountOfActions.Unlimited,
       firstTimeUnlocksActions = _ => Seq(TalkWithPeopleInTown),
       moveToArea = Some(Area2_Town),
@@ -366,7 +366,7 @@ object StoryActions {
       title = "Go to the Equipment Store",
       effectLabel = EffectLabel.Movement,
       kind = ActionKind.Agility,
-      actionTime = ActionTime.ReduzedXP(40, 0.5),
+      actionTime = ActionTime.ReduzedXP(40, 0.8),
       initialAmountOfActions = AmountOfActions.Unlimited,
       firstTimeUnlocksActions = _ =>
         Seq(
@@ -429,7 +429,7 @@ object StoryActions {
       ActionData(
         actionDataType = Arc1DataType.BuyEmptyShop,
         area = _ => Seq(Area2_Town),
-        title = s"Buy Empty Store",
+        title = s"Buy Empty Soap Shop",
         effectLabel = EffectLabel.BuyUpgrade(2500),
         kind = ActionKind.Social,
         actionTime = ActionTime.Standard(60),
@@ -467,7 +467,7 @@ object StoryActions {
       title = "Go to my Soap Shop",
       effectLabel = EffectLabel.Movement,
       kind = ActionKind.Agility,
-      actionTime = ActionTime.ReduzedXP(25, 0.5),
+      actionTime = ActionTime.ReduzedXP(25, 0.8),
       initialAmountOfActions = AmountOfActions.Unlimited,
       firstTimeUnlocksActions = _ => Seq(),
       moveToArea = Some(Area6_MySoapShop),
