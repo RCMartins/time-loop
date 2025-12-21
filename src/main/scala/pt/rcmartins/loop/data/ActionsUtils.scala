@@ -223,4 +223,11 @@ object ActionsUtils {
       permanentBonusUnlocks = permanentBonusUnlocks,
     )
 
+  implicit class IntMoneyOps(private val amount: Int) extends AnyVal {
+
+    def euro: Int = amount * 100
+    def euros: Int = amount * 100
+
+  }
+
 }

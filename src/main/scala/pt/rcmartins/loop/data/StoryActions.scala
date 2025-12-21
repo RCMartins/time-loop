@@ -70,7 +70,7 @@ object StoryActions {
       actionDataType = Arc1DataType.PickupCoins,
       area = _ => Seq(Area1_Home),
       itemType = ItemType.Coins,
-      amount = 100,
+      amount = 1.euro,
       actionTime = ActionTime.Standard(1),
       initialAmountOfActions = AmountOfActions.Standard(10),
       everyTimeUnlocksActions = {
@@ -149,7 +149,7 @@ object StoryActions {
       area = _ => Seq(Area3_GeneralStore),
       itemType = ItemType.Glycerin,
       amount = 1,
-      cost = 500,
+      cost = 5.euros,
       actionTime = ActionTime.Standard(5),
       initialAmountOfActions = AmountOfActions.Unlimited,
       firstTimeUnlocksActions = {
@@ -335,7 +335,7 @@ object StoryActions {
       actionTime = ActionTime.Standard(12),
       initialAmountOfActions = AmountOfActions.Unlimited,
       actionSuccessType = ActionSuccessType.WithFailure(0.5, 0.05),
-      changeInventory = _.addItem(ItemType.Coins, 200).removeItem(ItemType.HerbSoap, 1),
+      changeInventory = _.addItem(ItemType.Coins, 2.euros).removeItem(ItemType.HerbSoap, 1),
       invalidReason = state =>
         Option.unless(state.inventory.canRemoveItem(ItemType.HerbSoap, 1))(
           ReasonLabel.NotEnoughSoapToSell
@@ -379,7 +379,7 @@ object StoryActions {
       actionDataType = Arc1DataType.BuyBigBag,
       area = _ => Seq(Area4_EquipmentStore),
       name = "Big Bag",
-      cost = 10,
+      cost = 10.euros,
       inventoryMaxSize = 10,
       actionTime = ActionTime.Standard(10),
       firstTimeUnlocksActions = _ => Seq(BuyHugeBag),
@@ -389,7 +389,7 @@ object StoryActions {
       actionDataType = Arc1DataType.BuyHugeBag,
       area = _ => Seq(Area4_EquipmentStore),
       name = "Huge Bag",
-      cost = 20,
+      cost = 20.euros,
       inventoryMaxSize = 15,
       actionTime = ActionTime.Standard(10),
       firstTimeUnlocksActions = _ => Seq(),
@@ -419,7 +419,7 @@ object StoryActions {
       area = _ => Seq(Area3_GeneralStore),
       itemType = ItemType.PrettyFlower,
       amount = 1,
-      coinsGain = 100,
+      coinsGain = 1.euro,
       actionTime = ActionTime.Standard(10),
       initialAmountOfActions = AmountOfActions.Standard(10),
       firstTimeUnlocksActions = _ => Seq(),
@@ -430,11 +430,11 @@ object StoryActions {
         actionDataType = Arc1DataType.BuyEmptyShop,
         area = _ => Seq(Area2_Town),
         title = s"Buy Empty Soap Shop",
-        effectLabel = EffectLabel.BuyUpgrade(2500),
+        effectLabel = EffectLabel.BuyUpgrade(25.euros),
         kind = ActionKind.Social,
         actionTime = ActionTime.Standard(60),
         invalidReason = state =>
-          Option.unless(state.inventory.canRemoveItem(ItemType.Coins, 2500))(
+          Option.unless(state.inventory.canRemoveItem(ItemType.Coins, 25.euros))(
             ReasonLabel.NotEnoughCoins
           ),
         firstTimeUnlocksActions = _ => Seq(PrepareStoreForBusiness),
