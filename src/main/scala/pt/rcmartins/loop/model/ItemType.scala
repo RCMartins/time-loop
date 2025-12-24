@@ -116,11 +116,13 @@ object ItemType {
     val foodValueLong: Long = 5L
   }
 
-  case object Berries extends ItemType {
+  case object WildCherries extends ItemType {
     val id: Int = 9
-    val name: String = "Berries"
+    val name: String = "Cherries"
     val inventoryOrder: Int = 32
     val foodValueLong: Long = 6L
+    override val iconPath: String = Constants.Icons.Cherry
+    override val iconColor: String = "text-red-600"
   }
 
   case object Momo extends ItemType {
@@ -162,7 +164,7 @@ object ItemType {
     MagicLavender,
     FrozenMomo,
     Rice,
-    Berries,
+    WildCherries,
     Momo,
     Curry,
     Chatpate,

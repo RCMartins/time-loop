@@ -228,9 +228,32 @@ class UI(
         cls := "flex justify-between",
         span("Time Elapsed"),
         span(
-          child.text <-- timeElapsedLong.map(s => "%02d:%02d".format(s / 60, s % 60))
+          child.text <-- timeElapsedLong.map(secondsToPrettyStr)
+        ),
+
+        // Global elapsed time tooltip
+        cls := "relative inline-block group",
+        div(
+          cls := "absolute left-0 top-full mt-1 px-2 py-1 z-20 " +
+            "text-xs bg-slate-900 text-white rounded shadow-lg whitespace-nowrap " +
+            "hidden group-hover:block pointer-events-none z-10",
+          "Total Elapsed Time: ",
+          child.text <-- globalTimeElapsedLong.map(secondsToPrettyStr)
         )
       ),
+      child.maybe <--
+        loopNumber.map(_ > 1).distinct.map {
+          case false =>
+            None
+          case true =>
+            Some(
+              div(
+                cls := "flex justify-between",
+                span("Loop Count"),
+                span(child.text <-- loopNumber.map(_.toString)),
+              )
+            )
+        },
       div(
         cls := "flex justify-between",
         span("Energy"),

@@ -498,29 +498,29 @@ object StoryActions {
     def ForestSearchAreaAroundSorcererPosition: ActionData = ActionData(
       actionDataType = Arc1DataType.ForestSearchAreaAroundSorcererPosition,
       area = _ => Seq(Area7_Forest),
-      title = "Explore area around last kwown sorcerer position",
+      title = "Explore area around last known sorcerer position",
       effectLabel = EffectLabel.Explore,
       kind = ActionKind.Exploring,
       actionTime = ActionTime.LinearTime(20, 10), // 20+30+40+50+60
       initialAmountOfActions = AmountOfActions.Standard(5),
       forceMaxAmountOfActionsIs1 = true,
       everyTimeUnlocksActions = {
-        case (_, 1) => Seq(PickupBerries)
+        case (_, 1) => Seq(PickupWildCherries)
         case (_, 3) => Seq(PickupLavender)
         case (_, 5) => Seq(FollowHardToFindFootprintsPath)
       },
       addStory = {
-        case (_, 1)     => Some(Story.OtherLoops.ForestSomeBerries)
+        case (_, 1)     => Some(Story.OtherLoops.ForestSomeWildCherries)
         case (_, 2 | 4) => Some(Story.OtherLoops.ForestNothingUseful)
         case (_, 3)     => Some(Story.OtherLoops.ForestMagicLavender)
         case (_, 5)     => Some(Story.OtherLoops.ForestFootprintsPath)
       },
     )
 
-    def PickupBerries: ActionData = pickupToItem(
-      actionDataType = Arc1DataType.PickupBerries,
+    def PickupWildCherries: ActionData = pickupToItem(
+      actionDataType = Arc1DataType.PickupWildCherries,
       area = _ => Seq(Area7_Forest),
-      itemType = ItemType.Berries,
+      itemType = ItemType.WildCherries,
       amount = 1,
       actionTime = ActionTime.Standard(5),
       initialAmountOfActions = AmountOfActions.Unlimited,
@@ -657,9 +657,9 @@ object StoryActions {
           "I don't see the sorcerer this time, maybe I imagined him?"
         )
 
-      val ForestSomeBerries: StoryLine =
+      val ForestSomeWildCherries: StoryLine =
         StoryLine.simple(
-          "I found some berries in the forest, they might be useful later on."
+          "I found some wild cherries in the forest, they might be useful."
         )
 
       val ForestNothingUseful: StoryLine =
@@ -737,7 +737,7 @@ object StoryActions {
     Data.PrepareStoreForBusiness,
     Data.GoToForest,
     Data.ForestSearchAreaAroundSorcererPosition,
-    Data.PickupBerries,
+    Data.PickupWildCherries,
     Data.PickupLavender,
     Data.MakeMagicLavenderSoap,
     Data.FollowHardToFindFootprintsPath,

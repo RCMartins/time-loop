@@ -511,4 +511,14 @@ object Util {
       case PermanentBonus.HalfTiredness => Constants.Icons.Strong
     }
 
+  def secondsToPrettyStr(totalSeconds: Long): String = {
+    val hours = totalSeconds / 3600
+    val minutes = (totalSeconds % 3600) / 60
+    val seconds = totalSeconds  % 60
+    if (hours > 0)
+      f"$hours%02d:$minutes%02d:$seconds%02d"
+    else
+      f"$minutes%02d:$seconds%02d"
+  }
+
 }

@@ -92,7 +92,7 @@ object ActionDataType {
       val id: ActionId = ActionId(39L)
     }
 
-    case object PickupBerries extends Arc1DataType { val id: ActionId = ActionId(30L) }
+    case object PickupWildCherries extends Arc1DataType { val id: ActionId = ActionId(30L) }
 
     case object MakeMagicLavenderSoap extends Arc1DataType { val id: ActionId = ActionId(31L) }
 
@@ -145,7 +145,7 @@ object ActionDataType {
       Arc1DataType.GoToMySoapShop,
       Arc1DataType.SellSoapToPeopleInSoapShop,
       Arc1DataType.GoToForest,
-      Arc1DataType.PickupBerries,
+      Arc1DataType.PickupWildCherries,
       Arc1DataType.PickupLavender,
       Arc1DataType.FollowHardToFindFootprintsPath,
     ).pipe { seq =>
