@@ -17,6 +17,8 @@ case class ActiveActionData(
 
   val id: ActionId = data.actionDataType.id
 
+  def targetTimeSec: Long = targetTimeMicro / 1_000_000L
+
   override def toString: String =
     s"ActiveActionData(data=${data.title}, microSoFar=$microSoFar, amountOfActionsLeft=$amountOfActionsLeft)"
 

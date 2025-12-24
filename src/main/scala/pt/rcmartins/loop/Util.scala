@@ -62,8 +62,9 @@ object Util {
             cls := "mt-2 flex flex-wrap items-center gap-2",
             span(
               cls := "px-2 py-0.5 text-xs rounded-full bg-slate-700/70 ring-1 ring-slate-600",
-              child.text <-- longSoFar.combineWith(data).map { case (timeSoFar, data) =>
-                s"\u00A0$timeSoFar\u00A0 / \u00A0${data.actionTime.baseTimeSec}\u00A0"
+              child.text <-- longSoFar.combineWith(vm.map(_.targetTimeSec)).map {
+                case (timeSoFar, targetTimeSec) =>
+                  s"\u00A0$timeSoFar\u00A0 / \u00A0$targetTimeSec\u00A0"
               },
             ),
             span(
@@ -246,7 +247,7 @@ object Util {
               span(
                 cls := "px-2 py-0.5 text-xs rounded-full bg-slate-700/70 ring-1 ring-slate-600",
                 "\u00A0",
-                child.text <-- actionSignal.map(_.data.actionTime.baseTimeSec.toString),
+                child.text <-- actionSignal.map(_.targetTimeSec.toString),
                 "\u00A0",
               ),
               child.maybe <--
