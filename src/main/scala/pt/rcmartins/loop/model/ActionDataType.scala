@@ -82,7 +82,7 @@ object ActionDataType {
 
     case object PrepareShopForBusiness extends Arc1DataType { val id: ActionId = ActionId(34L) }
 
-    case object GoToMySoapShop extends Arc1DataType { val id: ActionId = ActionId(35L) }
+    case object GoToMySoapShop extends Arc1DataType { val id: ActionId = ActionId(41L) }
 
     case object SellSoapToPeopleInSoapShop extends Arc1DataType { val id: ActionId = ActionId(39L) }
 
@@ -147,7 +147,9 @@ object ActionDataType {
     ).pipe { seq =>
       val result = seq.map(a => a.id -> a).toMap
       if (result.size != seq.size)
-        throw new IllegalStateException("Duplicate ActionDataType ids found")
+        throw new IllegalStateException(
+          s"Duplicate ActionDataType ids found: ${seq.groupBy(_.id).toSeq.filter(_._2.size > 1)}"
+        )
       result
     }
 

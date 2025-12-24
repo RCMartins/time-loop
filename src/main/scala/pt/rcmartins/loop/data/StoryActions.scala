@@ -744,7 +744,9 @@ object StoryActions {
   ).pipe { seq =>
     val result = seq.map(a => a.actionDataType.id -> a).toMap
     if (result.size != seq.size)
-      throw new IllegalStateException("Duplicate ActionData ids found")
+      throw new IllegalStateException(
+        s"Duplicate ActionData ids found: ${seq.groupBy(_.actionDataType.id).toSeq.filter(_._2.size > 1).map(_._1)}"
+      )
     result
   }
 

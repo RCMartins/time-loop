@@ -139,8 +139,9 @@ class UI(
                   span(targetArea.name),
                   " (",
                   action.data.actionTime match {
-                    case ActionTime.Standard(baseTimeSec)     => baseTimeSec.toString
-                    case ActionTime.ReduzedXP(baseTimeSec, _) => baseTimeSec.toString
+                    case ActionTime.Standard(baseTimeSec)      => baseTimeSec.toString
+                    case ActionTime.ReduzedXP(baseTimeSec, _)  => baseTimeSec.toString
+                    case ActionTime.LinearTime(baseTimeSec, _) => baseTimeSec.toString
                   },
                   ")",
                 )
