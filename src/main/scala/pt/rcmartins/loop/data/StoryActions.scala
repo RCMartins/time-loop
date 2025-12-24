@@ -130,7 +130,7 @@ object StoryActions {
       actionDataType = Arc1DataType.GoToGeneralStore,
       area = {
         case LoopCount(1) => Seq(Area1_Home)
-        case _            => Area3_GeneralStore.allConnections
+        case _            => Area4_GeneralStore.allConnections
       },
       title = "Go to the General Store",
       effectLabel = EffectLabel.Movement,
@@ -142,12 +142,12 @@ object StoryActions {
         case (LoopCount(n), _) if n > 1 => Seq(SpeakToShopKeeper, GoToBackHome)
         case _                          => Seq()
       },
-      moveToArea = Some(Area3_GeneralStore),
+      moveToArea = Some(Area4_GeneralStore),
     )
 
     def BuyGlycerin: ActionData = buyItemAction(
       actionDataType = Arc1DataType.BuyGlycerin,
-      area = _ => Seq(Area3_GeneralStore),
+      area = _ => Seq(Area4_GeneralStore),
       itemType = ItemType.Glycerin,
       amount = 1,
       cost = 5.euros,
@@ -163,8 +163,8 @@ object StoryActions {
     def GoToForest: ActionData = ActionData(
       actionDataType = Arc1DataType.GoToForest,
       area = {
-        case LoopCount(1) => Seq(Area3_GeneralStore)
-        case _            => Area5_Forest.allConnections
+        case LoopCount(1) => Seq(Area4_GeneralStore)
+        case _            => Area7_Forest.allConnections
       },
       title = "Go to the Forest",
       effectLabel = EffectLabel.Movement,
@@ -175,12 +175,12 @@ object StoryActions {
         case LoopCount(1) => Seq(ExploreForestForLavender)
         case _            => Seq(ExploreForestForLavender)
       },
-      moveToArea = Some(Area5_Forest),
+      moveToArea = Some(Area7_Forest),
     )
 
     def ExploreForestForLavender: ActionData = ActionData(
       actionDataType = Arc1DataType.ExploreForestForLavender,
-      area = _ => Seq(Area5_Forest),
+      area = _ => Seq(Area7_Forest),
       title = "Explore the forest for lavender",
       effectLabel = EffectLabel.Explore,
       kind = ActionKind.Exploring,
@@ -198,7 +198,7 @@ object StoryActions {
 
     def FindMysteriousSorcerer: ActionData = ActionData(
       actionDataType = Arc1DataType.FindMysteriousSorcerer,
-      area = _ => Seq(Area5_Forest),
+      area = _ => Seq(Area7_Forest),
       title = "Aproach Sorcerer",
       effectLabel = EffectLabel.Empty,
       kind = ActionKind.Agility,
@@ -210,7 +210,7 @@ object StoryActions {
 
     def TalkMysteriousSorcerer: ActionData = ActionData(
       actionDataType = Arc1DataType.TalkMysteriousSorcerer,
-      area = _ => Seq(Area5_Forest),
+      area = _ => Seq(Area7_Forest),
       title = """Ask what is he talking about?""",
       effectLabel = EffectLabel.Empty,
       kind = ActionKind.Social,
@@ -222,7 +222,7 @@ object StoryActions {
 
     def FirstLoopFadingAway: ActionData = ActionData(
       actionDataType = Arc1DataType.FirstLoopFadingAway,
-      area = _ => Seq(Area5_Forest),
+      area = _ => Seq(Area7_Forest),
       title = """Fading away""",
       effectLabel = EffectLabel.Empty,
       kind = ActionKind.Social,
@@ -235,7 +235,7 @@ object StoryActions {
 
     def BuyFrozenMomo: ActionData = buyItemAction(
       actionDataType = Arc1DataType.BuyFrozenMomo,
-      area = _ => Seq(Area3_GeneralStore),
+      area = _ => Seq(Area4_GeneralStore),
       itemType = ItemType.FrozenMomo,
       amount = 1,
       cost = 50,
@@ -246,7 +246,7 @@ object StoryActions {
 
     def SpeakToShopKeeper: ActionData = ActionData(
       actionDataType = Arc1DataType.SpeakToShopKeeper,
-      area = _ => Seq(Area3_GeneralStore),
+      area = _ => Seq(Area4_GeneralStore),
       title = """Show your soaps""",
       effectLabel = EffectLabel.Empty,
       kind = ActionKind.Social,
@@ -258,7 +258,7 @@ object StoryActions {
 
     def TradeSoapsForBag: ActionData = tradeItemForBag(
       actionDataType = Arc1DataType.TradeSoapsForBag,
-      area = _ => Seq(Area3_GeneralStore),
+      area = _ => Seq(Area4_GeneralStore),
       title = """Trade 5 Herb Soaps for a Small Bag + 1 Glycerin""",
       effectLabel = EffectLabel.Custom("Note: Small Bag has 10 spaces"),
       cost = Seq(ItemType.RosemarySoap -> 5),
@@ -325,19 +325,19 @@ object StoryActions {
 
     def GoToNeighborhood: ActionData = ActionData(
       actionDataType = Arc1DataType.GoToNeighborhood,
-      area = _ => Area7_Neighborhood.allConnections,
+      area = _ => Area2_Neighborhood.allConnections,
       title = "Go to neighborhood",
       effectLabel = EffectLabel.Movement,
       kind = ActionKind.Agility,
       actionTime = ActionTime.ReduzedXP(15, 0.8),
       initialAmountOfActions = AmountOfActions.Unlimited,
       firstTimeUnlocksActions = _ => Seq(SellSoapToPeopleInNeighborhood),
-      moveToArea = Some(Area7_Neighborhood),
+      moveToArea = Some(Area2_Neighborhood),
     )
 
     def SellSoapToPeopleInNeighborhood: ActionData = ActionData(
       actionDataType = Arc1DataType.SellSoapInNeighborhood,
-      area = _ => Seq(Area7_Neighborhood),
+      area = _ => Seq(Area2_Neighborhood),
       title = "Sell soap to your neighbors",
       effectLabel = EffectLabel.SellSoap(2.euros),
       kind = ActionKind.Social,
@@ -354,19 +354,19 @@ object StoryActions {
 
     def GoToMarket: ActionData = ActionData(
       actionDataType = Arc1DataType.GoToMarket,
-      area = _ => Area2_Market.allConnections,
+      area = _ => Area3_Market.allConnections,
       title = "Go to Market",
       effectLabel = EffectLabel.Movement,
       kind = ActionKind.Agility,
       actionTime = ActionTime.ReduzedXP(15, 0.8),
       initialAmountOfActions = AmountOfActions.Unlimited,
       firstTimeUnlocksActions = _ => Seq(TalkWithPeopleInMarket),
-      moveToArea = Some(Area2_Market),
+      moveToArea = Some(Area3_Market),
     )
 
     def TalkWithPeopleInMarket: ActionData = ActionData(
       actionDataType = Arc1DataType.SetupSoapStallInMarket,
-      area = _ => Seq(Area2_Market),
+      area = _ => Seq(Area3_Market),
       title = "Setup a stall in the market to sell soap",
       effectLabel = EffectLabel.Empty,
       kind = ActionKind.Social,
@@ -376,7 +376,7 @@ object StoryActions {
 
     def SellSoapToPeopleInMarket: ActionData = ActionData(
       actionDataType = Arc1DataType.SellSoapToPeopleInMarket,
-      area = _ => Seq(Area2_Market),
+      area = _ => Seq(Area3_Market),
       title = "Sell Soap to people in the market",
       effectLabel = EffectLabel.SellSoap(3.euros),
       kind = ActionKind.Social,
@@ -395,7 +395,7 @@ object StoryActions {
 
     def ExploreMarket: ActionData = ActionData(
       actionDataType = Arc1DataType.ExploreMarket,
-      area = _ => Seq(Area2_Market),
+      area = _ => Seq(Area3_Market),
       title = "Explore Market area",
       effectLabel = EffectLabel.Explore,
       kind = ActionKind.Exploring,
@@ -407,19 +407,19 @@ object StoryActions {
 
     def GoToEquipmentStore: ActionData = ActionData(
       actionDataType = Arc1DataType.GoToEquipamentStore,
-      area = _ => Area4_EquipmentStore.allConnections,
+      area = _ => Area5_EquipmentStore.allConnections,
       title = "Go to the Equipment Store",
       effectLabel = EffectLabel.Movement,
       kind = ActionKind.Agility,
       actionTime = ActionTime.ReduzedXP(15, 0.8),
       initialAmountOfActions = AmountOfActions.Unlimited,
       firstTimeUnlocksActions = _ => Seq(BuyBigBag),
-      moveToArea = Some(Area4_EquipmentStore),
+      moveToArea = Some(Area5_EquipmentStore),
     )
 
     def BuyBigBag: ActionData = buyInventoryIncrease(
       actionDataType = Arc1DataType.BuyBigBag,
-      area = _ => Seq(Area4_EquipmentStore),
+      area = _ => Seq(Area5_EquipmentStore),
       name = "Big Bag",
       cost = 15.euros,
       inventoryMaxSize = 15,
@@ -429,7 +429,7 @@ object StoryActions {
 
     def BuyHugeBag: ActionData = buyInventoryIncrease(
       actionDataType = Arc1DataType.BuyHugeBag,
-      area = _ => Seq(Area4_EquipmentStore),
+      area = _ => Seq(Area5_EquipmentStore),
       name = "Huge Bag",
       cost = 25.euros,
       inventoryMaxSize = 20,
@@ -440,7 +440,7 @@ object StoryActions {
     def BuyEmptyShop: ActionData =
       ActionData(
         actionDataType = Arc1DataType.BuyEmptyShop,
-        area = _ => Seq(Area2_Market),
+        area = _ => Seq(Area3_Market),
         title = s"Buy Empty Soap Shop",
         effectLabel = EffectLabel.BuyUpgrade(40.euros),
         kind = ActionKind.Social,
@@ -456,7 +456,7 @@ object StoryActions {
     def PrepareStoreForBusiness: ActionData =
       ActionData(
         actionDataType = Arc1DataType.PrepareShopForBusiness,
-        area = _ => Seq(Area2_Market),
+        area = _ => Seq(Area3_Market),
         title = s"Prepare Store for Soap Business",
         effectLabel = EffectLabel.Empty,
         kind = ActionKind.Crafting,
@@ -497,7 +497,7 @@ object StoryActions {
 
     def ForestSearchAreaAroundSorcererPosition: ActionData = ActionData(
       actionDataType = Arc1DataType.ForestSearchAreaAroundSorcererPosition,
-      area = _ => Seq(Area5_Forest),
+      area = _ => Seq(Area7_Forest),
       title = "Explore area around last kwown sorcerer position",
       effectLabel = EffectLabel.Explore,
       kind = ActionKind.Exploring,
@@ -519,7 +519,7 @@ object StoryActions {
 
     def PickupBerries: ActionData = pickupToItem(
       actionDataType = Arc1DataType.PickupBerries,
-      area = _ => Seq(Area5_Forest),
+      area = _ => Seq(Area7_Forest),
       itemType = ItemType.Berries,
       amount = 1,
       actionTime = ActionTime.Standard(5),
@@ -528,7 +528,7 @@ object StoryActions {
 
     def PickupLavender: ActionData = pickupToItem(
       actionDataType = Arc1DataType.PickupLavender,
-      area = _ => Seq(Area5_Forest),
+      area = _ => Seq(Area7_Forest),
       itemType = ItemType.MagicLavender,
       amount = 1,
       actionTime = ActionTime.Standard(10),
@@ -553,7 +553,7 @@ object StoryActions {
 
     def FollowHardToFindFootprintsPath: ActionData = ActionData(
       actionDataType = Arc1DataType.FollowHardToFindFootprintsPath,
-      area = _ => Seq(Area5_Forest),
+      area = _ => Seq(Area7_Forest),
       title = "Follow hard to find footprints path",
       effectLabel = EffectLabel.Explore,
       kind = ActionKind.Exploring,
