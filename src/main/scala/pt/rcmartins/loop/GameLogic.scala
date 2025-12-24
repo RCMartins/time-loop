@@ -16,9 +16,10 @@ class GameLogic(
 
   private val MaxTimeJump = 3600_000_000L // 1 hour in microseconds
   private val MaxTickUpdateTimeMicro = 100_000L // ??? does this matter?
+  private val SaveIntervalMicro = 5_000_000L // 5 seconds in microseconds
 
   def update(initialGameState: GameState, currentTimeMicro: Long): GameState = {
-    val elapsedTimeMicro = Math.min(MaxTimeJump, currentTimeMicro - lastTimeMicro)
+    val elapsedTimeMicro = Math.max(0, Math.min(MaxTimeJump, currentTimeMicro - lastTimeMicro))
     lastTimeMicro = currentTimeMicro
     auxUpdateTotalTime(
       initialGameState,
@@ -48,6 +49,8 @@ class GameLogic(
     val (newState, actualTickElapsedTime) = auxUpdate(initialGameState, maxExpectedTickTimeElapsed)
     if (actualTickElapsedTime >= totalElapsedTimeMicro)
       newState
+    else if (actualTickElapsedTime == 0L)
+      newState
     else
       auxUpdateTotalTime(newState, totalElapsedTimeMicro - actualTickElapsedTime)
   }
@@ -56,9 +59,9 @@ class GameLogic(
     val (newState, actualElapsedMicro, shouldUpdateTiredness) =
       updateAction(initialGameState, elapsedTimeMicro)
     if (shouldUpdateTiredness && actualElapsedMicro > 0L)
-      (updateTiredness(newState, actualElapsedMicro), elapsedTimeMicro - actualElapsedMicro)
+      (updateTiredness(newState, actualElapsedMicro), actualElapsedMicro)
     else
-      (newState, elapsedTimeMicro - actualElapsedMicro)
+      (newState, actualElapsedMicro)
   }
 
   private def updateAction(
@@ -98,7 +101,14 @@ class GameLogic(
               else
                 initialGameState
                   .addElapedTimeMicro(maxElapedTime)
-            (updatedGameState, maxElapedTime, false)
+            // TODO instead of this "don't update tiredness hack, just update tiredness time ???
+            //  Or there should be a time-inm-game-elapsed, and total time (when paused, etc)
+//            (updatedGameState, maxElapedTime, false)
+            (
+              updatedGameState.modify(_.nextTiredIncreaseMicro).using(_ + maxElapedTime),
+              maxElapedTime,
+              false,
+            )
           case None =>
             val savedState: GameState = checkIfCanBeSaved(initialGameState)
             savedState.selectedNextAction.flatMap { case (id, limit) =>
@@ -122,7 +132,7 @@ class GameLogic(
                   false,
                 )
               case None =>
-                (savedState, 0L, false)
+                (savedState, 0L, true)
             }
         }
       case Some(currentAction) =>
@@ -133,7 +143,7 @@ class GameLogic(
 
         val currentActionElapsedMicro: Long =
           Math.min(
-            currentAction.data.baseTimeMicro,
+            currentAction.targetTimeMicro,
             currentActionMicroSoFar + elapsedWithMultiplier
           )
 
@@ -532,7 +542,7 @@ class GameLogic(
   }
 
   private def checkIfCanBeSaved(gameState: GameState): GameState =
-    if (gameState.timeElapsedMicroLastSave != gameState.timeElapsedMicro) {
+    if (gameState.timeElapsedMicroLastSave + SaveIntervalMicro < gameState.timeElapsedMicro) {
       SaveLoad.saveToLocalStorage(gameState) match {
         case Left(_) =>
           gameState

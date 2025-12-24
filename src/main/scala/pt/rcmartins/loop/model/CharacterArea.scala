@@ -100,11 +100,12 @@ object CharacterArea {
         addConnection(Area1_Home, Area2_Neighborhood, Dir8.Right)
         addConnection(Area1_Home, Area5_EquipmentStore, Dir8.BottomRight)
         addConnection(Area1_Home, Area6_MySoapShop, Dir8.Bottom)
+        addConnection(Area4_GeneralStore, Area7_Forest, Dir8.BottomLeft)
         addConnection(Area2_Neighborhood, Area4_GeneralStore, Dir8.TopLeft)
         addConnection(Area2_Neighborhood, Area3_Market, Dir8.Right)
         addConnection(Area2_Neighborhood, Area5_EquipmentStore, Dir8.Bottom)
         addConnection(Area2_Neighborhood, Area6_MySoapShop, Dir8.BottomLeft)
-        addConnection(Area3_Market, Area6_MySoapShop, Dir8.Top)
+        addConnection(Area3_Market, Area5_EquipmentStore, Dir8.BottomLeft)
         addConnection(Area6_MySoapShop, Area7_Forest, Dir8.TopLeft)
         addConnection(Area6_MySoapShop, Area5_EquipmentStore, Dir8.Right)
 

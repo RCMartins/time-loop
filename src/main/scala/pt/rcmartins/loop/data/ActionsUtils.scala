@@ -162,10 +162,7 @@ object ActionsUtils {
       initialAmountOfActions = initialAmountOfActions,
       actionSuccessType = actionSuccessType,
       showWhenInvalid = showWhenInvalid,
-      changeInventory = inventory =>
-        cost
-          .foldLeft(inventory) { case (inv, (it, ct)) => inv.removeItem(it, ct) }
-          .addItem(itemType, amount),
+      changeInventory = _.removeMultipleItems(cost).addItem(itemType, amount),
       invalidReason = state =>
         Option
           .unless(
@@ -205,10 +202,7 @@ object ActionsUtils {
       initialAmountOfActions = initialAmountOfActions,
       actionSuccessType = actionSuccessType,
       showWhenInvalid = showWhenInvalid,
-      changeInventory = inventory =>
-        cost
-          .foldLeft(inventory) { case (inv, (it, ct)) => inv.removeItem(it, ct) }
-          .addItem(itemType, amount),
+      changeInventory = _.removeMultipleItems(cost).addItem(itemType, amount),
       invalidReason = state =>
         Option
           .unless(
@@ -252,7 +246,9 @@ object ActionsUtils {
       initialAmountOfActions = initialAmountOfActions,
       actionSuccessType = actionSuccessType,
       showWhenInvalid = showWhenInvalid,
-      changeInventory = _.increaseInventorySizeTo(inventoryMaxSize),
+      changeInventory = _.increaseInventorySizeTo(inventoryMaxSize)
+        .removeMultipleItems(cost)
+        .addMultipleItems(bonus),
       invalidReason = state =>
         Option
           .unless(

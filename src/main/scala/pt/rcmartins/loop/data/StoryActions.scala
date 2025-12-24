@@ -54,7 +54,7 @@ object StoryActions {
       title = "Get Soap Mold",
       effectLabel = EffectLabel.GetSoapMold,
       kind = ActionKind.Foraging,
-      actionTime = ActionTime.Standard(5),
+      actionTime = ActionTime.Standard(3),
       initialAmountOfActions = AmountOfActions.Standard(1),
       firstTimeUnlocksActions = {
         case LoopCount(1) => Seq(PickupCoins)
@@ -85,7 +85,7 @@ object StoryActions {
       title = "Search the Kitchen",
       effectLabel = EffectLabel.Explore,
       kind = ActionKind.Exploring,
-      actionTime = ActionTime.Standard(7),
+      actionTime = ActionTime.Standard(6),
       firstTimeUnlocksActions = _ => Seq(CookRice),
     )
 
@@ -95,7 +95,7 @@ object StoryActions {
       itemType = ItemType.Rice,
       amount = 1,
       cost = Seq(),
-      actionTime = ActionTime.Standard(4),
+      actionTime = ActionTime.Standard(3),
       initialAmountOfActions = AmountOfActions.Unlimited,
       firstTimeUnlocksActions = _ => Seq(),
     )
@@ -106,7 +106,7 @@ object StoryActions {
       title = "Explore the Garden",
       effectLabel = EffectLabel.Explore,
       kind = ActionKind.Exploring,
-      actionTime = ActionTime.Standard(17),
+      actionTime = ActionTime.Standard(12),
       firstTimeUnlocksActions = _ => Seq(PickupRosemary, GoToGeneralStore),
       invalidReason = state =>
         Option.unless(
@@ -122,7 +122,7 @@ object StoryActions {
       area = _ => Seq(Area1_Home),
       itemType = ItemType.Rosemary,
       amount = 1,
-      actionTime = ActionTime.Standard(6),
+      actionTime = ActionTime.Standard(5),
       initialAmountOfActions = AmountOfActions.Unlimited,
     )
 
@@ -139,7 +139,7 @@ object StoryActions {
       initialAmountOfActions = AmountOfActions.Unlimited,
       firstTimeUnlocksActions = _ => Seq(BuyGlycerin, BuyFrozenMomo),
       everyTimeUnlocksActions = {
-        case (LoopCount(n), _) if n > 1 => Seq(SpeakToShopKeeper, GoToBackHome)
+        case (LoopCount(n), _) if n > 1 => Seq(GoToBackHome)
         case _                          => Seq()
       },
       moveToArea = Some(Area4_GeneralStore),
@@ -151,13 +151,13 @@ object StoryActions {
       itemType = ItemType.Glycerin,
       amount = 1,
       cost = 5.euros,
-      actionTime = ActionTime.Standard(5),
+      actionTime = ActionTime.Standard(4),
       initialAmountOfActions = AmountOfActions.Unlimited,
       firstTimeUnlocksActions = {
         case LoopCount(1) => Seq(GoToForest)
         case _            => Seq(MeltGlycerin)
       },
-      addStory = { case (LoopCount(1), _) => Some(Story.FirstLoop.GoToForestGetLavender) },
+      addStory = { case (LoopCount(1), 1) => Some(Story.FirstLoop.GoToForestGetLavender) },
     )
 
     def GoToForest: ActionData = ActionData(
@@ -278,7 +278,7 @@ object StoryActions {
       itemType = ItemType.Momo,
       amount = 1,
       cost = Seq(ItemType.FrozenMomo -> 1),
-      actionTime = ActionTime.Standard(4),
+      actionTime = ActionTime.Standard(3),
       initialAmountOfActions = AmountOfActions.Unlimited,
       firstTimeUnlocksActions = _ => Seq(),
       showWhenInvalid = false,
@@ -302,7 +302,7 @@ object StoryActions {
       itemType = ItemType.MeltedGlycerin,
       amount = 5,
       cost = Seq(ItemType.Glycerin -> 1),
-      actionTime = ActionTime.Standard(15),
+      actionTime = ActionTime.Standard(12),
       initialAmountOfActions = AmountOfActions.Unlimited,
       firstTimeUnlocksActions = _ => Seq(CreateRosemarySoap),
       showWhenInvalid = false,
@@ -315,12 +315,11 @@ object StoryActions {
       amount = 1,
       actionSuccessType = ActionSuccessType.WithFailure(0.65, 0.05),
       cost = Seq(ItemType.MeltedGlycerin -> 1, ItemType.Rosemary -> 1),
-      actionTime = ActionTime.Standard(15),
+      actionTime = ActionTime.Standard(10),
       initialAmountOfActions = AmountOfActions.Unlimited,
-      firstTimeUnlocksActions = _ => Seq(GoToMarket),
+      firstTimeUnlocksActions = _ => Seq(SpeakToShopKeeper),
       permanentBonusUnlocks =
         Seq(PermanentBonusUnlockType.ProgressiveActionCount(PermanentBonus.HalfTiredness, 1, 10)),
-      showWhenInvalid = false,
     )
 
     def GoToNeighborhood: ActionData = ActionData(
@@ -341,7 +340,7 @@ object StoryActions {
       title = "Sell soap to your neighbors",
       effectLabel = EffectLabel.SellSoap(2.euros),
       kind = ActionKind.Social,
-      actionTime = ActionTime.Standard(10),
+      actionTime = ActionTime.Standard(8),
       initialAmountOfActions = AmountOfActions.Standard(20),
       actionSuccessType = ActionSuccessType.WithFailure(0.75, 0.05),
       changeInventory = _.addItem(ItemType.Coins, 2.euros).removeItem(ItemType.RosemarySoap, 1),
@@ -380,7 +379,7 @@ object StoryActions {
       title = "Sell Soap to people in the market",
       effectLabel = EffectLabel.SellSoap(3.euros),
       kind = ActionKind.Social,
-      actionTime = ActionTime.Standard(10),
+      actionTime = ActionTime.Standard(9),
       initialAmountOfActions = AmountOfActions.Unlimited,
       actionSuccessType = ActionSuccessType.WithFailure(0.5, 0.05),
       changeInventory = _.addItem(ItemType.Coins, 3.euros).removeItem(ItemType.RosemarySoap, 1),
@@ -445,24 +444,13 @@ object StoryActions {
         effectLabel = EffectLabel.BuyUpgrade(40.euros),
         kind = ActionKind.Social,
         actionTime = ActionTime.Standard(30),
+        changeInventory = _.removeItem(ItemType.Coins, 40.euros),
         invalidReason = state =>
           Option.unless(state.inventory.canRemoveItem(ItemType.Coins, 40.euros))(
             ReasonLabel.NotEnoughCoins
           ),
-        firstTimeUnlocksActions = _ => Seq(PrepareStoreForBusiness),
-        addStory = { case (_, 1) => Some(Story.OtherLoops.BuyEmptyShop) },
-      )
-
-    def PrepareStoreForBusiness: ActionData =
-      ActionData(
-        actionDataType = Arc1DataType.PrepareShopForBusiness,
-        area = _ => Seq(Area3_Market),
-        title = s"Prepare Store for Soap Business",
-        effectLabel = EffectLabel.Empty,
-        kind = ActionKind.Crafting,
-        actionTime = ActionTime.Standard(60),
         firstTimeUnlocksActions = _ => Seq(GoToMySoapStore),
-        addStory = { case (_, 1) => Some(Story.OtherLoops.PrepareShopForBusiness) },
+        addStory = { case (_, 1) => Some(Story.OtherLoops.BuyEmptyShop) },
       )
 
     def GoToMySoapStore: ActionData = ActionData(
@@ -473,9 +461,21 @@ object StoryActions {
       kind = ActionKind.Agility,
       actionTime = ActionTime.ReduzedXP(15, 0.8),
       initialAmountOfActions = AmountOfActions.Unlimited,
-      firstTimeUnlocksActions = _ => Seq(),
+      firstTimeUnlocksActions = _ => Seq(PrepareStoreForBusiness),
       moveToArea = Some(Area6_MySoapShop),
     )
+
+    def PrepareStoreForBusiness: ActionData =
+      ActionData(
+        actionDataType = Arc1DataType.PrepareShopForBusiness,
+        area = _ => Seq(Area6_MySoapShop),
+        title = s"Prepare Store for Soap Business",
+        effectLabel = EffectLabel.Empty,
+        kind = ActionKind.Crafting,
+        actionTime = ActionTime.Standard(60),
+        firstTimeUnlocksActions = _ => Seq(SellSoapToPeopleInSoapShop),
+        addStory = { case (_, 1) => Some(Story.OtherLoops.PrepareShopForBusiness) },
+      )
 
     def SellSoapToPeopleInSoapShop: ActionData = ActionData(
       actionDataType = Arc1DataType.SellSoapToPeopleInSoapShop,
@@ -732,15 +732,15 @@ object StoryActions {
     Data.GoToEquipmentStore,
     Data.BuyBigBag,
     Data.BuyHugeBag,
+    Data.BuyEmptyShop,
+    Data.GoToMySoapStore,
+    Data.PrepareStoreForBusiness,
     Data.GoToForest,
     Data.ForestSearchAreaAroundSorcererPosition,
     Data.PickupBerries,
     Data.PickupLavender,
     Data.MakeMagicLavenderSoap,
     Data.FollowHardToFindFootprintsPath,
-    Data.BuyEmptyShop,
-    Data.PrepareStoreForBusiness,
-    Data.GoToMySoapStore,
   ).pipe { seq =>
     val result = seq.map(a => a.actionDataType.id -> a).toMap
     if (result.size != seq.size)

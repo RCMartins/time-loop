@@ -7,6 +7,7 @@ import pt.rcmartins.loop.model.saved.GameStateSaved
 import zio.json.{DecoderOps, EncoderOps}
 
 import scala.util.Try
+import scala.util.chaining.scalaUtilChainingOps
 
 object SaveLoad {
 
@@ -42,11 +43,14 @@ object SaveLoad {
 
   private val versionsToTry: LazyList[String => Option[GameState]] =
     LazyList[String => Option[GameState]](
-      _.fromJson[GameStateSaved].toOption.map(_.toGameState),
-      _.fromJson[GameStateMinimal].toOption.map(_.toGameState),
-      _.fromJson[GameStateSkillsOnly].toOption.map(_.toGameState),
-      _.fromJson[GameStateVersionOnly].toOption.map(_.toGameState),
+      _.fromJson[GameStateSaved].tap(printlnErrors).toOption.map(_.toGameState),
+      _.fromJson[GameStateMinimal].tap(printlnErrors).toOption.map(_.toGameState),
+      _.fromJson[GameStateSkillsOnly].tap(printlnErrors).toOption.map(_.toGameState),
+      _.fromJson[GameStateVersionOnly].tap(printlnErrors).toOption.map(_.toGameState),
     )
+
+  private def printlnErrors[T](either: Either[String, T]): Unit =
+    either.left.foreach(err => println(s"Error loading save: $err"))
 
   private def loadFromJson(str: String): Option[GameState] =
     versionsToTry.map(_(str)).collectFirst { case Some(gs) => gs }
