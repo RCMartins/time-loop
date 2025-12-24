@@ -28,7 +28,13 @@ object CharacterArea {
     val iconPath: String = Constants.Icons.House
   }
 
-  case object Area2_Town extends CharacterArea {
+  case object Area7_Neighborhood extends CharacterArea {
+    val id: Int = 7
+    val name: String = "Neighborhood"
+    val iconPath: String = Constants.Icons.Village
+  }
+
+  case object Area2_Market extends CharacterArea {
     val id: Int = 2
     val name: String = "Town"
     val iconPath: String = Constants.Icons.Village
@@ -60,11 +66,12 @@ object CharacterArea {
 
   private val allAreas: Seq[CharacterArea] = Seq(
     Area1_Home,
-    Area2_Town,
+    Area7_Neighborhood,
+    Area2_Market,
     Area3_GeneralStore,
     Area4_EquipmentStore,
     Area5_Forest,
-    Area6_MySoapShop
+    Area6_MySoapShop,
   )
 
   private val allConnections: Map[CharacterArea, IndexedSeq[Option[CharacterArea]]] =
@@ -88,13 +95,18 @@ object CharacterArea {
           )
         }
 
-        addConnection(Area1_Home, Area2_Town, Dir8.Right)
-        addConnection(Area1_Home, Area5_Forest, Dir8.Left)
         addConnection(Area1_Home, Area3_GeneralStore, Dir8.Top)
-        addConnection(Area2_Town, Area3_GeneralStore, Dir8.TopLeft)
-        addConnection(Area2_Town, Area4_EquipmentStore, Dir8.Bottom)
-        addConnection(Area2_Town, Area6_MySoapShop, Dir8.Right)
-        addConnection(Area3_GeneralStore, Area5_Forest, Dir8.BottomLeft)
+        addConnection(Area1_Home, Area5_Forest, Dir8.Left)
+        addConnection(Area1_Home, Area7_Neighborhood, Dir8.Right)
+        addConnection(Area1_Home, Area4_EquipmentStore, Dir8.BottomRight)
+        addConnection(Area1_Home, Area6_MySoapShop, Dir8.Bottom)
+        addConnection(Area7_Neighborhood, Area3_GeneralStore, Dir8.TopLeft)
+        addConnection(Area7_Neighborhood, Area2_Market, Dir8.Right)
+        addConnection(Area7_Neighborhood, Area4_EquipmentStore, Dir8.Bottom)
+        addConnection(Area7_Neighborhood, Area6_MySoapShop, Dir8.BottomLeft)
+        addConnection(Area2_Market, Area6_MySoapShop, Dir8.Top)
+        addConnection(Area6_MySoapShop, Area5_Forest, Dir8.TopLeft)
+        addConnection(Area6_MySoapShop, Area4_EquipmentStore, Dir8.Right)
 
         connections
       }

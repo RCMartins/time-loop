@@ -6,6 +6,7 @@ import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
 case class ActiveActionData(
     data: ActionData,
     microSoFar: Long,
+    targetTimeMicro: Long,
     xpMultiplier: Double,
     amountOfActionsLeft: AmountOfActions,
     currentActionSuccessChance: Double,

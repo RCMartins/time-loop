@@ -17,6 +17,8 @@ sealed trait ItemType {
   def foodValueLong: Long
   lazy val isFoodItem: Boolean = foodValueLong > 0
   lazy val foodValueMicro: Long = foodValueLong * 1_000_000L
+
+  def buffItem: Option[(Buff, Long)] = None
 }
 
 object ItemType {
@@ -63,20 +65,34 @@ object ItemType {
     val foodValueLong: Long = 0L
   }
 
-  case object HerbSoap extends ItemType {
+  case object RosemarySoap extends ItemType {
     val id: Int = 5
-    val name: String = "Herb Soap"
+    val name: String = "Rosemary Soap"
     override val iconPath: String = Constants.Icons.Soap
     override val iconColor: String = "text-green-300"
     val inventoryOrder: Int = 5
     val foodValueLong: Long = 0L
   }
 
-  case object PrettyFlower extends ItemType {
+  case object MagicLavender extends ItemType {
     val id: Int = 6
-    val name: String = "Pretty Flower"
+    val name: String = "Magic Lavender"
     val inventoryOrder: Int = 6
     val foodValueLong: Long = 0L
+  }
+
+  case object MagicLavenderSoap extends ItemType {
+    val id: Int = 14
+    val name: String = "Magic Lavender Soap"
+    override val iconPath: String = Constants.Icons.Soap
+    override val iconColor: String = "text-purple-300"
+    val inventoryOrder: Int = 7
+    val foodValueLong: Long = 0L
+
+    override val buffItem: Option[(Buff, Long)] = Some(
+      (Buff.TirednessMultiplier(1L, 0.5), 5_000_000L)
+    )
+
   }
 
   // Raw/Frozen Food Items
@@ -142,8 +158,8 @@ object ItemType {
     Rosemary,
     Glycerin,
     MeltedGlycerin,
-    HerbSoap,
-    PrettyFlower,
+    RosemarySoap,
+    MagicLavender,
     FrozenMomo,
     Rice,
     Berries,

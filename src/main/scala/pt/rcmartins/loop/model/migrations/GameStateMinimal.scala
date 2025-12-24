@@ -2,6 +2,7 @@ package pt.rcmartins.loop.model.migrations
 
 import pt.rcmartins.loop.data.StoryActions
 import pt.rcmartins.loop.model._
+import pt.rcmartins.loop.model.saved.StatsSaved
 import zio.json.{DeriveJsonDecoder, JsonDecoder}
 
 case class GameStateMinimal(
@@ -40,6 +41,8 @@ case class GameStateMinimal(
       actionsHistory = Seq.empty,
       storyActionsHistory = storyActionsHistory.map(StoryLineHistory.apply),
       inProgressStoryActions = Seq.empty,
+      buffs = Buffs.initial,
+      preferences = Preferences.initial,
     )
 
 }

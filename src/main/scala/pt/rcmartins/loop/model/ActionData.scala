@@ -13,9 +13,10 @@ final case class ActionData(
     actionSuccessType: ActionSuccessType = ActionSuccessType.Always,
     initialAmountOfActions: AmountOfActions = AmountOfActions.Standard(1),
     forceMaxAmountOfActionsIs1: Boolean = false,
-    firstTimeUnlocksActions: GameState => Seq[ActionData] = _ => Seq.empty,
-    everyTimeUnlocksActions: (GameState, Int) => Seq[ActionData] = (_, _) => Seq.empty,
-    addStory: GameState => Option[StoryLine] = _ => None,
+    firstTimeUnlocksActions: PartialFunction[GameState, Seq[ActionData]] = PartialFunction.empty,
+    everyTimeUnlocksActions: PartialFunction[(GameState, Int), Seq[ActionData]] =
+      PartialFunction.empty,
+    addStory: PartialFunction[(GameState, Int), Option[StoryLine]] = PartialFunction.empty,
     invalidReason: GameState => Option[ReasonLabel] = _ => None,
     showWhenInvalid: Boolean = true,
     changeInventory: InventoryState => InventoryState = identity,
@@ -30,6 +31,11 @@ final case class ActionData(
     new ActiveActionData(
       data = this,
       microSoFar = 0L,
+      targetTimeMicro = actionTime match {
+        case ActionTime.Standard(baseTimeSec)      => baseTimeSec * 1_000_000L
+        case ActionTime.LinearTime(baseTimeSec, _) => baseTimeSec * 1_000_000L
+        case ActionTime.ReduzedXP(baseTimeSec, _)  => baseTimeSec * 1_000_000L
+      },
       xpMultiplier = 1.0,
       amountOfActionsLeft = initialAmountOfActions,
       currentActionSuccessChance = actionSuccessType match {

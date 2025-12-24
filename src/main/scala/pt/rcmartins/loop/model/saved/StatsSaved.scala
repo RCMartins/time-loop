@@ -1,5 +1,6 @@
-package pt.rcmartins.loop.model
+package pt.rcmartins.loop.model.saved
 
+import pt.rcmartins.loop.model.{ActionDataType, Stats}
 import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
 
 case class StatsSaved(

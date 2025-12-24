@@ -1,8 +1,9 @@
 package pt.rcmartins.loop
 
 import org.scalajs.dom.window.localStorage
+import pt.rcmartins.loop.model.GameState
 import pt.rcmartins.loop.model.migrations._
-import pt.rcmartins.loop.model.{GameState, GameStateSaved}
+import pt.rcmartins.loop.model.saved.GameStateSaved
 import zio.json.{DecoderOps, EncoderOps}
 
 import scala.util.Try
