@@ -348,7 +348,19 @@ object StoryActions {
         Option.unless(state.inventory.canRemoveItem(ItemType.RosemarySoap, 1))(
           ReasonLabel.NotEnoughSoapToSell
         ),
-      everyTimeUnlocksActions = { case (_, 20) => Seq(GoToMarket) },
+      everyTimeUnlocksActions = { case (_, 20) => Seq(NeighborhoodTalkAboutMarket) },
+    )
+
+    def NeighborhoodTalkAboutMarket: ActionData = ActionData(
+      actionDataType = Arc1DataType.NeighborhoodTalkAboutMarket,
+      area = _ => Seq(Area2_Neighborhood),
+      title = """Talk with neighbors about selling soaps in the market""",
+      effectLabel = EffectLabel.Empty,
+      kind = ActionKind.Social,
+      actionTime = ActionTime.Standard(20),
+      initialAmountOfActions = AmountOfActions.Standard(1),
+      firstTimeUnlocksActions = _ => Seq(GoToMarket),
+      addStory = { case (_, 1) => Some(Story.OtherLoops.SpeakAboutSellingSoapsInMarket) },
     )
 
     def GoToMarket: ActionData = ActionData(
@@ -389,7 +401,7 @@ object StoryActions {
         ),
       firstTimeUnlocksActions = _ => Seq(ExploreMarket),
       everyTimeUnlocksActions = { case (_, 20) => Seq(BuyEmptyShop) },
-      addStory = { case (_, 20) => Some(Story.OtherLoops.PleopleInMarketLikeMySoap) },
+      addStory = { case (_, 20) => Some(Story.OtherLoops.PeopleInMarketLikeMySoap) },
     )
 
     def ExploreMarket: ActionData = ActionData(
@@ -634,7 +646,12 @@ object StoryActions {
           "The shop keeper likes my soaps. She told me that I could try selling them in the neighborhood."
         )
 
-      val PleopleInMarketLikeMySoap: StoryLine =
+      val SpeakAboutSellingSoapsInMarket: StoryLine =
+        StoryLine.simple(
+          "My neighbors think my soaps are great! They suggested I try selling them in the market."
+        )
+
+      val PeopleInMarketLikeMySoap: StoryLine =
         StoryLine.simple(
           "People in the market really like my soaps, I should try to have my own soap shop!"
         )

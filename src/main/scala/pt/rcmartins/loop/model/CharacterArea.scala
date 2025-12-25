@@ -36,7 +36,7 @@ object CharacterArea {
 
   case object Area3_Market extends CharacterArea {
     val id: Int = 3
-    val name: String = "Town"
+    val name: String = "Market"
     val iconPath: String = Constants.Icons.Village
   }
 

@@ -54,6 +54,10 @@ object ActionDataType {
 
     case object SellSoapInNeighborhood extends Arc1DataType { val id: ActionId = ActionId(38L) }
 
+    case object NeighborhoodTalkAboutMarket extends Arc1DataType {
+      val id: ActionId = ActionId(43L)
+    }
+
     case object BuyGoodSoapMold extends Arc1DataType { val id: ActionId = ActionId(17L) }
 
     case object CookMomo extends Arc1DataType { val id: ActionId = ActionId(18L) }
@@ -128,6 +132,7 @@ object ActionDataType {
       Arc1DataType.TradeSoapsForBag,
       Arc1DataType.GoToNeighborhood,
       Arc1DataType.SellSoapInNeighborhood,
+      Arc1DataType.NeighborhoodTalkAboutMarket,
       Arc1DataType.BuyGoodSoapMold,
       Arc1DataType.CookMomo,
       Arc1DataType.MeltGlycerin,
