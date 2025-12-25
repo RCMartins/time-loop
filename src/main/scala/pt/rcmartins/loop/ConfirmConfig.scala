@@ -22,17 +22,17 @@ final case class ConfirmConfig(
 )
 
 final class ConfirmState {
-  private val cfgVar = Var(Option.empty[ConfirmConfig])
-  private val busyVar = Var(false)
-  private val errorVar = Var(Option.empty[String])
-  private val typedVar = Var("")
-  private val lastFocusVar = Var(Option.empty[dom.Element])
+  val cfgVar = Var(Option.empty[ConfirmConfig])
+  val busyVar = Var(false)
+  val errorVar = Var(Option.empty[String])
+  val typedVar = Var("")
+  val lastFocusVar = Var(Option.empty[dom.Element])
 
   val isOpen: Signal[Boolean] = cfgVar.signal.map(_.nonEmpty)
 
   def open(cfg: ConfirmConfig): Unit = {
     // remember focus so we can restore it
-    lastFocusVar.set(Option(dom.document.activeElement).collect { case e: dom.Element => e })
+    lastFocusVar.set(Option(dom.document.activeElement).collect { case e: dom.HTMLElement => e })
     typedVar.set("")
     errorVar.set(None)
     busyVar.set(false)
@@ -47,22 +47,22 @@ final class ConfirmState {
     typedVar.set("")
     dom.document.body.classList.remove("overflow-hidden")
     // restore focus
-    lastFocusVar.now().foreach(_.focus())
+    lastFocusVar.now().collect { case e: dom.HTMLElement => e }.foreach(_.focus())
     lastFocusVar.set(None)
   }
 
   def render: HtmlElement = ConfirmModal(this)
 
   // internal getters
-  private[ConfirmState] def cfgSignal = cfgVar.signal
-  private[ConfirmState] def busySignal = busyVar.signal
-  private[ConfirmState] def errorSignal = errorVar.signal
-  private[ConfirmState] def typedVarRef = typedVar
+  def cfgSignal = cfgVar.signal
+  def busySignal = busyVar.signal
+  def errorSignal = errorVar.signal
+  def typedVarRef = typedVar
 
-  private[ConfirmState] def setBusy(b: Boolean) = busyVar.set(b)
-  private[ConfirmState] def setError(msg: Option[String]) = errorVar.set(msg)
+  def setBusy(b: Boolean) = busyVar.set(b)
+  def setError(msg: Option[String]) = errorVar.set(msg)
 
-  private[ConfirmState] def confirm(): Unit = {
+  def confirm(): Unit = {
     cfgVar.now() match {
       case None      => ()
       case Some(cfg) =>
@@ -86,7 +86,7 @@ object ConfirmModal {
 
   def apply(state: ConfirmState): HtmlElement = {
     // Helpers to find focusable elements inside the modal
-    def focusables(root: dom.Element): List[dom.Element] = {
+    def focusables(root: dom.Element): List[dom.HTMLElement] = {
       val sel =
         "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])"
       root
@@ -95,6 +95,7 @@ object ConfirmModal {
         .toList
         .collect { case e: dom.Element => e }
         .filter(e => !e.hasAttribute("disabled") && e.getAttribute("aria-hidden") != "true")
+        .map(_.asInstanceOf[dom.HTMLElement])
     }
 
     // very small focus trap: TAB cycles inside modal content
@@ -166,7 +167,7 @@ object ConfirmModal {
                       case e: dom.Element => e
                       case _              => null
                     }
-                    if (cancelBtn != null) cancelBtn.focus()
+                    if (cancelBtn != null) cancelBtn.asInstanceOf[dom.HTMLElement].focus()
                     else focusables(root).headOption.foreach(_.focus())
                   },
                   0
