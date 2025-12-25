@@ -44,6 +44,8 @@ object Main {
       )
     }
 
+    MobileUtils.setupMobileLogic()
+
     render(
       dom.document.getElementById("main-div"),
       new UI(gameData).run()
