@@ -89,14 +89,14 @@ object ActionDataType {
     case object GoToForest extends Arc1DataType { val id: ActionId = ActionId(29L) }
 
     case object ForestSearchAreaAroundSorcererPosition extends Arc1DataType {
-      val id: ActionId = ActionId(39L)
+      val id: ActionId = ActionId(42L)
     }
 
     case object PickupWildCherries extends Arc1DataType { val id: ActionId = ActionId(30L) }
 
-    case object MakeMagicLavenderSoap extends Arc1DataType { val id: ActionId = ActionId(31L) }
-
     case object PickupLavender extends Arc1DataType { val id: ActionId = ActionId(40L) }
+
+    case object MakeMagicLavenderSoap extends Arc1DataType { val id: ActionId = ActionId(31L) }
 
     case object FollowHardToFindFootprintsPath extends Arc1DataType {
       val id: ActionId = ActionId(32L)
@@ -145,8 +145,10 @@ object ActionDataType {
       Arc1DataType.GoToMySoapShop,
       Arc1DataType.SellSoapToPeopleInSoapShop,
       Arc1DataType.GoToForest,
+      Arc1DataType.ForestSearchAreaAroundSorcererPosition,
       Arc1DataType.PickupWildCherries,
       Arc1DataType.PickupLavender,
+      Arc1DataType.MakeMagicLavenderSoap,
       Arc1DataType.FollowHardToFindFootprintsPath,
     ).pipe { seq =>
       val result = seq.map(a => a.id -> a).toMap
