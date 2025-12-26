@@ -37,6 +37,11 @@ case class InventoryState(
     } else
       this
 
+  def addMultipleItems(newItems: Seq[(ItemType, Int)]): InventoryState =
+    newItems.foldLeft(this) { case (inventory, (itemType, amount)) =>
+      inventory.addItem(itemType, amount)
+    }
+
   def removeItem(itemType: ItemType, amount: Int): InventoryState =
     items.find(_._1 == itemType) match {
       case None =>
@@ -50,6 +55,11 @@ case class InventoryState(
               other
           }
         )
+    }
+
+  def removeMultipleItems(itemsToRemove: Seq[(ItemType, Int)]): InventoryState =
+    itemsToRemove.foldLeft(this) { case (inventory, (itemType, amount)) =>
+      inventory.removeItem(itemType, amount)
     }
 
   def increaseInventorySizeTo(amount: Int): InventoryState =

@@ -29,6 +29,8 @@ case class GameState(
     actionsHistory: Seq[ActionDataType],
     storyActionsHistory: Seq[StoryLineHistory],
     inProgressStoryActions: Seq[RunTimeStoryAction],
+    buffs: Buffs,
+    preferences: Preferences,
 ) {
 
   def currentTiredSecondMicro: Long = (currentTiredSecond * 1_000_000L).toLong
@@ -59,6 +61,8 @@ case class GameState(
       actionsHistory = Seq(),
       storyActionsHistory = storyActionsHistory,
       inProgressStoryActions = Seq(),
+      buffs = buffs.resetForNewLoop,
+      preferences = preferences,
     )
 
   def addElapedTimeMicro(actualElapsedMicro: Long): GameState =
@@ -103,6 +107,8 @@ object GameState {
     actionsHistory = Seq(),
     storyActionsHistory = Seq(),
     inProgressStoryActions = Seq(),
+    buffs = Buffs.initial,
+    preferences = Preferences.initial,
   )
 
   object LoopCount {

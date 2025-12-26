@@ -6,6 +6,7 @@ import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
 case class ActiveActionData(
     data: ActionData,
     microSoFar: Long,
+    targetTimeMicro: Long,
     xpMultiplier: Double,
     amountOfActionsLeft: AmountOfActions,
     currentActionSuccessChance: Double,
@@ -15,6 +16,8 @@ case class ActiveActionData(
 ) {
 
   val id: ActionId = data.actionDataType.id
+
+  def targetTimeSec: Long = targetTimeMicro / 1_000_000L
 
   override def toString: String =
     s"ActiveActionData(data=${data.title}, microSoFar=$microSoFar, amountOfActionsLeft=$amountOfActionsLeft)"
@@ -38,10 +41,10 @@ object ActiveActionData {
     action.map(_.microSoFar / 1_000_000L)
 
   def microLeft(action: Signal[ActiveActionData]): Signal[Long] =
-    action.map(action => action.data.baseTimeMicro - action.microSoFar)
+    action.map(action => action.targetTimeMicro - action.microSoFar)
 
   def progressRatio(action: Signal[ActiveActionData]): Signal[Double] =
-    action.map(action => action.microSoFar.toDouble / action.data.baseTimeMicro.toDouble)
+    action.map(action => action.microSoFar.toDouble / action.targetTimeMicro.toDouble)
 
   def areaIsValid(state: GameState, data: ActionData): Boolean =
     data

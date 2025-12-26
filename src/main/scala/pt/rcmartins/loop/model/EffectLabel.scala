@@ -14,6 +14,8 @@ object EffectLabel {
     override val label: String = ""
   }
 
+  case class Custom(label: String) extends EffectLabel
+
   case object Explore extends EffectLabel {
     override val label: String = "Explore area for activities/resources."
   }
@@ -22,12 +24,8 @@ object EffectLabel {
     override val label: String = "Move to a new location."
   }
 
-  case object TalkAboutSoap extends EffectLabel {
-    override val label: String = "Talk with people about your soaps."
-  }
-
-  case object SellSoap extends EffectLabel {
-    override val label: String = "Sell your soaps."
+  case class SellSoap(cost: Int) extends EffectLabel {
+    override val label: String = s"Sell your soaps for ${Coins.amountFormatInv(cost)}"
   }
 
   case object GetSoapMold extends EffectLabel {

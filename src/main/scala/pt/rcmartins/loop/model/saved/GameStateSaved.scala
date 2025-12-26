@@ -1,6 +1,7 @@
-package pt.rcmartins.loop.model
+package pt.rcmartins.loop.model.saved
 
 import pt.rcmartins.loop.model.migrations.GameSatedSavedVersion
+import pt.rcmartins.loop.model._
 import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
 
 case class GameStateSaved(
@@ -23,6 +24,8 @@ case class GameStateSaved(
     deckActions: Seq[ActiveActionData],
     actionsHistory: Seq[ActionDataType],
     storyActionsHistory: Seq[String],
+    buffs: Buffs,
+    preferencesSaved: PreferencesSaved,
 ) extends GameSatedSavedVersion {
 
   def toGameState: GameState =
@@ -50,6 +53,8 @@ case class GameStateSaved(
       actionsHistory = actionsHistory,
       storyActionsHistory = storyActionsHistory.map(StoryLineHistory.apply),
       inProgressStoryActions = Seq.empty,
+      buffs = buffs,
+      preferences = preferencesSaved.toPreferences,
     )
 
 }
@@ -77,6 +82,8 @@ object GameStateSaved {
       deckActions = gameState.deckActions,
       actionsHistory = gameState.actionsHistory,
       storyActionsHistory = gameState.storyActionsHistory.map(_.line),
+      buffs = gameState.buffs,
+      preferencesSaved = PreferencesSaved.fromPreferences(gameState.preferences),
     )
 
   implicit val decoder: JsonDecoder[GameStateSaved] = DeriveJsonDecoder.gen[GameStateSaved]

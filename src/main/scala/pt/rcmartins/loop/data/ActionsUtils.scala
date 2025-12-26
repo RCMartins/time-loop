@@ -11,9 +11,10 @@ object ActionsUtils {
       amount: Int,
       actionTime: ActionTime,
       initialAmountOfActions: AmountOfActions = AmountOfActions.Standard(1),
-      firstTimeUnlocksActions: GameState => Seq[ActionData] = _ => Seq.empty,
-      everyTimeUnlocksActions: (GameState, Int) => Seq[ActionData] = (_, _) => Seq.empty,
-      addStory: GameState => Option[StoryLine] = _ => None,
+      firstTimeUnlocksActions: PartialFunction[GameState, Seq[ActionData]] = PartialFunction.empty,
+      everyTimeUnlocksActions: PartialFunction[(GameState, Int), Seq[ActionData]] =
+        PartialFunction.empty,
+      addStory: PartialFunction[(GameState, Int), Option[StoryLine]] = PartialFunction.empty,
   ): ActionData = ActionData(
     actionDataType = actionDataType,
     area = area,
@@ -58,8 +59,8 @@ object ActionsUtils {
       cost: Int,
       actionTime: ActionTime,
       initialAmountOfActions: AmountOfActions,
-      firstTimeUnlocksActions: GameState => Seq[ActionData] = _ => Seq.empty,
-      addStory: GameState => Option[StoryLine] = _ => None,
+      firstTimeUnlocksActions: PartialFunction[GameState, Seq[ActionData]] = PartialFunction.empty,
+      addStory: PartialFunction[(GameState, Int), Option[StoryLine]] = PartialFunction.empty,
       changeInventoryExtra: InventoryState => InventoryState = identity,
   ): ActionData =
     ActionData(
@@ -91,7 +92,7 @@ object ActionsUtils {
       coinsGain: Int,
       actionTime: ActionTime,
       initialAmountOfActions: AmountOfActions,
-      firstTimeUnlocksActions: GameState => Seq[ActionData] = _ => Seq.empty,
+      firstTimeUnlocksActions: PartialFunction[GameState, Seq[ActionData]] = PartialFunction.empty,
       changeInventoryExtra: InventoryState => InventoryState = identity,
   ): ActionData =
     ActionData(
@@ -120,7 +121,7 @@ object ActionsUtils {
       cost: Int,
       inventoryMaxSize: Int,
       actionTime: ActionTime,
-      firstTimeUnlocksActions: GameState => Seq[ActionData] = _ => Seq(),
+      firstTimeUnlocksActions: PartialFunction[GameState, Seq[ActionData]] = PartialFunction.empty,
   ): ActionData =
     ActionData(
       actionDataType = actionDataType,
@@ -148,7 +149,7 @@ object ActionsUtils {
       actionTime: ActionTime,
       initialAmountOfActions: AmountOfActions,
       actionSuccessType: ActionSuccessType = ActionSuccessType.Always,
-      firstTimeUnlocksActions: GameState => Seq[ActionData] = _ => Seq.empty,
+      firstTimeUnlocksActions: PartialFunction[GameState, Seq[ActionData]] = PartialFunction.empty,
       showWhenInvalid: Boolean = true,
   ): ActionData =
     ActionData(
@@ -161,10 +162,7 @@ object ActionsUtils {
       initialAmountOfActions = initialAmountOfActions,
       actionSuccessType = actionSuccessType,
       showWhenInvalid = showWhenInvalid,
-      changeInventory = inventory =>
-        cost
-          .foldLeft(inventory) { case (inv, (it, ct)) => inv.removeItem(it, ct) }
-          .addItem(itemType, amount),
+      changeInventory = _.removeMultipleItems(cost).addItem(itemType, amount),
       invalidReason = state =>
         Option
           .unless(
@@ -189,8 +187,9 @@ object ActionsUtils {
       actionTime: ActionTime,
       initialAmountOfActions: AmountOfActions,
       actionSuccessType: ActionSuccessType = ActionSuccessType.Always,
-      firstTimeUnlocksActions: GameState => Seq[ActionData] = _ => Seq.empty,
+      firstTimeUnlocksActions: PartialFunction[GameState, Seq[ActionData]] = PartialFunction.empty,
       permanentBonusUnlocks: Seq[PermanentBonusUnlockType] = Seq.empty,
+      addStory: PartialFunction[(GameState, Int), Option[StoryLine]] = PartialFunction.empty,
       showWhenInvalid: Boolean = true,
   ): ActionData =
     ActionData(
@@ -203,10 +202,7 @@ object ActionsUtils {
       initialAmountOfActions = initialAmountOfActions,
       actionSuccessType = actionSuccessType,
       showWhenInvalid = showWhenInvalid,
-      changeInventory = inventory =>
-        cost
-          .foldLeft(inventory) { case (inv, (it, ct)) => inv.removeItem(it, ct) }
-          .addItem(itemType, amount),
+      changeInventory = _.removeMultipleItems(cost).addItem(itemType, amount),
       invalidReason = state =>
         Option
           .unless(
@@ -221,6 +217,57 @@ object ActionsUtils {
           ),
       firstTimeUnlocksActions = firstTimeUnlocksActions,
       permanentBonusUnlocks = permanentBonusUnlocks,
+      addStory = addStory,
+    )
+
+  def tradeItemForBag(
+      title: String,
+      effectLabel: EffectLabel,
+      actionDataType: ActionDataType,
+      area: GameState => Seq[CharacterArea],
+      cost: Seq[(ItemType, Int)],
+      bonus: Seq[(ItemType, Int)],
+      inventoryMaxSize: Int,
+      actionTime: ActionTime,
+      initialAmountOfActions: AmountOfActions,
+      actionSuccessType: ActionSuccessType = ActionSuccessType.Always,
+      firstTimeUnlocksActions: PartialFunction[GameState, Seq[ActionData]] = PartialFunction.empty,
+      permanentBonusUnlocks: Seq[PermanentBonusUnlockType] = Seq.empty,
+      addStory: PartialFunction[(GameState, Int), Option[StoryLine]] = PartialFunction.empty,
+      showWhenInvalid: Boolean = true,
+  ): ActionData =
+    ActionData(
+      actionDataType = actionDataType,
+      area = area,
+      title = title,
+      effectLabel = effectLabel,
+      kind = ActionKind.Social,
+      actionTime = actionTime,
+      initialAmountOfActions = initialAmountOfActions,
+      actionSuccessType = actionSuccessType,
+      showWhenInvalid = showWhenInvalid,
+      changeInventory = _.increaseInventorySizeTo(inventoryMaxSize)
+        .removeMultipleItems(cost)
+        .addMultipleItems(bonus),
+      invalidReason = state =>
+        Option
+          .unless(
+            bonus.forall { case (itemType, amount) =>
+              // Bad action design if the increase is not enough to hold the new 'bonus' items...
+              state.inventory.increaseInventorySizeTo(inventoryMaxSize).canAddItem(itemType, amount)
+            }
+          )(ReasonLabel.InventoryFull)
+          .orElse(
+            Option
+              .unless(
+                cost.forall { case (itemType, amount) =>
+                  state.inventory.canRemoveItem(itemType, amount)
+                }
+              )(ReasonLabel.NotEnoughResources)
+          ),
+      firstTimeUnlocksActions = firstTimeUnlocksActions,
+      permanentBonusUnlocks = permanentBonusUnlocks,
+      addStory = addStory,
     )
 
   implicit class IntMoneyOps(private val amount: Int) extends AnyVal {

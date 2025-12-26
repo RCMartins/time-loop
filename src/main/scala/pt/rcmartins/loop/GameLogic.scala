@@ -14,34 +14,54 @@ class GameLogic(
     private val gameUtils: GameUtils,
 ) {
 
+  private val MaxTimeJump = 3600_000_000L // 1 hour in microseconds
+  private val MaxTickUpdateTimeMicro = 100_000L // ??? does this matter?
+  private val SaveIntervalMicro = 5_000_000L // 5 seconds in microseconds
+
   def update(initialGameState: GameState, currentTimeMicro: Long): GameState = {
-    val elapsedTimeMicro = Math.min(1_000_000L, currentTimeMicro - lastTimeMicro)
+    val elapsedTimeMicro = Math.max(0, Math.min(MaxTimeJump, currentTimeMicro - lastTimeMicro))
     lastTimeMicro = currentTimeMicro
-    auxUpdate(initialGameState, elapsedTimeMicro, initialGameState.skills.globalGameSpeed)
+    auxUpdateTotalTime(
+      initialGameState,
+      (elapsedTimeMicro * initialGameState.skills.globalGameSpeed).toLong
+    )
   }
 
   @inline
   @tailrec
-  private def auxUpdate(
+  private def auxUpdateTotalTime(
       initialGameState: GameState,
-      elapsedTimeMicro: Long,
-      speedLeft: Double,
+      totalElapsedTimeMicro: Long,
   ): GameState = {
-    val newState = auxUpdate(initialGameState, (elapsedTimeMicro * Math.min(1.0, speedLeft)).toLong)
-    if (speedLeft <= 1.0)
+    val maxTimeBuff: Long =
+      initialGameState.buffs.temporary.headOption
+        .map(_._1 - initialGameState.timeElapsedMicro)
+        .getOrElse(MaxTickUpdateTimeMicro)
+    val maxTimeTirednessIncrease: Long =
+      initialGameState.nextTiredIncreaseMicro - initialGameState.timeElapsedMicro
+
+    val maxExpectedTickTimeElapsed: Long =
+      Math.min(
+        Math.min(totalElapsedTimeMicro, MaxTickUpdateTimeMicro),
+        Math.min(maxTimeBuff, maxTimeTirednessIncrease),
+      )
+
+    val (newState, actualTickElapsedTime) = auxUpdate(initialGameState, maxExpectedTickTimeElapsed)
+    if (actualTickElapsedTime >= totalElapsedTimeMicro)
+      newState
+    else if (actualTickElapsedTime == 0L)
       newState
     else
-      auxUpdate(newState, elapsedTimeMicro, speedLeft - 1.0)
+      auxUpdateTotalTime(newState, totalElapsedTimeMicro - actualTickElapsedTime)
   }
 
-  @inline
-  private def auxUpdate(initialGameState: GameState, elapsedTimeMicro: Long): GameState = {
+  private def auxUpdate(initialGameState: GameState, elapsedTimeMicro: Long): (GameState, Long) = {
     val (newState, actualElapsedMicro, shouldUpdateTiredness) =
       updateAction(initialGameState, elapsedTimeMicro)
-    if (shouldUpdateTiredness)
-      updateTiredness(newState, actualElapsedMicro)
+    if (shouldUpdateTiredness && actualElapsedMicro > 0L)
+      (updateTiredness(newState, actualElapsedMicro), actualElapsedMicro)
     else
-      newState
+      (newState, actualElapsedMicro)
   }
 
   private def updateAction(
@@ -81,7 +101,14 @@ class GameLogic(
               else
                 initialGameState
                   .addElapedTimeMicro(maxElapedTime)
-            (updatedGameState, maxElapedTime, false)
+            // TODO instead of this "don't update tiredness hack, just update tiredness time ???
+            //  Or there should be a time-inm-game-elapsed, and total time (when paused, etc)
+//            (updatedGameState, maxElapedTime, false)
+            (
+              updatedGameState.modify(_.nextTiredIncreaseMicro).using(_ + maxElapedTime),
+              maxElapedTime,
+              false,
+            )
           case None =>
             val savedState: GameState = checkIfCanBeSaved(initialGameState)
             savedState.selectedNextAction.flatMap { case (id, limit) =>
@@ -105,7 +132,7 @@ class GameLogic(
                   false,
                 )
               case None =>
-                (savedState, 0L, false)
+                (savedState, 0L, true)
             }
         }
       case Some(currentAction) =>
@@ -116,7 +143,7 @@ class GameLogic(
 
         val currentActionElapsedMicro: Long =
           Math.min(
-            currentAction.data.baseTimeMicro,
+            currentAction.targetTimeMicro,
             currentActionMicroSoFar + elapsedWithMultiplier
           )
 
@@ -159,7 +186,7 @@ class GameLogic(
           )
 
         val currentActionIsComplete: Boolean =
-          currentActionElapsedMicro == currentAction.data.baseTimeMicro
+          currentActionElapsedMicro == currentAction.targetTimeMicro
 
         (
           initialGameState
@@ -176,7 +203,7 @@ class GameLogic(
   }
 
   private def applyCurrentActionIfComplete(
-      state: GameState,
+      initialState: GameState,
       currentActionIsComplete: Boolean,
       currentAction: ActiveActionData
   ): GameState =
@@ -184,7 +211,7 @@ class GameLogic(
       val actionSuccess: Boolean = currentAction.currentActionSuccessChance >= Random.nextDouble()
 
       if (!actionSuccess)
-        state
+        initialState
           .modify(_.currentAction)
           .setTo(
             Some(
@@ -200,7 +227,7 @@ class GameLogic(
           currentAction.numberOfCompletions == 0
 
         val stateWithHistory: GameState =
-          state
+          initialState
             .modify(_.actionsHistory)
             .using(_ :+ currentAction.data.actionDataType)
             .modifyAll(_.stats.loopActionCount, _.stats.globalActionCount)
@@ -208,19 +235,34 @@ class GameLogic(
 
         stateWithHistory
           .modify(_.deckActions)
-          .usingIf(firstTimeComplete)(
-            _ ++ currentAction.data.firstTimeUnlocksActions(stateWithHistory).map(_.toActiveAction)
-          )
+          .usingIf(firstTimeComplete) { deckActions =>
+            currentAction.data.firstTimeUnlocksActions.lift(stateWithHistory) match {
+              case None             => deckActions
+              case Some(newActions) => deckActions ++ newActions.map(_.toActiveAction)
+            }
+          }
           .modify(_.deckActions)
-          .using(
-            _ ++
-              currentAction.data
-                .everyTimeUnlocksActions(stateWithHistory, currentAction.numberOfCompletions + 1)
-                .map(_.toActiveAction)
-          )
+          .using { deckActions =>
+            currentAction.data.everyTimeUnlocksActions.lift(
+              stateWithHistory,
+              stateWithHistory.stats.loopActionCount
+                .getOrElse(currentAction.data.actionDataType, 0),
+            ) match {
+              case None             => deckActions
+              case Some(newActions) => deckActions ++ newActions.map(_.toActiveAction)
+            }
+          }
           .modify(_.inProgressStoryActions)
           .using(inProgressStoryActions =>
-            currentAction.data.addStory(stateWithHistory) match {
+            currentAction.data.addStory
+              .lift(
+                (
+                  stateWithHistory,
+                  stateWithHistory.stats.globalActionCount
+                    .getOrElse(currentAction.data.actionDataType, 0)
+                )
+              )
+              .flatten match {
               case None =>
                 inProgressStoryActions
               case Some(newStory) =>
@@ -241,7 +283,7 @@ class GameLogic(
           .pipe(checkMultiAction(_, currentAction))
       }
     } else
-      state
+      initialState
 
   private def checkPermanentBonus(
       state: GameState,
@@ -298,6 +340,7 @@ class GameLogic(
             justCompletedAction.data.actionTime match {
               case ActionTime.Standard(_)                => currentMultiplier
               case ActionTime.ReduzedXP(_, xpMultiplier) => currentMultiplier * xpMultiplier
+              case ActionTime.LinearTime(_, _)           => currentMultiplier
             }
           }
           .modify(_.numberOfCompletions)
@@ -314,6 +357,17 @@ class GameLogic(
               case ActionSuccessType.WithFailure(baseChance, _) => baseChance
             }
           )
+          .modify(_.targetTimeMicro)
+          .using { currentTargetTimeMicro =>
+            justCompletedAction.data.actionTime match {
+              case ActionTime.Standard(_) =>
+                currentTargetTimeMicro
+              case ActionTime.ReduzedXP(_, _) =>
+                currentTargetTimeMicro
+              case ActionTime.LinearTime(_, increaseTimeSec) =>
+                currentTargetTimeMicro + increaseTimeSec * 1_000_000L
+            }
+          }
 
       if (updatedAction.isInvalid(state) || updatedAction.limitOfActions.contains(0)) {
         state
@@ -338,11 +392,10 @@ class GameLogic(
   private def drawNewCardsFromDeck(
       state: GameState
   ): GameState = {
-    // TODO stable shuffle based on seed (with a stable random generator)
     val (allAvailableActions, allAvailableMoveActions) = {
       val allActions = state.deckActions ++ state.visibleNextActions ++ state.visibleMoveActions
       val (stardardActions, moveActions) = allActions.partition(_.data.moveToArea.isEmpty)
-      (Random.shuffle(stardardActions), moveActions.sortBy(_.id.id))
+      (stardardActions.sortBy(_.id.id), moveActions.sortBy(_.id.id))
     }
 
     val (invalidStandardActions, validStandardActions) =
@@ -354,9 +407,7 @@ class GameLogic(
 
     val (nextActions, remainingDeckActions) = {
       val validSorted: Seq[ActiveActionData] =
-        validStandardActions
-          .take(MaximumAmountOfVisibleActions)
-          .sortBy(action => (action.data.baseTimeMicro, action.id.id))
+        validStandardActions.take(MaximumAmountOfVisibleActions)
       val (takenVisible, remainingVisible) =
         (validSorted ++ visibleInvalid).splitAt(MaximumAmountOfVisibleActions)
       (
@@ -393,13 +444,20 @@ class GameLogic(
   }
     .modify(_.energyMicro)
     .using { energy =>
-      val additionalTiredness: Long =
+      val difficultyAdditionalTiredness: Long =
         initialGameState.currentAction match {
           case None         => 0L
           case Some(action) => action.data.difficultyModifier.increaseTirednessAbsoluteMicro
         }
+      val tirednessBuffMultiplier: Double =
+        initialGameState.buffs.temporary.collectFirst {
+          case (_, Buff.TirednessMultiplier(_, multiplier)) => multiplier
+        } match {
+          case Some(multiplier) => multiplier
+          case None             => 1.0
+        }
       val totalTiredSecondMicro: Long =
-        additionalTiredness + initialGameState.currentTiredSecondMicro
+        ((difficultyAdditionalTiredness + initialGameState.currentTiredSecondMicro) * tirednessBuffMultiplier).toLong
 
       Math.max(
         0,
@@ -407,6 +465,8 @@ class GameLogic(
       )
     }
     .pipe(checkFoodConsumption)
+    .pipe(checkBuffsExpiration)
+    .pipe(checkActivateNewBuffsFromInventory)
     .pipe(checkDeathDueToTiredness)
 
   private def checkFoodConsumption(state: GameState): GameState =
@@ -439,8 +499,48 @@ class GameLogic(
         )
     }
 
+  @tailrec
+  private def checkBuffsExpiration(state: GameState): GameState =
+    state.buffs.temporary.headOption match {
+      case Some((expirationTime, _)) if expirationTime <= state.timeElapsedMicro =>
+        checkBuffsExpiration(state.modify(_.buffs.temporary).using(_.drop(1)))
+      case _ =>
+        state
+    }
+
+  private def checkActivateNewBuffsFromInventory(state: GameState): GameState = {
+    val currentTime = state.timeElapsedMicro
+    var items = state.inventory.items
+    var newBuffsVar: Buffs = state.buffs
+    var anyChange: Boolean = false
+    for (i <- items.indices) {
+      val (itemType, amount, cooldown) = items(i)
+      itemType.buffItem match {
+        case Some((buff, durationMicro)) if amount > 0 && currentTime > cooldown =>
+          newBuffsVar.insertTemporaryIfPossible(buff, currentTime, durationMicro) match {
+            case None           => // cannot insert buff
+            case Some(newBuffs) =>
+              newBuffsVar = newBuffs
+              items = items.updated(
+                i,
+                (itemType, amount - 1, currentTime + FoodConsumptionIntervalMicro)
+              )
+              anyChange = true
+          }
+        case _ =>
+      }
+    }
+    if (!anyChange)
+      state
+    else
+      state.copy(
+        inventory = state.inventory.copy(items = items),
+        buffs = newBuffsVar,
+      )
+  }
+
   private def checkIfCanBeSaved(gameState: GameState): GameState =
-    if (gameState.timeElapsedMicroLastSave != gameState.timeElapsedMicro) {
+    if (gameState.timeElapsedMicroLastSave + SaveIntervalMicro < gameState.timeElapsedMicro) {
       SaveLoad.saveToLocalStorage(gameState) match {
         case Left(_) =>
           gameState

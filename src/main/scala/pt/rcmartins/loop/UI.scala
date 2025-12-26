@@ -37,6 +37,10 @@ class UI(
     div(
       // page padding & responsive grid
       cls := "min-h-dvh p-4 md:py-6 md:px-20 bg-slate-900 text-slate-100",
+      styleAttr <-- MobileUtils.isMobileSignal.map {
+        case true  => "zoom: 0.75;"
+        case false => "zoom: 1;"
+      },
       div(
         // mobile: single column; desktop: 3 columns
         cls := "grid gap-4 md:grid-cols-[260px,1fr,300px]",
@@ -61,20 +65,26 @@ class UI(
   private val currentActionIsDefined: Signal[Boolean] =
     currentAction.map(_.isDefined).distinct
 
-  private val currentActionView: ReactiveHtmlElement[HTMLDivElement] =
-    div(
-      cls := "flex items-start gap-3",
-      child.maybe <--
-        currentActionIsDefined.map {
-          case false => None
-          case true  =>
-            Some(
-              activeActionCard(
-                currentAction.map(_.getOrElse(StoryActions.Data.WakeUp.toActiveAction)),
-                skills,
-              )
-            )
-        }
+  private val currentActionView: HtmlElement =
+    panelCard(
+      span("Current Action"),
+      div(
+        cls := "space-y-3 min-h-32 max-h-32",
+        div(
+          cls := "flex items-start gap-3",
+          child.maybe <--
+            currentActionIsDefined.map {
+              case false => None
+              case true  =>
+                Some(
+                  activeActionCard(
+                    currentAction.map(_.getOrElse(StoryActions.Data.WakeUp.toActiveAction)),
+                    skills,
+                  )
+                )
+            }
+        )
+      )
     )
 
   private val nextActionsView: ReactiveHtmlElement[HTMLDivElement] =
@@ -138,10 +148,7 @@ class UI(
                 div(
                   span(targetArea.name),
                   " (",
-                  action.data.actionTime match {
-                    case ActionTime.Standard(baseTimeSec)     => baseTimeSec.toString
-                    case ActionTime.ReduzedXP(baseTimeSec, _) => baseTimeSec.toString
-                  },
+                  s"${action.targetTimeSec}",
                   ")",
                 )
               )
@@ -227,9 +234,32 @@ class UI(
         cls := "flex justify-between",
         span("Time Elapsed"),
         span(
-          child.text <-- timeElapsedLong.map(s => "%02d:%02d".format(s / 60, s % 60))
+          child.text <-- timeElapsedLong.map(secondsToPrettyStr)
+        ),
+
+        // Global elapsed time tooltip
+        cls := "relative inline-block group",
+        div(
+          cls := "absolute left-0 top-full mt-1 px-2 py-1 z-20 " +
+            "text-xs bg-slate-900 text-white rounded shadow-lg whitespace-nowrap " +
+            "hidden group-hover:block pointer-events-none z-10",
+          "Total Elapsed Time: ",
+          child.text <-- globalTimeElapsedLong.map(secondsToPrettyStr)
         )
       ),
+      child.maybe <--
+        loopNumber.map(_ > 1).distinct.map {
+          case false =>
+            None
+          case true =>
+            Some(
+              div(
+                cls := "flex justify-between",
+                span("Loop Count"),
+                span(child.text <-- loopNumber.map(_.toString)),
+              )
+            )
+        },
       div(
         cls := "flex justify-between",
         span("Energy"),
@@ -271,37 +301,20 @@ class UI(
       // two rows: auto (top) + 1fr (bottom)
       cls := "grid grid-rows-[auto,1fr] gap-4 min-h-[60dvh]",
       // top: current action
-      div(
-        cls := "grid grid-cols-2 gap-3",
-        panelCard(
-          span("Current Action"),
-          div(cls := "space-y-3 min-h-32 max-h-32", currentActionView)
-        ),
-        panelCard(
-          span("Story"),
-          div(
-            cls := "overflow-y-auto min-h-32 max-h-32",
-            children <--
-              storyActionsHistory.split(_.id) { case (_, StoryLineHistory(_, line), _) =>
-                p(
-                  cls("animate-fade-in"),
-                  span(line),
-                )
-              },
-            onMountCallback { ctx =>
-              implicit val owner: Owner = ctx.owner
-              val box = ctx.thisNode.ref
-
-              def moveToBottom(): Unit =
-                timers.setTimeout(0) {
-                  box.scrollTop = box.scrollHeight
-                }
-              storyActionsHistory.changes.foreach { _ => moveToBottom() }
-              moveToBottom()
-            },
-          )
-        )
-      ),
+      child <--
+        MobileUtils.isMobileSignal.map {
+          case false =>
+            div(
+              cls := "grid grid-cols-2 gap-3",
+              currentActionView,
+              storyDiv,
+            )
+          case true =>
+            div(
+              storyDiv,
+              div(cls := "mt-4", currentActionView),
+            )
+        },
       // bottom: next actions list with own scroll
       div(
         cls := "rounded-2xl p-4 bg-slate-800/60 ring-1 ring-slate-700 shadow flex flex-col min-h-0 ",
@@ -352,6 +365,32 @@ class UI(
       ),
     )
   }
+
+  private def storyDiv: HtmlElement =
+    panelCard(
+      span("Story"),
+      div(
+        cls := "overflow-y-auto min-h-32 max-h-32",
+        children <--
+          storyActionsHistory.split(_.id) { case (_, StoryLineHistory(_, line), _) =>
+            p(
+              cls("animate-fade-in"),
+              span(line),
+            )
+          },
+        onMountCallback { ctx =>
+          implicit val owner: Owner = ctx.owner
+          val box = ctx.thisNode.ref
+
+          def moveToBottom(): Unit =
+            timers.setTimeout(0) {
+              box.scrollTop = box.scrollHeight
+            }
+          storyActionsHistory.changes.foreach { _ => moveToBottom() }
+          moveToBottom()
+        },
+      )
+    )
 
   /** Right sidebar: inventory + other info stacked */
   private def rightSidebar(): HtmlElement =

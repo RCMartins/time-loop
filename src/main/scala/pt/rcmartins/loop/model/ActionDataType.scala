@@ -46,6 +46,18 @@ object ActionDataType {
 
     case object BuyFrozenMomo extends Arc1DataType { val id: ActionId = ActionId(16L) }
 
+    case object SpeakToShopKeeper extends Arc1DataType { val id: ActionId = ActionId(35L) }
+
+    case object TradeSoapsForBag extends Arc1DataType { val id: ActionId = ActionId(36L) }
+
+    case object GoToNeighborhood extends Arc1DataType { val id: ActionId = ActionId(37L) }
+
+    case object SellSoapInNeighborhood extends Arc1DataType { val id: ActionId = ActionId(38L) }
+
+    case object NeighborhoodTalkAboutMarket extends Arc1DataType {
+      val id: ActionId = ActionId(43L)
+    }
+
     case object BuyGoodSoapMold extends Arc1DataType { val id: ActionId = ActionId(17L) }
 
     case object CookMomo extends Arc1DataType { val id: ActionId = ActionId(18L) }
@@ -54,15 +66,15 @@ object ActionDataType {
 
     case object MoldSoap extends Arc1DataType { val id: ActionId = ActionId(20L) }
 
-    case object CreateSoap extends Arc1DataType { val id: ActionId = ActionId(21L) }
+    case object CreateRomesarySoap extends Arc1DataType { val id: ActionId = ActionId(21L) }
 
-    case object GoToTown extends Arc1DataType { val id: ActionId = ActionId(22L) }
+    case object GoToMarket extends Arc1DataType { val id: ActionId = ActionId(22L) }
 
-    case object TalkWithPeopleInTown extends Arc1DataType { val id: ActionId = ActionId(23L) }
+    case object SetupSoapStallInMarket extends Arc1DataType { val id: ActionId = ActionId(23L) }
 
-    case object SellSoapToPeople extends Arc1DataType { val id: ActionId = ActionId(24L) }
+    case object SellSoapToPeopleInMarket extends Arc1DataType { val id: ActionId = ActionId(24L) }
 
-    case object ExploreTown extends Arc1DataType { val id: ActionId = ActionId(25L) }
+    case object ExploreMarket extends Arc1DataType { val id: ActionId = ActionId(25L) }
 
     case object GoToEquipamentStore extends Arc1DataType { val id: ActionId = ActionId(26L) }
 
@@ -70,25 +82,33 @@ object ActionDataType {
 
     case object BuyHugeBag extends Arc1DataType { val id: ActionId = ActionId(28L) }
 
-    case object GoToForest extends Arc1DataType { val id: ActionId = ActionId(29L) }
-
-    case object PickupBerries extends Arc1DataType { val id: ActionId = ActionId(30L) }
-
-    case object PickupPrettyFlower extends Arc1DataType { val id: ActionId = ActionId(31L) }
-
-    case object SellFlowerInStore extends Arc1DataType { val id: ActionId = ActionId(32L) }
-
     case object BuyEmptyShop extends Arc1DataType { val id: ActionId = ActionId(33L) }
 
     case object PrepareShopForBusiness extends Arc1DataType { val id: ActionId = ActionId(34L) }
 
+    case object GoToMySoapShop extends Arc1DataType { val id: ActionId = ActionId(41L) }
+
+    case object SellSoapToPeopleInSoapShop extends Arc1DataType { val id: ActionId = ActionId(39L) }
+
+    case object GoToForest extends Arc1DataType { val id: ActionId = ActionId(29L) }
+
+    case object ForestSearchAreaAroundSorcererPosition extends Arc1DataType {
+      val id: ActionId = ActionId(42L)
+    }
+
+    case object PickupWildCherries extends Arc1DataType { val id: ActionId = ActionId(30L) }
+
+    case object PickupLavender extends Arc1DataType { val id: ActionId = ActionId(40L) }
+
+    case object MakeMagicLavenderSoap extends Arc1DataType { val id: ActionId = ActionId(31L) }
+
+    case object FollowHardToFindFootprintsPath extends Arc1DataType {
+      val id: ActionId = ActionId(32L)
+    }
+
   }
 
-  object Arc2DataType {
-
-    case object GoToMySoapShop extends Arc1DataType { val id: ActionId = ActionId(35L) }
-
-  }
+  object Arc2DataType {}
 
   private[model] val all: Map[ActionId, ActionDataType] =
     Seq(
@@ -108,29 +128,39 @@ object ActionDataType {
       Arc1DataType.GoToBackHome,
       Arc1DataType.BuyGlycerin,
       Arc1DataType.BuyFrozenMomo,
+      Arc1DataType.SpeakToShopKeeper,
+      Arc1DataType.TradeSoapsForBag,
+      Arc1DataType.GoToNeighborhood,
+      Arc1DataType.SellSoapInNeighborhood,
+      Arc1DataType.NeighborhoodTalkAboutMarket,
       Arc1DataType.BuyGoodSoapMold,
       Arc1DataType.CookMomo,
       Arc1DataType.MeltGlycerin,
       Arc1DataType.MoldSoap,
-      Arc1DataType.CreateSoap,
-      Arc1DataType.GoToTown,
-      Arc1DataType.TalkWithPeopleInTown,
-      Arc1DataType.SellSoapToPeople,
-      Arc1DataType.ExploreTown,
+      Arc1DataType.CreateRomesarySoap,
+      Arc1DataType.GoToMarket,
+      Arc1DataType.SetupSoapStallInMarket,
+      Arc1DataType.SellSoapToPeopleInMarket,
+      Arc1DataType.ExploreMarket,
       Arc1DataType.GoToEquipamentStore,
       Arc1DataType.BuyBigBag,
       Arc1DataType.BuyHugeBag,
-      Arc1DataType.GoToForest,
-      Arc1DataType.PickupBerries,
-      Arc1DataType.PickupPrettyFlower,
-      Arc1DataType.SellFlowerInStore,
       Arc1DataType.BuyEmptyShop,
       Arc1DataType.PrepareShopForBusiness,
-      Arc2DataType.GoToMySoapShop,
+      Arc1DataType.GoToMySoapShop,
+      Arc1DataType.SellSoapToPeopleInSoapShop,
+      Arc1DataType.GoToForest,
+      Arc1DataType.ForestSearchAreaAroundSorcererPosition,
+      Arc1DataType.PickupWildCherries,
+      Arc1DataType.PickupLavender,
+      Arc1DataType.MakeMagicLavenderSoap,
+      Arc1DataType.FollowHardToFindFootprintsPath,
     ).pipe { seq =>
       val result = seq.map(a => a.id -> a).toMap
       if (result.size != seq.size)
-        throw new IllegalStateException("Duplicate ActionDataType ids found")
+        throw new IllegalStateException(
+          s"Duplicate ActionDataType ids found: ${seq.groupBy(_.id).toSeq.filter(_._2.size > 1)}"
+        )
       result
     }
 

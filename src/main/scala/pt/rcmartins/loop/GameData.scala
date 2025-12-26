@@ -18,6 +18,11 @@ class GameData(
 
   val timeElapsedMicro: Signal[Long] = gameState.map(_.timeElapsedMicro).distinct
   val timeElapsedLong: Signal[Long] = timeElapsedMicro.map(_ / 1_000_000L).distinct
+  private val globalTimeElapsedMicro: Signal[Long] =
+    gameState.map(_.stats.totalElapedTimeMicro).distinct
+
+  val globalTimeElapsedLong: Signal[Long] = globalTimeElapsedMicro.map(_ / 1_000_000L).distinct
+  val loopNumber: Signal[Int] = gameState.map(_.stats.loopNumber).distinct
 
   val energyMicro: Signal[Long] = gameState.map(_.energyMicro).distinct
   val energyLong: Signal[Long] = energyMicro.map(e => Math.floor(e / 1e6).toLong).distinct
