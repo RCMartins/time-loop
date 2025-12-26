@@ -1,6 +1,7 @@
 package pt.rcmartins.loop
 
 import com.softwaremill.quicklens.ModifyPimp
+import pt.rcmartins.loop.GameLogic._
 import pt.rcmartins.loop.model.GameState._
 import pt.rcmartins.loop.model.StoryLine.StoryPart
 import pt.rcmartins.loop.model._
@@ -15,7 +16,6 @@ class GameLogic(
 ) {
 
   private val MaxTimeJump = 3600_000_000L // 1 hour in microseconds
-  private val MaxTickUpdateTimeMicro = 100_000L // ??? does this matter?
   private val SaveIntervalMicro = 5_000_000L // 5 seconds in microseconds
 
   def update(initialGameState: GameState, currentTimeMicro: Long): GameState = {
@@ -33,16 +33,22 @@ class GameLogic(
       initialGameState: GameState,
       totalElapsedTimeMicro: Long,
   ): GameState = {
+    val maxFoodCooldownTime: Long =
+      initialGameState.inventory.items
+        .filter(_._3 > initialGameState.timeElapsedMicro)
+        .map { case (_, _, cooldown) => cooldown - initialGameState.timeElapsedMicro }
+        .minOption
+        .getOrElse(MaxTimeJump)
     val maxTimeBuff: Long =
       initialGameState.buffs.temporary.headOption
         .map(_._1 - initialGameState.timeElapsedMicro)
-        .getOrElse(MaxTickUpdateTimeMicro)
+        .getOrElse(MaxTimeJump)
     val maxTimeTirednessIncrease: Long =
       initialGameState.nextTiredIncreaseMicro - initialGameState.timeElapsedMicro
 
     val maxExpectedTickTimeElapsed: Long =
       Math.min(
-        Math.min(totalElapsedTimeMicro, MaxTickUpdateTimeMicro),
+        Math.min(totalElapsedTimeMicro, maxFoodCooldownTime),
         Math.min(maxTimeBuff, maxTimeTirednessIncrease),
       )
 
@@ -137,30 +143,37 @@ class GameLogic(
         }
       case Some(currentAction) =>
         val initialSkillState: SkillState = initialGameState.skills.get(currentAction.data.kind)
-        val currentActionMicroSoFar = currentAction.microSoFar
-        val elapsedWithMultiplier: Long =
-          Math.floor(elapsedTimeMicro.toDouble * initialSkillState.finalSpeedMulti).toLong
+        val maximumPossibleElapsedWithMult: Long =
+          toFloorLong(elapsedTimeMicro.toDouble * initialSkillState.finalSpeedMulti)
 
-        val currentActionElapsedMicro: Long =
+        val actualElapsedWithMult: Long =
           Math.min(
-            currentAction.targetTimeMicro,
-            currentActionMicroSoFar + elapsedWithMultiplier
+            Math.min(
+              maximumPossibleElapsedWithMult,
+              currentAction.targetTimeMicro - currentAction.microSoFar,
+            ),
+            Math.min(
+              toCeilLong(
+                (initialSkillState.nextLoopXPMicro - initialSkillState.loopXPMicro) / currentAction.xpMultiplier
+              ),
+              toCeilLong(
+                (initialSkillState.nextPermXPMicro - initialSkillState.permXPMicro) / currentAction.xpMultiplier
+              ),
+            )
           )
 
-        val percentActualTimePassed: Double =
-          (currentActionMicroSoFar + elapsedWithMultiplier) / currentActionElapsedMicro.toDouble
-        val actualElapsedMicro = (elapsedTimeMicro * percentActualTimePassed).toLong
+        val actualTimeElapsedMicro: Long =
+          if (actualElapsedWithMult == maximumPossibleElapsedWithMult)
+            elapsedTimeMicro
+          else
+            toFloorLongMin1(actualElapsedWithMult.toDouble / initialSkillState.finalSpeedMulti)
+        val actualXPGainMicro: Long =
+          toFloorLongMin1(currentAction.xpMultiplier * actualElapsedWithMult)
 
         val skillsUpdated: SkillsState =
           initialGameState.skills.update(
             currentAction.data.kind,
             skillState => {
-              val actualXPGainMicro: Long =
-                Math
-                  .ceil(
-                    currentAction.xpMultiplier * elapsedWithMultiplier * percentActualTimePassed
-                  )
-                  .toLong
               val newLoopXPMicro: Long = skillState.loopXPMicro + actualXPGainMicro
               val newPermXPMicro: Long = skillState.permXPMicro + actualXPGainMicro
 
@@ -185,6 +198,7 @@ class GameLogic(
             }
           )
 
+        val currentActionElapsedMicro = currentAction.microSoFar + actualElapsedWithMult
         val currentActionIsComplete: Boolean =
           currentActionElapsedMicro == currentAction.targetTimeMicro
 
@@ -192,11 +206,11 @@ class GameLogic(
           initialGameState
             .modify(_.currentAction)
             .using(_.map(_.copy(microSoFar = currentActionElapsedMicro)))
-            .addElapedTimeMicro(actualElapsedMicro)
+            .addElapedTimeMicro(actualTimeElapsedMicro)
             .modify(_.skills)
             .setTo(skillsUpdated)
             .pipe(applyCurrentActionIfComplete(_, currentActionIsComplete, currentAction)),
-          actualElapsedMicro,
+          actualTimeElapsedMicro,
           true,
         )
     }
@@ -479,7 +493,7 @@ class GameLogic(
       var anyChange: Boolean = false
       for (i <- items.indices) {
         val (itemType, amount, cooldown) = items(i)
-        if (amount > 0 && itemType.isFoodItem && currentTime > cooldown) {
+        if (amount > 0 && itemType.isFoodItem && currentTime >= cooldown) {
           if ((state.maxEnergyMicro - energyMicro) >= itemType.foodValueMicro) {
             energyMicro += itemType.foodValueMicro
             items = items.updated(
@@ -539,17 +553,17 @@ class GameLogic(
       )
   }
 
-  private def checkIfCanBeSaved(gameState: GameState): GameState =
-    if (gameState.timeElapsedMicroLastSave + SaveIntervalMicro < gameState.timeElapsedMicro) {
-      SaveLoad.saveToLocalStorage(gameState) match {
+  private def checkIfCanBeSaved(state: GameState): GameState =
+    if (state.timeElapsedMicroLastSave + SaveIntervalMicro < state.timeElapsedMicro) {
+      SaveLoad.saveToLocalStorage(state) match {
         case Left(_) =>
-          gameState
+          state
         case Right(_) =>
           gameUtils.showToast("Game Saved!")
-          gameState.copy(timeElapsedMicroLastSave = gameState.timeElapsedMicro)
+          state.copy(timeElapsedMicroLastSave = state.timeElapsedMicro)
       }
     } else
-      gameState
+      state
 
   private def checkDeathDueToTiredness(state: GameState): GameState =
     if (state.energyMicro == 0L) {
@@ -564,5 +578,13 @@ class GameLogic(
     } else {
       state
     }
+
+}
+
+object GameLogic {
+
+  def toFloorLong(value: Double): Long = Math.floor(value).toLong
+  def toCeilLong(value: Double): Long = Math.ceil(value).toLong
+  def toFloorLongMin1(value: Double): Long = Math.max(1, Math.floor(value).toLong)
 
 }

@@ -8,15 +8,13 @@ import zio.test.{assertTrue, Spec, ZIOSpecDefault}
 
 object GameLogicTest extends ZIOSpecDefault {
 
-  private val GameStateEmpty = GameState.initial.copy(
+  private def GameStateEmpty: GameState = GameState.initial.copy(
     visibleNextActions = Seq(),
     visibleMoveActions = Seq(),
   )
 
-  private val GameUtils = new GameUtils()
-  private val GameLogicBasic = new GameLogic(0L, GameUtils)
-
-  private val GameDataEmpty = new GameData(GameStateEmpty, GameLogicBasic, GameUtils)
+  private def GameUtils = new GameUtils()
+  private def GameLogicBasic = new GameLogic(0L, GameUtils)
 
   private val DummyWakeUpAction: ActionData = ActionData(
     actionDataType = Arc1DataType.WakeUp,
@@ -32,8 +30,7 @@ object GameLogicTest extends ZIOSpecDefault {
       suite("update")(
         test("update action completions after action finish") {
           val res: GameState =
-            updateInSmallIncrements(
-              GameLogicBasic,
+            GameLogicBasic.update(
               GameStateEmpty.copy(currentAction = Some(DummyWakeUpAction.toActiveAction)),
               5_000_000L,
             )
@@ -41,24 +38,85 @@ object GameLogicTest extends ZIOSpecDefault {
             res.stats.loopActionCount.get(Arc1DataType.WakeUp).contains(1),
             res.stats.globalActionCount.get(Arc1DataType.WakeUp).contains(1),
           )
-        }
+        },
+        test("update only the time of the action") {
+          val res: GameState =
+            GameLogicBasic.update(
+              GameStateEmpty.copy(currentAction =
+                Some(DummyWakeUpAction.copy(actionTime = ActionTime.Standard(10)).toActiveAction)
+              ),
+              12_000_000L,
+            )
+          assertTrue(
+            res.timeElapsedMicro == 10_000_000L,
+            res.stats.totalElapedTimeMicro == 10_000_000L,
+            res.skills.agility.loopLevel == 1,
+          )
+        },
+        test("update only the time of the action with speed multiplier from level up") {
+          val res: GameState =
+            GameLogicBasic.update(
+              GameStateEmpty.copy(currentAction =
+                Some(DummyWakeUpAction.copy(actionTime = ActionTime.Standard(15)).toActiveAction)
+              ),
+              15_000_000L,
+            )
+          val actualExpectedtimePassed: Long =
+            10_000_000 + // time to complete while at level 0
+              Math.floor(5_000_000.0 / 1.05).toLong // time to complete while at level 1
+
+          assertTrue(
+            res.timeElapsedMicro == actualExpectedtimePassed,
+            res.stats.totalElapedTimeMicro == actualExpectedtimePassed,
+            res.skills.agility.loopLevel == 1,
+          )
+        },
+        test("Check if rounding issues don't affect time calculation") {
+          val res: GameState =
+            GameLogicBasic.update(
+              GameStateEmpty.copy(
+                currentAction = Some(
+                  DummyWakeUpAction
+                    .copy(actionTime = ActionTime.Standard(15))
+                    .toActiveAction
+                    .copy(xpMultiplier = 0.722)
+                ),
+                skills = SkillsState.initial.copy(
+                  agility = SkillState(
+                    kind = ActionKind.Agility,
+                    loopLevel = 13,
+                    loopXPMicro = 21028824L,
+                    permLevel = 48,
+                    permXPMicro = 54493649L,
+                    initialBonusMultiplier = 1.0,
+                    currentBonusMultiplier = 1.0,
+                  )
+                )
+              ),
+              5_000_000L,
+            )
+          assertTrue(
+            res.currentAction.isEmpty,
+          )
+        },
+        test("update food actions/cooldowns properly") {
+          val res: GameState =
+            GameLogicBasic.update(
+              GameStateEmpty.copy(
+                currentAction = Some(
+                  DummyWakeUpAction.copy(actionTime = ActionTime.Standard(1000)).toActiveAction
+                ),
+                inventory = InventoryState(20, Seq((ItemType.Rice, 20, 5_000_000L))),
+                maxEnergyInt = 1000,
+                energyMicro = 900_000_000L,
+              ),
+              105_000_000L,
+            )
+          assertTrue(
+            res.inventory.items == Seq((ItemType.Rice, 0, 105_000_000L))
+          )
+        },
       )
     )
-
-  private def updateInSmallIncrements(
-      gameLogic: GameLogic,
-      gameState: GameState,
-      totalMicro: Long,
-  ): GameState = {
-    var currentState = gameState
-    val increment = 100_000L
-    var microLeft = totalMicro
-    while (microLeft > 0) {
-      val step = Math.min(increment, microLeft)
-      currentState = gameLogic.update(currentState, currentState.timeElapsedMicro + step)
-      microLeft -= step
-    }
-    currentState
-  }
 
 }
