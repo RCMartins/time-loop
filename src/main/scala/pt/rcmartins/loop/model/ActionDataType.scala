@@ -56,7 +56,7 @@ object ActionDataType {
 
     val NeighborhoodTalkAboutMarket: ActionDataType = addNewDataType(43L)
 
-    val BuyGoodSoapMold: ActionDataType = addNewDataType(17L)
+    val UNUSED_2: ActionDataType = addNewDataType(17L)
 
     val CookMomo: ActionDataType = addNewDataType(18L)
 
@@ -107,11 +107,9 @@ object ActionDataType {
   private def addNewDataType(id: Long): ActionDataType = {
     val actionId = ActionId(id)
     if (allMutable.contains(actionId))
-      throw new IllegalStateException(
-        s"Duplicate ActionDataType id found: ${actionId}"
-      )
+      throw new IllegalStateException(s"Duplicate ActionDataType id found: ${actionId}")
     val actionDataType = new ActionDataType { val id: ActionId = actionId }
-    allMutable(actionId) = actionDataType
+    allMutable.put(actionId, actionDataType)
     actionDataType
   }
 

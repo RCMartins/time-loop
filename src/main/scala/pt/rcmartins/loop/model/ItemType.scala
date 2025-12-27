@@ -3,7 +3,9 @@ package pt.rcmartins.loop.model
 import pt.rcmartins.loop.Constants
 import zio.json.{JsonDecoder, JsonEncoder}
 
-sealed trait ItemType {
+import scala.collection.mutable
+
+trait ItemType {
   val id: Int
   val name: String
   val iconPath: String = ""
@@ -23,9 +25,11 @@ sealed trait ItemType {
 
 object ItemType {
 
+  private val allMutable: mutable.Map[Int, ItemType] = mutable.Map.empty
+
   // Coins
 
-  case object Coins extends ItemType {
+  val Coins: ItemType = addNewItem(new ItemType {
     val id: Int = 1
     val name: String = "Coins"
     override val iconPath: String = Constants.Icons.TwoCoins
@@ -35,53 +39,53 @@ object ItemType {
     val foodValueLong: Long = 0L
     override val amountFormat: Int => String = n => f"$$${n / 100.0}%.2f"
     override val amountFormatInv: Int => String = n => amountFormat(n)
-  }
+  })
 
   // Misc Items
 
-  case object Rosemary extends ItemType {
+  val Rosemary: ItemType = addNewItem(new ItemType {
     val id: Int = 2
     val name: String = "Rosemary"
     override val iconPath: String = Constants.Icons.Olive
     override val iconColor: String = "text-green-500"
     val inventoryOrder: Int = 2
     val foodValueLong: Long = 0L
-  }
+  })
 
-  case object Glycerin extends ItemType {
+  val Glycerin: ItemType = addNewItem(new ItemType {
     val id: Int = 3
     val name: String = "Glycerin Based Soap"
     override val iconPath: String = Constants.Icons.StoneBlock
     val inventoryOrder: Int = 3
     val foodValueLong: Long = 0L
-  }
+  })
 
-  case object MeltedGlycerin extends ItemType {
+  val MeltedGlycerin: ItemType = addNewItem(new ItemType {
     val id: Int = 4
     val name: String = "Melted Glycerin"
     override val iconPath: String = Constants.Icons.BubblingBowl
     override val iconColor: String = "text-neutral-300"
     val inventoryOrder: Int = 4
     val foodValueLong: Long = 0L
-  }
+  })
 
-  case object RosemarySoap extends ItemType {
+  val RosemarySoap: ItemType = addNewItem(new ItemType {
     val id: Int = 5
     val name: String = "Rosemary Soap"
     override val iconPath: String = Constants.Icons.Soap
     override val iconColor: String = "text-green-300"
     val inventoryOrder: Int = 5
     val foodValueLong: Long = 0L
-  }
+  })
 
-  case object MagicLavender extends ItemType {
+  val MagicLavender: ItemType = addNewItem(new ItemType {
     val id: Int = 6
     val name: String = "Magic Lavender"
     val inventoryOrder: Int = 6
     val foodValueLong: Long = 0L
-  }
+  })
 
-  case object MagicLavenderSoap extends ItemType {
+  val MagicLavenderSoap: ItemType = addNewItem(new ItemType {
     val id: Int = 14
     val name: String = "Magic Lavender Soap"
     override val iconPath: String = Constants.Icons.Soap
@@ -92,91 +96,78 @@ object ItemType {
     override val buffItem: Option[(Buff, Long)] = Some(
       (Buff.TirednessMultiplier(1L, 0.5), 5_000_000L)
     )
-
-  }
+  })
 
   // Raw/Frozen Food Items
 
-  case object FrozenMomo extends ItemType {
+  val FrozenMomo: ItemType = addNewItem(new ItemType {
     val id: Int = 7
     val name: String = "Frozen Momo"
     override val iconPath: String = Constants.Icons.DumplingBao
     override val iconColor: String = "text-cyan-500"
     val inventoryOrder: Int = 21
     val foodValueLong: Long = 0L
-  }
+  })
 
   // Food Items
 
-  case object Rice extends ItemType {
+  val Rice: ItemType = addNewItem(new ItemType {
     val id: Int = 8
     val name: String = "Rice"
     override val iconPath: String = Constants.Icons.BowlOfRice
     val inventoryOrder: Int = 31
     val foodValueLong: Long = 5L
-  }
+  })
 
-  case object WildCherries extends ItemType {
+  val WildCherries: ItemType = addNewItem(new ItemType {
     val id: Int = 9
     val name: String = "Cherries"
     val inventoryOrder: Int = 32
     val foodValueLong: Long = 6L
     override val iconPath: String = Constants.Icons.Cherry
     override val iconColor: String = "text-red-600"
-  }
+  })
 
-  case object Momo extends ItemType {
+  val Momo: ItemType = addNewItem(new ItemType {
     val id: Int = 10
     val name: String = "Momo"
     override val iconPath: String = Constants.Icons.DumplingBao
     override val iconColor: String = "text-yellow-100"
     val inventoryOrder: Int = 33
     val foodValueLong: Long = 10L
-  }
+  })
 
-  case object Curry extends ItemType {
+  val Curry: ItemType = addNewItem(new ItemType {
     val id: Int = 11
     val name: String = "Curry"
     val inventoryOrder: Int = 34
     val foodValueLong: Long = 12L
-  }
+  })
 
-  case object Chatpate extends ItemType {
+  val Chatpate: ItemType = addNewItem(new ItemType {
     val id: Int = 12
     val name: String = "Chatpate"
     val inventoryOrder: Int = 35
     val foodValueLong: Long = 15L
-  }
+  })
 
-  case object Panipuri extends ItemType {
+  val Panipuri: ItemType = addNewItem(new ItemType {
     val id: Int = 13
     val name: String = "Panipuri"
     val inventoryOrder: Int = 36
     val foodValueLong: Long = 20L
+  })
+
+  private def addNewItem(itemType: ItemType): ItemType = {
+    if (allMutable.contains(itemType.id))
+      throw new IllegalStateException(s"Duplicate ItemType id found: ${itemType.id}")
+    allMutable.put(itemType.id, itemType)
+    itemType
   }
-
-  private val allItems: Seq[ItemType] = Seq(
-    Coins,
-    Rosemary,
-    Glycerin,
-    MeltedGlycerin,
-    RosemarySoap,
-    MagicLavender,
-    FrozenMomo,
-    Rice,
-    WildCherries,
-    Momo,
-    Curry,
-    Chatpate,
-    Panipuri,
-  )
-
-  private[model] val allMap: Map[Int, ItemType] =
-    allItems.map(item => item.id -> item).toMap
 
   implicit val decoder: JsonDecoder[ItemType] =
     JsonDecoder.int.mapOrFail { id =>
-      allMap.get(id) match {
+      allMutable.get(id) match {
         case Some(itemType) => Right(itemType)
         case None           => Left(s"Unknown ItemType id: $id")
       }

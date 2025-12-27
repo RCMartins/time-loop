@@ -342,10 +342,8 @@ class UI(
       child.maybe <--
         showMapUI.map {
           case false =>
-            println(false)
             None
           case true =>
-            println(true)
             Some(
               div(
                 cls := "rounded-2xl p-4 bg-slate-800/60 ring-1 ring-slate-700 shadow flex flex-col min-h-0",

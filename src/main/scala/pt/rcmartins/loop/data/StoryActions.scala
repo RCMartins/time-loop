@@ -803,7 +803,7 @@ object StoryActions {
   private def addAction(action: ActionData): ActionData = {
     if (allActionsMutable.contains(action.actionDataType.id))
       throw new IllegalArgumentException(
-        s"Action with id ${action.actionDataType.id} already exists"
+        s"Duplicate ActionData id found: ${action.actionDataType.id}"
       )
     allActionsMutable.put(action.actionDataType.id, action)
     action
