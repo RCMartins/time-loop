@@ -25,8 +25,6 @@ final case class ActionData(
     difficultyModifier: ActionDifficultyModifier = ActionDifficultyModifier.empty,
 ) {
 
-  val baseTimeMicro: Long = actionTime.baseTimeSec * 1_000_000L
-
   def toActiveAction: ActiveActionData =
     new ActiveActionData(
       data = this,
@@ -54,7 +52,7 @@ object ActionData {
 
   implicit val decoder: JsonDecoder[ActionData] =
     ActionDataType.decoder.mapOrFail { actionDataType =>
-      StoryActions.allActions.get(actionDataType.id) match {
+      StoryActions.allActions(actionDataType.id) match {
         case Some(data) => Right(data)
         case None       => Left(s"Unknown DataAction: ${actionDataType.id}")
       }
