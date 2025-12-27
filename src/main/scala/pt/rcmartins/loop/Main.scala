@@ -3,6 +3,7 @@ package pt.rcmartins.loop
 import com.raquo.airstream.core.AirstreamError.CombinedError
 import com.raquo.laminar.api.L._
 import org.scalajs.dom
+import pt.rcmartins.loop.data.StoryActions
 import pt.rcmartins.loop.model.GameState
 
 object Main {
@@ -27,6 +28,9 @@ object Main {
 
       dump(e)
     }
+
+    // Hack to force load Data object before the json deserialization happens
+    val _ = StoryActions.Data.InitialActions.map(_.actionDataType.id)
 
     val currentGameState: GameState =
       SaveLoad.loadFromLocalStorage() match {

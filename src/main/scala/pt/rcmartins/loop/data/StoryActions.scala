@@ -14,11 +14,7 @@ object StoryActions {
 
   object Data {
 
-    val InitialCharacterArea: CharacterArea = Area1_Home
-    val InitialActions: Seq[ActionData] = Seq(WakeUp)
-    val InitialMoveActions: Seq[ActionData] = Seq.empty
-
-    def WakeUp: ActionData = addAction(
+    val WakeUp: ActionData = addAction(
       ActionData(
         actionDataType = Arc1DataType.WakeUp,
         area = _ => Seq(Area1_Home),
@@ -39,7 +35,7 @@ object StoryActions {
       )
     )
 
-    private def SearchLivingRoom: ActionData = addAction(
+    private val SearchLivingRoom: ActionData = addAction(
       ActionData(
         actionDataType = Arc1DataType.SearchLivingRoom,
         area = _ => Seq(Area1_Home),
@@ -54,7 +50,7 @@ object StoryActions {
       )
     )
 
-    private def PickupSimpleSoapMold: ActionData = addAction(
+    private val PickupSimpleSoapMold: ActionData = addAction(
       ActionData(
         actionDataType = Arc1DataType.PickupSimpleSoapMold,
         area = _ => Seq(Area1_Home),
@@ -74,7 +70,7 @@ object StoryActions {
       )
     )
 
-    private def PickupCoins: ActionData = addAction(
+    private val PickupCoins: ActionData = addAction(
       pickupToItem(
         actionDataType = Arc1DataType.PickupCoins,
         area = _ => Seq(Area1_Home),
@@ -89,7 +85,7 @@ object StoryActions {
       )
     )
 
-    private def SearchKitchen: ActionData = addAction(
+    private val SearchKitchen: ActionData = addAction(
       ActionData(
         actionDataType = Arc1DataType.SearchKitchen,
         area = _ => Seq(Area1_Home),
@@ -101,7 +97,7 @@ object StoryActions {
       )
     )
 
-    private def CookRice: ActionData = addAction(
+    private val CookRice: ActionData = addAction(
       cookingAction(
         actionDataType = Arc1DataType.CookRice,
         area = _ => Seq(Area1_Home),
@@ -114,7 +110,7 @@ object StoryActions {
       )
     )
 
-    private def SearchGarden: ActionData = addAction(
+    private val SearchGarden: ActionData = addAction(
       ActionData(
         actionDataType = Arc1DataType.SearchGarden,
         area = _ => Seq(Area1_Home),
@@ -133,7 +129,7 @@ object StoryActions {
       )
     )
 
-    private def PickupRosemary: ActionData = addAction(
+    private val PickupRosemary: ActionData = addAction(
       gardeningAction(
         actionDataType = Arc1DataType.PickRosemaryGarden,
         area = _ => Seq(Area1_Home),
@@ -144,7 +140,7 @@ object StoryActions {
       )
     )
 
-    private def GoToGeneralStore: ActionData = addAction(
+    private val GoToGeneralStore: ActionData = addAction(
       ActionData(
         actionDataType = Arc1DataType.GoToGeneralStore,
         area = {
@@ -165,7 +161,7 @@ object StoryActions {
       )
     )
 
-    private def BuyGlycerin: ActionData = addAction(
+    private val BuyGlycerin: ActionData = addAction(
       buyItemAction(
         actionDataType = Arc1DataType.BuyGlycerin,
         area = _ => Seq(Area4_GeneralStore),
@@ -182,7 +178,7 @@ object StoryActions {
       )
     )
 
-    private def GoToForest: ActionData = addAction(
+    private val GoToForest: ActionData = addAction(
       ActionData(
         actionDataType = Arc1DataType.GoToForest,
         area = {
@@ -202,7 +198,7 @@ object StoryActions {
       )
     )
 
-    private def ExploreForestForLavender: ActionData = addAction(
+    private val ExploreForestForLavender: ActionData = addAction(
       ActionData(
         actionDataType = Arc1DataType.ExploreForestForLavender,
         area = _ => Seq(Area7_Forest),
@@ -222,7 +218,7 @@ object StoryActions {
       )
     )
 
-    private def FindMysteriousSorcerer: ActionData = addAction(
+    private val FindMysteriousSorcerer: ActionData = addAction(
       ActionData(
         actionDataType = Arc1DataType.FindMysteriousSorcerer,
         area = _ => Seq(Area7_Forest),
@@ -236,7 +232,7 @@ object StoryActions {
       )
     )
 
-    private def TalkMysteriousSorcerer: ActionData = addAction(
+    private val TalkMysteriousSorcerer: ActionData = addAction(
       ActionData(
         actionDataType = Arc1DataType.TalkMysteriousSorcerer,
         area = _ => Seq(Area7_Forest),
@@ -265,7 +261,7 @@ object StoryActions {
       )
     )
 
-    private def BuyFrozenMomo: ActionData = addAction(
+    private val BuyFrozenMomo: ActionData = addAction(
       buyItemAction(
         actionDataType = Arc1DataType.BuyFrozenMomo,
         area = _ => Seq(Area4_GeneralStore),
@@ -278,7 +274,7 @@ object StoryActions {
       )
     )
 
-    private def SpeakToShopKeeper: ActionData = addAction(
+    private val SpeakToShopKeeper: ActionData = addAction(
       ActionData(
         actionDataType = Arc1DataType.SpeakToShopKeeper,
         area = _ => Seq(Area4_GeneralStore),
@@ -292,7 +288,7 @@ object StoryActions {
       )
     )
 
-    private def TradeSoapsForBag: ActionData = addAction(
+    private val TradeSoapsForBag: ActionData = addAction(
       tradeItemForBag(
         actionDataType = Arc1DataType.TradeSoapsForBag,
         area = _ => Seq(Area4_GeneralStore),
@@ -310,7 +306,7 @@ object StoryActions {
       )
     )
 
-    private def CookMomo: ActionData = addAction(
+    private val CookMomo: ActionData = addAction(
       cookingAction(
         actionDataType = Arc1DataType.CookMomo,
         area = _ => Seq(Area1_Home),
@@ -324,7 +320,7 @@ object StoryActions {
       )
     )
 
-    private def GoToBackHome: ActionData = addAction(
+    private val GoToBackHome: ActionData = addAction(
       ActionData(
         actionDataType = Arc1DataType.GoToBackHome,
         area = _ => Area1_Home.allConnections,
@@ -338,7 +334,7 @@ object StoryActions {
       )
     )
 
-    private def MeltGlycerin: ActionData = addAction(
+    private val MeltGlycerin: ActionData = addAction(
       craftItem(
         actionDataType = Arc1DataType.MeltGlycerin,
         area = _ => Seq(Area1_Home, Area6_MySoapShop),
@@ -352,7 +348,7 @@ object StoryActions {
       )
     )
 
-    private def CreateRosemarySoap: ActionData = addAction(
+    private val CreateRosemarySoap: ActionData = addAction(
       craftItem(
         actionDataType = Arc1DataType.CreateRomesarySoap,
         area = _ => Seq(Area1_Home, Area6_MySoapShop),
@@ -368,7 +364,7 @@ object StoryActions {
       )
     )
 
-    private def GoToNeighborhood: ActionData = addAction(
+    private val GoToNeighborhood: ActionData = addAction(
       ActionData(
         actionDataType = Arc1DataType.GoToNeighborhood,
         area = _ => Area2_Neighborhood.allConnections,
@@ -382,7 +378,7 @@ object StoryActions {
       )
     )
 
-    private def SellSoapToPeopleInNeighborhood: ActionData = addAction(
+    private val SellSoapToPeopleInNeighborhood: ActionData = addAction(
       ActionData(
         actionDataType = Arc1DataType.SellSoapInNeighborhood,
         area = _ => Seq(Area2_Neighborhood),
@@ -401,7 +397,7 @@ object StoryActions {
       )
     )
 
-    private def NeighborhoodTalkAboutMarket: ActionData = addAction(
+    private val NeighborhoodTalkAboutMarket: ActionData = addAction(
       ActionData(
         actionDataType = Arc1DataType.NeighborhoodTalkAboutMarket,
         area = _ => Seq(Area2_Neighborhood),
@@ -415,7 +411,7 @@ object StoryActions {
       )
     )
 
-    private def GoToMarket: ActionData = addAction(
+    private val GoToMarket: ActionData = addAction(
       ActionData(
         actionDataType = Arc1DataType.GoToMarket,
         area = _ => Area3_Market.allConnections,
@@ -429,7 +425,7 @@ object StoryActions {
       )
     )
 
-    private def TalkWithPeopleInMarket: ActionData = addAction(
+    private val TalkWithPeopleInMarket: ActionData = addAction(
       ActionData(
         actionDataType = Arc1DataType.SetupSoapStallInMarket,
         area = _ => Seq(Area3_Market),
@@ -441,7 +437,7 @@ object StoryActions {
       )
     )
 
-    private def SellSoapToPeopleInMarket: ActionData = addAction(
+    private val SellSoapToPeopleInMarket: ActionData = addAction(
       ActionData(
         actionDataType = Arc1DataType.SellSoapToPeopleInMarket,
         area = _ => Seq(Area3_Market),
@@ -462,7 +458,7 @@ object StoryActions {
       )
     )
 
-    private def ExploreMarket: ActionData = addAction(
+    private val ExploreMarket: ActionData = addAction(
       ActionData(
         actionDataType = Arc1DataType.ExploreMarket,
         area = _ => Seq(Area3_Market),
@@ -476,7 +472,7 @@ object StoryActions {
       )
     )
 
-    private def GoToEquipmentStore: ActionData = addAction(
+    private val GoToEquipmentStore: ActionData = addAction(
       ActionData(
         actionDataType = Arc1DataType.GoToEquipamentStore,
         area = _ => Area5_EquipmentStore.allConnections,
@@ -490,7 +486,7 @@ object StoryActions {
       )
     )
 
-    private def BuyBigBag: ActionData = addAction(
+    private val BuyBigBag: ActionData = addAction(
       buyInventoryIncrease(
         actionDataType = Arc1DataType.BuyBigBag,
         area = _ => Seq(Area5_EquipmentStore),
@@ -502,7 +498,7 @@ object StoryActions {
       )
     )
 
-    private def BuyHugeBag: ActionData = addAction(
+    private val BuyHugeBag: ActionData = addAction(
       buyInventoryIncrease(
         actionDataType = Arc1DataType.BuyHugeBag,
         area = _ => Seq(Area5_EquipmentStore),
@@ -514,7 +510,7 @@ object StoryActions {
       )
     )
 
-    private def BuyEmptyShop: ActionData = addAction(
+    private val BuyEmptyShop: ActionData = addAction(
       ActionData(
         actionDataType = Arc1DataType.BuyEmptyShop,
         area = _ => Seq(Area3_Market),
@@ -532,7 +528,7 @@ object StoryActions {
       )
     )
 
-    private def GoToMySoapStore: ActionData = addAction(
+    private val GoToMySoapStore: ActionData = addAction(
       ActionData(
         actionDataType = Arc1DataType.GoToMySoapShop,
         area = _ => Area6_MySoapShop.allConnections,
@@ -546,7 +542,7 @@ object StoryActions {
       )
     )
 
-    private def PrepareStoreForBusiness: ActionData = addAction(
+    private val PrepareStoreForBusiness: ActionData = addAction(
       ActionData(
         actionDataType = Arc1DataType.PrepareShopForBusiness,
         area = _ => Seq(Area6_MySoapShop),
@@ -559,7 +555,7 @@ object StoryActions {
       )
     )
 
-    private def SellSoapToPeopleInSoapShop: ActionData = addAction(
+    private val SellSoapToPeopleInSoapShop: ActionData = addAction(
       ActionData(
         actionDataType = Arc1DataType.SellSoapToPeopleInSoapShop,
         area = _ => Seq(Area6_MySoapShop),
@@ -579,7 +575,7 @@ object StoryActions {
       )
     )
 
-    private def ForestSearchAreaAroundSorcererPosition: ActionData = addAction(
+    private val ForestSearchAreaAroundSorcererPosition: ActionData = addAction(
       ActionData(
         actionDataType = Arc1DataType.ForestSearchAreaAroundSorcererPosition,
         area = _ => Seq(Area7_Forest),
@@ -603,7 +599,7 @@ object StoryActions {
       )
     )
 
-    private def PickupWildCherries: ActionData = addAction(
+    private val PickupWildCherries: ActionData = addAction(
       pickupToItem(
         actionDataType = Arc1DataType.PickupWildCherries,
         area = _ => Seq(Area7_Forest),
@@ -614,7 +610,7 @@ object StoryActions {
       )
     )
 
-    private def PickupLavender: ActionData = addAction(
+    private val PickupLavender: ActionData = addAction(
       pickupToItem(
         actionDataType = Arc1DataType.PickupLavender,
         area = _ => Seq(Area7_Forest),
@@ -627,7 +623,7 @@ object StoryActions {
       )
     )
 
-    private def MakeMagicLavenderSoap: ActionData = addAction(
+    private val MakeMagicLavenderSoap: ActionData = addAction(
       craftItem(
         actionDataType = Arc1DataType.MakeMagicLavenderSoap,
         area = _ => Seq(Area1_Home, Area6_MySoapShop),
@@ -643,7 +639,7 @@ object StoryActions {
       )
     )
 
-    private def FollowHardToFindFootprintsPath: ActionData = addAction(
+    private val FollowHardToFindFootprintsPath: ActionData = addAction(
       ActionData(
         actionDataType = Arc1DataType.FollowHardToFindFootprintsPath,
         area = _ => Seq(Area7_Forest),
@@ -655,6 +651,10 @@ object StoryActions {
         difficultyModifier = ActionDifficultyModifier(increaseTirednessAbsoluteMicro = 5_000_000)
       )
     )
+
+    val InitialCharacterArea: CharacterArea = Area1_Home
+    val InitialActions: Seq[ActionData] = Seq(WakeUp)
+    val InitialMoveActions: Seq[ActionData] = Seq.empty
 
   }
 
@@ -809,7 +809,8 @@ object StoryActions {
     action
   }
 
-  def allActions(actionId: ActionId): Option[ActionData] =
+  def allActions(actionId: ActionId): Option[ActionData] = {
     allActionsMutable.get(actionId)
+  }
 
 }
