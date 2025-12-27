@@ -237,17 +237,19 @@ class GameLogic(
             )
           )
       else {
-        val firstTimeComplete: Boolean =
-          currentAction.numberOfCompletions == 0
-
         val stateWithHistory: GameState =
           initialState
             .modifyAll(_.stats.loopActionCount, _.stats.globalActionCount)
             .using(_.updatedWith(currentAction.data.actionDataType)(_.map(_ + 1).orElse(Some(1))))
 
+        val currentLoopCompletions: Int =
+          stateWithHistory.stats.getLoopCount(currentAction.data.actionDataType)
+        val totalCompletions: Int =
+          stateWithHistory.stats.getGlobalCount(currentAction.data.actionDataType)
+
         stateWithHistory
           .modify(_.deckActions)
-          .usingIf(firstTimeComplete) { deckActions =>
+          .usingIf(currentLoopCompletions == 1) { deckActions =>
             currentAction.data.firstTimeUnlocksActions.lift(stateWithHistory) match {
               case None             => deckActions
               case Some(newActions) => deckActions ++ newActions.map(_.toActiveAction)
@@ -257,8 +259,7 @@ class GameLogic(
           .using { deckActions =>
             currentAction.data.everyTimeUnlocksActions.lift(
               stateWithHistory,
-              stateWithHistory.stats.loopActionCount
-                .getOrElse(currentAction.data.actionDataType, 0),
+              currentLoopCompletions,
             ) match {
               case None             => deckActions
               case Some(newActions) => deckActions ++ newActions.map(_.toActiveAction)
@@ -267,13 +268,7 @@ class GameLogic(
           .modify(_.inProgressStoryActions)
           .using(inProgressStoryActions =>
             currentAction.data.addStory
-              .lift(
-                (
-                  stateWithHistory,
-                  stateWithHistory.stats.globalActionCount
-                    .getOrElse(currentAction.data.actionDataType, 0)
-                )
-              )
+              .lift((stateWithHistory, totalCompletions))
               .flatten match {
               case None =>
                 inProgressStoryActions
@@ -287,7 +282,7 @@ class GameLogic(
             checkPermanentBonus(
               _,
               currentAction.data.permanentBonusUnlocks,
-              currentAction.numberOfCompletions + 1,
+              currentLoopCompletions,
             )
           )
           .modify(_.characterArea)
@@ -300,12 +295,12 @@ class GameLogic(
   private def checkPermanentBonus(
       state: GameState,
       permanentBonusUnlocks: Seq[PermanentBonusUnlockType],
-      completitions: Int,
+      currentLoopCompletions: Int,
   ): GameState = {
     @tailrec
     def multMatches(baseValue: Int, multiplier: Int): Boolean =
-      if (completitions == baseValue) true
-      else if (completitions < baseValue) false
+      if (currentLoopCompletions == baseValue) true
+      else if (currentLoopCompletions < baseValue) false
       else multMatches(baseValue * multiplier, multiplier)
 
     val newBonus: Option[PermanentBonus] =
@@ -355,8 +350,6 @@ class GameLogic(
               case ActionTime.LinearTime(_, _)           => currentMultiplier
             }
           }
-          .modify(_.numberOfCompletions)
-          .using(_ + 1)
           .modify(_.limitOfActions)
           .using {
             case Some(limit) if limit >= 1 => Some(limit - 1)

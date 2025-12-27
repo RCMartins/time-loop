@@ -17,6 +17,9 @@ case class Stats(
   def getLoopCount(actionDataType: ActionDataType): Int =
     loopActionCount.getOrElse(actionDataType, 0)
 
+  def getGlobalCount(actionDataType: ActionDataType): Int =
+    globalActionCount.getOrElse(actionDataType, 0)
+
 }
 
 object Stats {

@@ -12,7 +12,6 @@ case class ActiveActionData(
     currentActionSuccessChance: Double,
     actionSuccessChanceIncrease: Double,
     limitOfActions: Option[Int] = None,
-    numberOfCompletions: Int = 0,
 ) {
 
   val id: ActionId = data.actionDataType.id
