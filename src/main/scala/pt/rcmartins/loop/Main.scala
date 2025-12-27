@@ -4,7 +4,7 @@ import com.raquo.airstream.core.AirstreamError.CombinedError
 import com.raquo.laminar.api.L._
 import org.scalajs.dom
 import pt.rcmartins.loop.data.StoryActions
-import pt.rcmartins.loop.model.{ActionDataType, GameState, ItemType}
+import pt.rcmartins.loop.model.{GameState, ItemType}
 
 object Main {
 
