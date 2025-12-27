@@ -110,9 +110,9 @@ object StoryActions {
       firstTimeUnlocksActions = _ => Seq(PickupRosemary, GoToGeneralStore),
       invalidReason = state =>
         Option.unless(
-          state.actionsHistory.contains(Arc1DataType.SearchKitchen) &&
-            state.actionsHistory.contains(Arc1DataType.SearchLivingRoom) &&
-            state.actionsHistory.contains(Arc1DataType.PickupSimpleSoapMold)
+          state.stats.getLoopCount(Arc1DataType.SearchKitchen) > 0 &&
+            state.stats.getLoopCount(Arc1DataType.SearchLivingRoom) > 0 &&
+            state.stats.getLoopCount(Arc1DataType.PickupSimpleSoapMold) > 0
         )(ReasonLabel.Empty),
       showWhenInvalid = false,
     )

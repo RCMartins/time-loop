@@ -38,7 +38,6 @@ case class GameStateMinimal(
       visibleMoveActions = StoryActions.Data.InitialMoveActions.map(_.toActiveAction),
       selectedNextAction = None,
       deckActions = Seq.empty,
-      actionsHistory = Seq.empty,
       storyActionsHistory = storyActionsHistory.map(StoryLineHistory.apply),
       inProgressStoryActions = Seq.empty,
       buffs = Buffs.initial,

@@ -242,8 +242,6 @@ class GameLogic(
 
         val stateWithHistory: GameState =
           initialState
-            .modify(_.actionsHistory)
-            .using(_ :+ currentAction.data.actionDataType)
             .modifyAll(_.stats.loopActionCount, _.stats.globalActionCount)
             .using(_.updatedWith(currentAction.data.actionDataType)(_.map(_ + 1).orElse(Some(1))))
 

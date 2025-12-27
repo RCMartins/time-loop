@@ -64,7 +64,7 @@ object ActionDataType {
 
     case object MeltGlycerin extends Arc1DataType { val id: ActionId = ActionId(19L) }
 
-    case object MoldSoap extends Arc1DataType { val id: ActionId = ActionId(20L) }
+    case object UNUSED extends Arc1DataType { val id: ActionId = ActionId(20L) }
 
     case object CreateRomesarySoap extends Arc1DataType { val id: ActionId = ActionId(21L) }
 
@@ -136,7 +136,7 @@ object ActionDataType {
       Arc1DataType.BuyGoodSoapMold,
       Arc1DataType.CookMomo,
       Arc1DataType.MeltGlycerin,
-      Arc1DataType.MoldSoap,
+      Arc1DataType.UNUSED,
       Arc1DataType.CreateRomesarySoap,
       Arc1DataType.GoToMarket,
       Arc1DataType.SetupSoapStallInMarket,
