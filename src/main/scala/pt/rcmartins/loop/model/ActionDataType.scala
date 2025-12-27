@@ -2,172 +2,121 @@ package pt.rcmartins.loop.model
 
 import zio.json.{JsonDecoder, JsonEncoder}
 
-import scala.util.chaining.scalaUtilChainingOps
+import scala.collection.mutable
 
-sealed trait ActionDataType {
+trait ActionDataType {
   val id: ActionId
 }
 
 object ActionDataType {
 
-  sealed trait Arc1DataType extends ActionDataType
+  private val allMutable: mutable.Map[ActionId, ActionDataType] = mutable.Map.empty
 
   object Arc1DataType {
 
-    case object WakeUp extends Arc1DataType { val id: ActionId = ActionId(1L) }
+    val WakeUp: ActionDataType = addNewDataType(1L)
 
-    case object SearchLivingRoom extends Arc1DataType { val id: ActionId = ActionId(2L) }
+    val SearchLivingRoom: ActionDataType = addNewDataType(2L)
 
-    case object PickupSimpleSoapMold extends Arc1DataType { val id: ActionId = ActionId(3L) }
+    val PickupSimpleSoapMold: ActionDataType = addNewDataType(3L)
 
-    case object ExploreForestForLavender extends Arc1DataType { val id: ActionId = ActionId(4L) }
+    val ExploreForestForLavender: ActionDataType = addNewDataType(4L)
 
-    case object FindMysteriousSorcerer extends Arc1DataType { val id: ActionId = ActionId(5L) }
+    val FindMysteriousSorcerer: ActionDataType = addNewDataType(5L)
 
-    case object TalkMysteriousSorcerer extends Arc1DataType { val id: ActionId = ActionId(6L) }
+    val TalkMysteriousSorcerer: ActionDataType = addNewDataType(6L)
 
-    case object FirstLoopFadingAway extends Arc1DataType { val id: ActionId = ActionId(7L) }
+    val FirstLoopFadingAway: ActionDataType = addNewDataType(7L)
 
-    case object PickupCoins extends Arc1DataType { val id: ActionId = ActionId(8L) }
+    val PickupCoins: ActionDataType = addNewDataType(8L)
 
-    case object SearchKitchen extends Arc1DataType { val id: ActionId = ActionId(9L) }
+    val SearchKitchen: ActionDataType = addNewDataType(9L)
 
-    case object CookRice extends Arc1DataType { val id: ActionId = ActionId(10L) }
+    val CookRice: ActionDataType = addNewDataType(10L)
 
-    case object SearchGarden extends Arc1DataType { val id: ActionId = ActionId(11L) }
+    val SearchGarden: ActionDataType = addNewDataType(11L)
 
-    case object PickRosemaryGarden extends Arc1DataType { val id: ActionId = ActionId(12L) }
+    val PickRosemaryGarden: ActionDataType = addNewDataType(12L)
 
-    case object GoToGeneralStore extends Arc1DataType { val id: ActionId = ActionId(13L) }
+    val GoToGeneralStore: ActionDataType = addNewDataType(13L)
 
-    case object GoToBackHome extends Arc1DataType { val id: ActionId = ActionId(14L) }
+    val GoToBackHome: ActionDataType = addNewDataType(14L)
 
-    case object BuyGlycerin extends Arc1DataType { val id: ActionId = ActionId(15L) }
+    val BuyGlycerin: ActionDataType = addNewDataType(15L)
 
-    case object BuyFrozenMomo extends Arc1DataType { val id: ActionId = ActionId(16L) }
+    val BuyFrozenMomo: ActionDataType = addNewDataType(16L)
 
-    case object SpeakToShopKeeper extends Arc1DataType { val id: ActionId = ActionId(35L) }
+    val SpeakToShopKeeper: ActionDataType = addNewDataType(35L)
 
-    case object TradeSoapsForBag extends Arc1DataType { val id: ActionId = ActionId(36L) }
+    val TradeSoapsForBag: ActionDataType = addNewDataType(36L)
 
-    case object GoToNeighborhood extends Arc1DataType { val id: ActionId = ActionId(37L) }
+    val GoToNeighborhood: ActionDataType = addNewDataType(37L)
 
-    case object SellSoapInNeighborhood extends Arc1DataType { val id: ActionId = ActionId(38L) }
+    val SellSoapInNeighborhood: ActionDataType = addNewDataType(38L)
 
-    case object NeighborhoodTalkAboutMarket extends Arc1DataType {
-      val id: ActionId = ActionId(43L)
-    }
+    val NeighborhoodTalkAboutMarket: ActionDataType = addNewDataType(43L)
 
-    case object BuyGoodSoapMold extends Arc1DataType { val id: ActionId = ActionId(17L) }
+    val UNUSED_2: ActionDataType = addNewDataType(17L)
 
-    case object CookMomo extends Arc1DataType { val id: ActionId = ActionId(18L) }
+    val CookMomo: ActionDataType = addNewDataType(18L)
 
-    case object MeltGlycerin extends Arc1DataType { val id: ActionId = ActionId(19L) }
+    val MeltGlycerin: ActionDataType = addNewDataType(19L)
 
-    case object UNUSED extends Arc1DataType { val id: ActionId = ActionId(20L) }
+    val UNUSED: ActionDataType = addNewDataType(20L)
 
-    case object CreateRomesarySoap extends Arc1DataType { val id: ActionId = ActionId(21L) }
+    val CreateRomesarySoap: ActionDataType = addNewDataType(21L)
 
-    case object GoToMarket extends Arc1DataType { val id: ActionId = ActionId(22L) }
+    val GoToMarket: ActionDataType = addNewDataType(22L)
 
-    case object SetupSoapStallInMarket extends Arc1DataType { val id: ActionId = ActionId(23L) }
+    val SetupSoapStallInMarket: ActionDataType = addNewDataType(23L)
 
-    case object SellSoapToPeopleInMarket extends Arc1DataType { val id: ActionId = ActionId(24L) }
+    val SellSoapToPeopleInMarket: ActionDataType = addNewDataType(24L)
 
-    case object ExploreMarket extends Arc1DataType { val id: ActionId = ActionId(25L) }
+    val ExploreMarket: ActionDataType = addNewDataType(25L)
 
-    case object GoToEquipamentStore extends Arc1DataType { val id: ActionId = ActionId(26L) }
+    val GoToEquipamentStore: ActionDataType = addNewDataType(26L)
 
-    case object BuyBigBag extends Arc1DataType { val id: ActionId = ActionId(27L) }
+    val BuyBigBag: ActionDataType = addNewDataType(27L)
 
-    case object BuyHugeBag extends Arc1DataType { val id: ActionId = ActionId(28L) }
+    val BuyHugeBag: ActionDataType = addNewDataType(28L)
 
-    case object BuyEmptyShop extends Arc1DataType { val id: ActionId = ActionId(33L) }
+    val BuyEmptyShop: ActionDataType = addNewDataType(33L)
 
-    case object PrepareShopForBusiness extends Arc1DataType { val id: ActionId = ActionId(34L) }
+    val PrepareShopForBusiness: ActionDataType = addNewDataType(34L)
 
-    case object GoToMySoapShop extends Arc1DataType { val id: ActionId = ActionId(41L) }
+    val GoToMySoapShop: ActionDataType = addNewDataType(41L)
 
-    case object SellSoapToPeopleInSoapShop extends Arc1DataType { val id: ActionId = ActionId(39L) }
+    val SellSoapToPeopleInSoapShop: ActionDataType = addNewDataType(39L)
 
-    case object GoToForest extends Arc1DataType { val id: ActionId = ActionId(29L) }
+    val GoToForest: ActionDataType = addNewDataType(29L)
 
-    case object ForestSearchAreaAroundSorcererPosition extends Arc1DataType {
-      val id: ActionId = ActionId(42L)
-    }
+    val ForestSearchAreaAroundSorcererPosition: ActionDataType = addNewDataType(42L)
 
-    case object PickupWildCherries extends Arc1DataType { val id: ActionId = ActionId(30L) }
+    val PickupWildCherries: ActionDataType = addNewDataType(30L)
 
-    case object PickupLavender extends Arc1DataType { val id: ActionId = ActionId(40L) }
+    val PickupLavender: ActionDataType = addNewDataType(40L)
 
-    case object MakeMagicLavenderSoap extends Arc1DataType { val id: ActionId = ActionId(31L) }
+    val MakeMagicLavenderSoap: ActionDataType = addNewDataType(31L)
 
-    case object FollowHardToFindFootprintsPath extends Arc1DataType {
-      val id: ActionId = ActionId(32L)
-    }
+    val FollowHardToFindFootprintsPath: ActionDataType = addNewDataType(32L)
 
   }
 
   object Arc2DataType {}
 
-  private[model] val all: Map[ActionId, ActionDataType] =
-    Seq(
-      Arc1DataType.WakeUp,
-      Arc1DataType.SearchLivingRoom,
-      Arc1DataType.PickupSimpleSoapMold,
-      Arc1DataType.ExploreForestForLavender,
-      Arc1DataType.FindMysteriousSorcerer,
-      Arc1DataType.TalkMysteriousSorcerer,
-      Arc1DataType.FirstLoopFadingAway,
-      Arc1DataType.PickupCoins,
-      Arc1DataType.SearchKitchen,
-      Arc1DataType.CookRice,
-      Arc1DataType.SearchGarden,
-      Arc1DataType.PickRosemaryGarden,
-      Arc1DataType.GoToGeneralStore,
-      Arc1DataType.GoToBackHome,
-      Arc1DataType.BuyGlycerin,
-      Arc1DataType.BuyFrozenMomo,
-      Arc1DataType.SpeakToShopKeeper,
-      Arc1DataType.TradeSoapsForBag,
-      Arc1DataType.GoToNeighborhood,
-      Arc1DataType.SellSoapInNeighborhood,
-      Arc1DataType.NeighborhoodTalkAboutMarket,
-      Arc1DataType.BuyGoodSoapMold,
-      Arc1DataType.CookMomo,
-      Arc1DataType.MeltGlycerin,
-      Arc1DataType.UNUSED,
-      Arc1DataType.CreateRomesarySoap,
-      Arc1DataType.GoToMarket,
-      Arc1DataType.SetupSoapStallInMarket,
-      Arc1DataType.SellSoapToPeopleInMarket,
-      Arc1DataType.ExploreMarket,
-      Arc1DataType.GoToEquipamentStore,
-      Arc1DataType.BuyBigBag,
-      Arc1DataType.BuyHugeBag,
-      Arc1DataType.BuyEmptyShop,
-      Arc1DataType.PrepareShopForBusiness,
-      Arc1DataType.GoToMySoapShop,
-      Arc1DataType.SellSoapToPeopleInSoapShop,
-      Arc1DataType.GoToForest,
-      Arc1DataType.ForestSearchAreaAroundSorcererPosition,
-      Arc1DataType.PickupWildCherries,
-      Arc1DataType.PickupLavender,
-      Arc1DataType.MakeMagicLavenderSoap,
-      Arc1DataType.FollowHardToFindFootprintsPath,
-    ).pipe { seq =>
-      val result = seq.map(a => a.id -> a).toMap
-      if (result.size != seq.size)
-        throw new IllegalStateException(
-          s"Duplicate ActionDataType ids found: ${seq.groupBy(_.id).toSeq.filter(_._2.size > 1)}"
-        )
-      result
-    }
+  private def addNewDataType(id: Long): ActionDataType = {
+    val actionId = ActionId(id)
+    if (allMutable.contains(actionId))
+      throw new IllegalStateException(s"Duplicate ActionDataType id found: ${actionId}")
+    val actionDataType = new ActionDataType { val id: ActionId = actionId }
+    allMutable.put(actionId, actionDataType)
+    actionDataType
+  }
 
   implicit val decoder: JsonDecoder[ActionDataType] =
     JsonDecoder.long.mapOrFail { idLong =>
       val actionId = ActionId(idLong)
-      all.get(actionId) match {
+      allMutable.get(actionId) match {
         case Some(actionDataType) => Right(actionDataType)
         case None                 => Left(s"Unknown ActionDataType id: $idLong")
       }

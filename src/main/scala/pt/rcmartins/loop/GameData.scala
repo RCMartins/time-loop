@@ -56,6 +56,9 @@ class GameData(
 
   val stats: Signal[Stats] = gameState.map(_.stats).distinct
 
+  val showMapUI: Signal[Boolean] =
+    stats.map(_.getGlobalCount(ActionDataType.Arc1DataType.PickupCoins) >= 10).distinct
+
   def runUpdateGameState(): Unit = {
     val initialGameState = gameStateVar.now()
     val currentTimeMicro = System.nanoTime() / 1000L

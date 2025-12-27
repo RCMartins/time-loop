@@ -74,10 +74,12 @@ class UI(
           cls := "flex items-start gap-3",
           child.maybe <--
             currentActionIsDefined.map {
-              case false => None
-              case true  =>
+              case false =>
+                None
+              case true =>
                 Some(
                   activeActionCard(
+                    // TODO ugly
                     currentAction.map(_.getOrElse(StoryActions.Data.WakeUp.toActiveAction)),
                     skills,
                   )
@@ -337,11 +339,19 @@ class UI(
         div(cls := "overflow-auto min-h-0 grow min-h-32", nextActionsView),
       ),
       // bottom: next actions list with own scroll
-      div(
-        cls := "rounded-2xl p-4 bg-slate-800/60 ring-1 ring-slate-700 shadow flex flex-col min-h-0",
-        h3(cls := "text-sm font-semibold tracking-tight mb-2", "Move Actions"),
-        div(cls := "overflow-auto min-h-0 grow min-h-32", nextMoveActionsView)
-      ),
+      child.maybe <--
+        showMapUI.map {
+          case false =>
+            None
+          case true =>
+            Some(
+              div(
+                cls := "rounded-2xl p-4 bg-slate-800/60 ring-1 ring-slate-700 shadow flex flex-col min-h-0",
+                h3(cls := "text-sm font-semibold tracking-tight mb-2", "Move Actions"),
+                div(cls := "overflow-auto min-h-0 grow min-h-32", nextMoveActionsView)
+              )
+            )
+        },
       div(
         cls := "mt-3 relative", // allow absolute positioning inside
         // progress background
