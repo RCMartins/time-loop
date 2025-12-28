@@ -137,25 +137,13 @@ object ItemType {
     val foodValueLong: Long = 10L
   })
 
-  val Curry: ItemType = addNewItem(new ItemType {
+  val Noodles: ItemType = addNewItem(new ItemType {
     val id: Int = 11
-    val name: String = "Curry"
+    override val iconPath: String = Constants.Icons.Noodles
+    override val iconColor: String = "text-yellow-400"
+    val name: String = "Noodles"
     val inventoryOrder: Int = 34
     val foodValueLong: Long = 12L
-  })
-
-  val Chatpate: ItemType = addNewItem(new ItemType {
-    val id: Int = 12
-    val name: String = "Chatpate"
-    val inventoryOrder: Int = 35
-    val foodValueLong: Long = 15L
-  })
-
-  val Panipuri: ItemType = addNewItem(new ItemType {
-    val id: Int = 13
-    val name: String = "Panipuri"
-    val inventoryOrder: Int = 36
-    val foodValueLong: Long = 20L
   })
 
   private def addNewItem(itemType: ItemType): ItemType = {

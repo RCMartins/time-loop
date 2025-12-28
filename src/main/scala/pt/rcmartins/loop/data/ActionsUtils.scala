@@ -274,6 +274,7 @@ object ActionsUtils {
 
     def euro: Int = amount * 100
     def euros: Int = amount * 100
+    def cents: Int = amount
 
   }
 

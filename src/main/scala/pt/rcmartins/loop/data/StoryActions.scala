@@ -121,9 +121,9 @@ object StoryActions {
         firstTimeUnlocksActions = _ => Seq(PickupRosemary, GoToGeneralStore),
         invalidReason = state =>
           Option.unless(
-            state.stats.getLoopCount(Arc1DataType.SearchKitchen) > 0 &&
-              state.stats.getLoopCount(Arc1DataType.SearchLivingRoom) > 0 &&
-              state.stats.getLoopCount(Arc1DataType.PickupSimpleSoapMold) > 0
+            state.stats.getLoopCount(Arc1DataType.SearchKitchen.id) > 0 &&
+              state.stats.getLoopCount(Arc1DataType.SearchLivingRoom.id) > 0 &&
+              state.stats.getLoopCount(Arc1DataType.PickupSimpleSoapMold.id) > 0
           )(ReasonLabel.Empty),
         showWhenInvalid = false,
       )
@@ -267,7 +267,7 @@ object StoryActions {
         area = _ => Seq(Area4_GeneralStore),
         itemType = ItemType.FrozenMomo,
         amount = 1,
-        cost = 50,
+        cost = 50.cents,
         actionTime = ActionTime.Standard(3),
         initialAmountOfActions = AmountOfActions.Unlimited,
         firstTimeUnlocksActions = _ => Seq(CookMomo),
@@ -466,9 +466,12 @@ object StoryActions {
         effectLabel = EffectLabel.Explore,
         kind = ActionKind.Exploring,
         actionTime = ActionTime.Standard(30),
-        initialAmountOfActions = AmountOfActions.Standard(1),
+        initialAmountOfActions = AmountOfActions.Standard(2),
         forceMaxAmountOfActionsIs1 = true,
-        everyTimeUnlocksActions = { case (_, 1) => Seq(GoToEquipmentStore) },
+        everyTimeUnlocksActions = {
+          case (_, 1) => Seq(GoToEquipmentStore)
+          case (_, 2) => Seq(BuyNoodlesInMarket)
+        },
       )
     )
 
@@ -483,6 +486,18 @@ object StoryActions {
         initialAmountOfActions = AmountOfActions.Unlimited,
         firstTimeUnlocksActions = _ => Seq(BuyBigBag),
         moveToArea = Some(Area5_EquipmentStore),
+      )
+    )
+
+    private val BuyNoodlesInMarket: ActionData = addAction(
+      buyItemAction(
+        actionDataType = Arc1DataType.BuyNoodlesInMarket,
+        area = _ => Seq(Area3_Market),
+        itemType = ItemType.Noodles,
+        amount = 1,
+        cost = 1.euros + 50.cents,
+        actionTime = ActionTime.Standard(5),
+        initialAmountOfActions = AmountOfActions.Unlimited,
       )
     )
 
@@ -655,6 +670,9 @@ object StoryActions {
     val InitialCharacterArea: CharacterArea = Area1_Home
     val InitialActions: Seq[ActionData] = Seq(WakeUp)
     val InitialMoveActions: Seq[ActionData] = Seq.empty
+    val InitialInventory: Seq[(ItemType, Int)] = Seq.empty
+//    val InitialInventory: Seq[(ItemType, Int)] =
+//      Seq(ItemType.Noddles -> 1, ItemType.MagicLavenderSoap -> 1)
 
   }
 

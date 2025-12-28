@@ -32,6 +32,7 @@ class GameLogic(
   private def auxUpdateTotalTime(
       initialGameState: GameState,
       totalElapsedTimeMicro: Long,
+      lastHasZeroElapsed: Boolean = false,
   ): GameState = {
     val maxFoodCooldownTime: Long =
       initialGameState.inventory.items
@@ -56,7 +57,10 @@ class GameLogic(
     if (actualTickElapsedTime >= totalElapsedTimeMicro)
       newState
     else if (actualTickElapsedTime == 0L)
-      newState
+      if (lastHasZeroElapsed)
+        newState
+      else
+        auxUpdateTotalTime(newState, totalElapsedTimeMicro, lastHasZeroElapsed = true)
     else
       auxUpdateTotalTime(newState, totalElapsedTimeMicro - actualTickElapsedTime)
   }
@@ -240,12 +244,12 @@ class GameLogic(
         val stateWithHistory: GameState =
           initialState
             .modifyAll(_.stats.loopActionCount, _.stats.globalActionCount)
-            .using(_.updatedWith(currentAction.data.actionDataType)(_.map(_ + 1).orElse(Some(1))))
+            .using(_.updatedWith(currentAction.data.actionDataType.id)(_.map(_ + 1).orElse(Some(1))))
 
         val currentLoopCompletions: Int =
-          stateWithHistory.stats.getLoopCount(currentAction.data.actionDataType)
+          stateWithHistory.stats.getLoopCount(currentAction.data.actionDataType.id)
         val totalCompletions: Int =
-          stateWithHistory.stats.getGlobalCount(currentAction.data.actionDataType)
+          stateWithHistory.stats.getGlobalCount(currentAction.data.actionDataType.id)
 
         stateWithHistory
           .modify(_.deckActions)

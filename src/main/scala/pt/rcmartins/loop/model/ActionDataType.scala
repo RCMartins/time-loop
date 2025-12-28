@@ -76,6 +76,8 @@ object ActionDataType {
 
     val GoToEquipamentStore: ActionDataType = addNewDataType(26L)
 
+    val BuyNoodlesInMarket: ActionDataType = addNewDataType(44L)
+
     val BuyBigBag: ActionDataType = addNewDataType(27L)
 
     val BuyHugeBag: ActionDataType = addNewDataType(28L)

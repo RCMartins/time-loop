@@ -183,7 +183,7 @@ object Util {
       data.combineWith(gameData.stats).map { case (data, stats) =>
         data.permanentBonusUnlocks.map {
           case PermanentBonusUnlockType.ProgressiveActionCount(bonus, baseValue, multiplier) =>
-            val count = stats.getLoopCount(data.actionDataType)
+            val count = stats.getLoopCount(data.actionDataType.id)
             (
               span(
                 p(

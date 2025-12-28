@@ -1,13 +1,13 @@
 package pt.rcmartins.loop.model.saved
 
-import pt.rcmartins.loop.model.{ActionDataType, Stats}
+import pt.rcmartins.loop.model.{ActionId, Stats}
 import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
 
 case class StatsSaved(
     loopNumber: Int,
     totalElapedTimeMicro: Long,
     usedCheats: Boolean,
-    globalActionCount: Seq[(ActionDataType, Int)],
+    globalActionCount: Seq[(ActionId, Int)],
 ) {
   def toStats: Stats =
     Stats(

@@ -19,10 +19,27 @@ object GameLogicTest extends ZIOSpecDefault {
   private val DummyWakeUpAction: ActionData = ActionData(
     actionDataType = Arc1DataType.WakeUp,
     area = _ => Seq(Area1_Home),
-    title = "Test wake Up",
+    title = "Test dummy action",
     effectLabel = EffectLabel.Empty,
     kind = ActionKind.Agility,
     actionTime = ActionTime.Standard(5),
+  )
+
+  private val DummyBuyNoodlesInMarket: ActionData = ActionData(
+    actionDataType = Arc1DataType.BuyNoodlesInMarket,
+    area = _ => Seq(Area1_Home),
+    title = "Test unlimited action",
+    effectLabel = EffectLabel.Empty,
+    kind = ActionKind.Agility,
+    actionTime = ActionTime.Standard(5),
+    initialAmountOfActions = AmountOfActions.Unlimited,
+    changeInventory = inventory => inventory.addItem(ItemType.Noodles, 1),
+    invalidReason = state =>
+      Option.unless(
+        state.inventory.canAddItem(ItemType.Noodles, 1)
+      )(
+        ReasonLabel.InventoryFull
+      ),
   )
 
   override def spec: Spec[Scope, Any] =
@@ -35,8 +52,8 @@ object GameLogicTest extends ZIOSpecDefault {
               5_000_000L,
             )
           assertTrue(
-            res.stats.loopActionCount.get(Arc1DataType.WakeUp).contains(1),
-            res.stats.globalActionCount.get(Arc1DataType.WakeUp).contains(1),
+            res.stats.loopActionCount.get(Arc1DataType.WakeUp.id).contains(1),
+            res.stats.globalActionCount.get(Arc1DataType.WakeUp.id).contains(1),
           )
         },
         test("update only the time of the action") {
@@ -114,6 +131,26 @@ object GameLogicTest extends ZIOSpecDefault {
             )
           assertTrue(
             res.inventory.items == Seq((ItemType.Rice, 0, 105_000_000L))
+          )
+        },
+        test("finishing unlimited action make it go back to available") {
+          val res: GameState =
+            GameLogicBasic.update(
+              GameStateEmpty.copy(
+                visibleNextActions = Seq(
+                  DummyBuyNoodlesInMarket
+                    .copy(
+                      actionTime = ActionTime.Standard(1),
+                    )
+                    .toActiveAction
+                ),
+                selectedNextAction = Some(ActionId(44L) -> None),
+                inventory = InventoryState(5, Seq.empty),
+              ),
+              5_000_000L,
+            )
+          assertTrue(
+            res.visibleNextActions.map(_.id) == Seq(ActionId(44L))
           )
         },
       )

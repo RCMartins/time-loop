@@ -32,7 +32,7 @@ case class GameStateMinimal(
       characterArea = StoryActions.Data.InitialCharacterArea,
       stats = stats.toStats,
       skills = skills.resetLoopProgress,
-      inventory = InventoryState.initial,
+      inventory = InventoryState.initial.addMultipleItems(StoryActions.Data.InitialInventory),
       currentAction = None,
       visibleNextActions = StoryActions.Data.InitialActions.map(_.toActiveAction),
       visibleMoveActions = StoryActions.Data.InitialMoveActions.map(_.toActiveAction),

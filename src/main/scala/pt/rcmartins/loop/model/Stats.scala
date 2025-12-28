@@ -4,8 +4,8 @@ case class Stats(
     loopNumber: Int,
     totalElapedTimeMicro: Long,
     usedCheats: Boolean,
-    loopActionCount: Map[ActionDataType, Int],
-    globalActionCount: Map[ActionDataType, Int],
+    loopActionCount: Map[ActionId, Int],
+    globalActionCount: Map[ActionId, Int],
 ) {
 
   def resetForNewLoop: Stats =
@@ -14,11 +14,11 @@ case class Stats(
       loopActionCount = Map.empty,
     )
 
-  def getLoopCount(actionDataType: ActionDataType): Int =
-    loopActionCount.getOrElse(actionDataType, 0)
+  def getLoopCount(actionId: ActionId): Int =
+    loopActionCount.getOrElse(actionId, 0)
 
-  def getGlobalCount(actionDataType: ActionDataType): Int =
-    globalActionCount.getOrElse(actionDataType, 0)
+  def getGlobalCount(actionId: ActionId): Int =
+    globalActionCount.getOrElse(actionId, 0)
 
 }
 
