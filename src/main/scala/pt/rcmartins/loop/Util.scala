@@ -18,6 +18,10 @@ object Util {
     "hover:ring-emerald-400/60 hover:shadow-md focus:outline-none " +
       "focus:ring-2 focus:ring-emerald-400"
 
+
+  private val mobileBaseCardClasses: String =
+    "rounded-2xl p-1 pb-5 bg-slate-800/60 ring-1 ring-slate-700 shadow transition "
+
   def activeActionCard(
       vm: Signal[ActiveActionData],
       skills: Signal[SkillsState],
@@ -127,6 +131,122 @@ object Util {
 
   private def calcWithSkillDouble(baseTime: Long, state: SkillState): Double =
     baseTime.toDouble / state.finalSpeedMulti
+
+  def mobileCurrentAction(
+      vm: Signal[Option[ActiveActionData]],
+      skills: Signal[SkillsState],
+  ) = {
+    val data: Signal[ActionData] = vm.distinctBy(_.id).map(_.data)
+    val longSoFar: Signal[Long] = ActiveActionData.longSoFar(vm).distinct
+    val microLeft: Signal[Long] = ActiveActionData.microLeft(vm).distinct
+    val progressRatio: Signal[Double] = ActiveActionData.progressRatio(vm).distinct
+    val numberOfActionsLeftSignal: Signal[AmountOfActions] = vm.map(_.amountOfActionsLeft)
+
+    div(
+
+    )
+
+    vm.map {
+      case None =>
+
+    }
+
+    div(
+      cls := baseCardClasses,
+      cls := "shadow-lg",
+      tabIndex := 0,
+
+      // Content
+      div(
+        cls := "relative inline-block",
+        cls := "flex items-start gap-3",
+        // Icon + kind accent
+        div(
+          cls := "mt-0.5 shrink-0 rounded-xl bg-slate-700/60 ring-1 ring-slate-600 p-2",
+          child <-- vm.map(action => actionIcon(action.data.kind))
+        ),
+
+        // Title + subtitle + badges
+        div(
+          cls := "min-w-0 flex-1",
+          div(
+            cls := "flex items-start justify-between gap-3",
+            div(
+              h3(
+                cls := "text-base font-semibold tracking-tight",
+                child.text <-- vm.map(_.data.title)
+              ),
+              p(cls := "text-xs text-slate-300/90", child.text <-- vm.map(_.data.effectLabel.label))
+            ),
+          ),
+
+          // Badges row
+          div(
+            cls := "mt-2 flex flex-wrap items-center gap-2",
+            span(
+              cls := "px-2 py-0.5 text-xs rounded-full bg-slate-700/70 ring-1 ring-slate-600",
+              child.text <-- longSoFar.combineWith(vm.map(_.targetTimeSec)).map {
+                case (timeSoFar, targetTimeSec) =>
+                  s"\u00A0$timeSoFar\u00A0 / \u00A0$targetTimeSec\u00A0"
+              },
+            ),
+            span(
+              cls := "px-2 py-0.5 text-xs rounded-full bg-slate-900/70 ring-1 ring-slate-600",
+              child.text <-- microLeft.combineWith(data, skills).map {
+                case (timeSoFar, data, skills) =>
+                  val currentTime: Double =
+                    calcWithSkillDouble(timeSoFar, skills.get(data.kind)) / 1_000_000L
+                  f"$currentTime%.1f s"
+              },
+            ),
+            child.maybe <--
+              data.map(_.actionSuccessType).distinct.map {
+                case ActionSuccessType.WithFailure(baseChance, increase) =>
+                  Some(
+                    div(
+                      cls := "relative group",
+                      span(
+                        cls := "px-2 py-0.5 text-xs rounded-full bg-slate-700/70 ring-1 ring-slate-600",
+                        "\u00A0",
+                        child.text <--
+                          vm.map(_.currentActionSuccessChance).map { currentActionSuccessChance =>
+                            f"${(currentActionSuccessChance * 100).toInt}%02d%%"
+                          },
+                        "\u00A0",
+                      ),
+                      div(
+                        cls := "absolute left-1/2 -translate-x-1/2 top-full mt-1 px-2 py-1 z-20 " +
+                          "text-xs bg-slate-900 text-white rounded shadow-lg whitespace-nowrap " +
+                          "opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none",
+                        f"This action has a base ${(baseChance * 100).toInt}%d%% of success + ${(increase * 100).toInt}%d%% for every failure"
+                      )
+                    )
+                  )
+                case _ =>
+                  None
+              }
+          ),
+          div(
+            cls := "mt-3 mb-1",
+            div(
+              cls := "h-1.5 rounded-full bg-slate-700/60 overflow-hidden",
+              div(
+                // origin-left ensures scaleX grows from the left edge
+                cls := "h-1.5 rounded-full bg-emerald-500 origin-left will-change-transform",
+
+                // reactive transform: scaleX(progressRatio)
+                transform <-- progressRatio.map { ratio =>
+                  val clamped = ratio.max(0.0).min(1.0)
+                  s"scaleX($clamped)"
+                }
+              )
+            )
+          ),
+        ),
+        amountOfActionsTooltip(numberOfActionsLeftSignal),
+      )
+    )
+  }
 
   def actionCard(
       actionSignal: Signal[ActiveActionData],

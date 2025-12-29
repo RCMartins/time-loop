@@ -19,22 +19,12 @@ class UI(
     saveLoad: SaveLoad,
 ) {
 
-  // TODO Hide map until first move action is available
-
   private val owner = new Owner {}
   private val DEBUG_MODE: Boolean = true
 
   import gameData._
 
   def run(): ReactiveHtmlElement[HTMLDivElement] = {
-    setInterval(25) {
-      gameData.runUpdateGameState()
-    }
-
-    gameData.utils.toastBus.events.foreach { toast =>
-      gameData.utils.toastsVar.update(_ :+ toast)
-    }(owner)
-
     div(
       // page padding & responsive grid
       cls := "min-h-dvh p-4 md:py-6 md:px-20 bg-slate-900 text-slate-100",
