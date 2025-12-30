@@ -11,7 +11,6 @@ import scala.util.Random
 import scala.util.chaining.scalaUtilChainingOps
 
 class GameLogic(
-    private var lastTimeMicro: Long,
     private val gameUtils: GameUtils,
     private val saveload: SaveLoad,
 ) {
@@ -19,9 +18,12 @@ class GameLogic(
   private val MaxTimeJump = 30 * 24 * 3600_000_000L // 30 days
   private val SaveIntervalMicro = 10_000_000L // 10 seconds
 
-  def update(initialGameState: GameState, currentTimeMicro: Long): GameState = {
-    val elapsedTimeMicro = Math.max(0, Math.min(MaxTimeJump, currentTimeMicro - lastTimeMicro))
-    lastTimeMicro = currentTimeMicro
+  def update(initialGameState: GameState, currentTimeEpoch: Long): GameState = {
+    val elapsedTimeMicro: Long =
+      Math.max(
+        0,
+        Math.min(MaxTimeJump, (currentTimeEpoch - initialGameState.updateLastTimeEpoch) * 1000)
+      )
     val (updatedGameState, timeToUse) =
       if (
         initialGameState.preferences.speedMultiplier > 1 &&
@@ -33,11 +35,15 @@ class GameLogic(
             elapsedTimeMicro * (initialGameState.preferences.speedMultiplier - 1)
           )
         (
-          initialGameState.modify(_.extraTimeMicro).using(_ - extraTimeToUse),
+          initialGameState
+            .modify(_.updateLastTimeEpoch)
+            .setTo(currentTimeEpoch)
+            .modify(_.extraTimeMicro)
+            .using(_ - extraTimeToUse),
           elapsedTimeMicro + extraTimeToUse
         )
       } else {
-        (initialGameState, elapsedTimeMicro)
+        (initialGameState.copy(updateLastTimeEpoch = currentTimeEpoch), elapsedTimeMicro)
       }
 
     checkIfCanBeSaved(auxUpdateTotalTime(updatedGameState, timeToUse))

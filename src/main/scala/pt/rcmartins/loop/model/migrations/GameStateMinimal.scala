@@ -16,10 +16,11 @@ case class GameStateMinimal(
     storyActionsHistory: Seq[String],
 ) extends GameSatedSavedVersion {
 
-  def toGameState: GameState =
+  def toGameState(currentTimeMillis: Long): GameState =
     GameState(
       version = version,
       seed = seed,
+      updateLastTimeEpoch = currentTimeMillis,
       timeElapsedMicro = 0L,
       timeElapsedMicroLastSave = 0L,
       extraTimeMicro = 0L,

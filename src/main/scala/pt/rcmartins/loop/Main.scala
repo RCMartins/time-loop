@@ -37,7 +37,7 @@ object Main {
 
     val currentGameState: GameState =
       saveLoad.loadFromLocalStorage() match {
-        case None       => GameState.initial
+        case None       => GameState.initial(System.currentTimeMillis())
         case Some(save) => save
       }
 
@@ -46,7 +46,7 @@ object Main {
       new GameData(
         constructorGameState = currentGameState,
         // TODO add some kind of offline progress ?
-        gameLogic = new GameLogic(System.currentTimeMillis(), gameUtils, saveLoad),
+        gameLogic = new GameLogic(gameUtils, saveLoad),
         utils = gameUtils,
       )
     }

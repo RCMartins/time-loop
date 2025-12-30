@@ -41,19 +41,21 @@ class SaveLoadImpl extends SaveLoad {
       loadFromJson(base64ToJson(strTrimmed))
   }
 
-  private val versionsToTry: LazyList[String => Option[GameState]] =
-    LazyList[String => Option[GameState]](
-      _.fromJson[GameStateSaved].tap(printlnErrors).toOption.map(_.toGameState),
-      _.fromJson[GameStateMinimal].tap(printlnErrors).toOption.map(_.toGameState),
-      _.fromJson[GameStateSkillsOnly].tap(printlnErrors).toOption.map(_.toGameState),
-      _.fromJson[GameStateVersionOnly].tap(printlnErrors).toOption.map(_.toGameState),
-    )
+  private def versionsToTry(currentTimeMillis: Long): LazyList[String => Option[GameState]] =
+    LazyList[String => Either[String, GameSatedSavedVersion]](
+      _.fromJson[GameStateSaved],
+      _.fromJson[GameStateMinimal],
+      _.fromJson[GameStateSkillsOnly],
+      _.fromJson[GameStateVersionOnly],
+    ).map(f => f(_).tap(printlnErrors).toOption.map(_.toGameState(currentTimeMillis)))
 
   private def printlnErrors[T](either: Either[String, T]): Unit =
     either.left.foreach(err => println(s"Error loading save: $err"))
 
-  private def loadFromJson(str: String): Option[GameState] =
-    versionsToTry.map(_(str)).collectFirst { case Some(gs) => gs }
+  private def loadFromJson(str: String): Option[GameState] = {
+    val currentTimeMillis = System.currentTimeMillis()
+    versionsToTry(currentTimeMillis).map(_(str)).collectFirst { case Some(gs) => gs }
+  }
 
   private def base64ToJson(str: String): String =
     new String(java.util.Base64.getDecoder.decode(str.getBytes))

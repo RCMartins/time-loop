@@ -63,8 +63,8 @@ class GameData(
 
   def runUpdateGameState(): Unit = {
     val initialGameState = gameStateVar.now()
-    val currentTimeMicro = System.nanoTime() / 1000L
-    val newState = gameLogic.update(initialGameState, currentTimeMicro)
+    val currentTimeEpoch = System.currentTimeMillis()
+    val newState = gameLogic.update(initialGameState, currentTimeEpoch)
     gameStateVar.set(newState)
   }
 
@@ -102,7 +102,7 @@ class GameData(
   }
 
   def DebugHardReset(saveload: SaveLoad): Unit = {
-    val newState = GameState.initial
+    val newState = GameState.initial(System.currentTimeMillis())
     saveload.saveToLocalStorage(newState)
     gameStateVar.set(newState)
   }

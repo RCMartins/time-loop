@@ -9,12 +9,14 @@ case class GameStateSkillsOnly(
     skills: SkillsState,
 ) extends GameSatedSavedVersion {
 
-  def toGameState: GameState =
-    GameState.initial.copy(
-      version = version,
-      seed = seed,
-      skills = skills.resetLoopProgress,
-    )
+  def toGameState(currentTimeMillis: Long): GameState =
+    GameState
+      .initial(currentTimeMillis)
+      .copy(
+        version = version,
+        seed = seed,
+        skills = skills.resetLoopProgress,
+      )
 
 }
 

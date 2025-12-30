@@ -8,6 +8,7 @@ import scala.util.Random
 case class GameState(
     version: Int,
     seed: Long,
+    updateLastTimeEpoch: Long,
     timeElapsedMicro: Long,
     timeElapsedMicroLastSave: Long,
     extraTimeMicro: Long,
@@ -40,6 +41,7 @@ case class GameState(
     GameState(
       version = version,
       seed = seed,
+      updateLastTimeEpoch = updateLastTimeEpoch,
       timeElapsedMicro = 0L,
       timeElapsedMicroLastSave = 0L,
       extraTimeMicro = extraTimeMicro,
@@ -83,33 +85,35 @@ object GameState {
 
   val StoryLineDelayMicro = 3_000_000
 
-  val initial: GameState = GameState(
-    version = CurrentVersion,
-    seed = Random.nextLong(),
-    timeElapsedMicro = 0L,
-    timeElapsedMicroLastSave = 0L,
-    extraTimeMicro = 0L,
-    energyMicro = StartingMaxEnergy * 1_000_000L,
-    maxEnergyInt = StartingMaxEnergy,
-    initialTiredSecond = initialTiredSecond,
-    initialTiredMultSecond = InitialTiredMultSecond,
-    currentTiredSecond = initialTiredSecond,
-    currentTiredMultSecond = InitialTiredMultSecond,
-    nextTiredIncreaseMicro = 1_000_000L,
-    characterArea = StoryActions.Data.InitialCharacterArea,
-    stats = Stats.initial,
-    skills = SkillsState.initial,
-    inventory = InventoryState.initial.addMultipleItems(StoryActions.Data.InitialInventory),
-    currentAction = None,
-    visibleNextActions = StoryActions.Data.InitialActions.map(_.toActiveAction),
-    visibleMoveActions = StoryActions.Data.InitialMoveActions.map(_.toActiveAction),
-    selectedNextAction = None,
-    deckActions = Seq(),
-    storyActionsHistory = Seq(),
-    inProgressStoryActions = Seq(),
-    buffs = Buffs.initial,
-    preferences = Preferences.initial,
-  )
+  def initial(currentTimeMillis: Long): GameState =
+    GameState(
+      version = CurrentVersion,
+      seed = Random.nextLong(),
+      updateLastTimeEpoch = currentTimeMillis,
+      timeElapsedMicro = 0L,
+      timeElapsedMicroLastSave = 0L,
+      extraTimeMicro = 0L,
+      energyMicro = StartingMaxEnergy * 1_000_000L,
+      maxEnergyInt = StartingMaxEnergy,
+      initialTiredSecond = initialTiredSecond,
+      initialTiredMultSecond = InitialTiredMultSecond,
+      currentTiredSecond = initialTiredSecond,
+      currentTiredMultSecond = InitialTiredMultSecond,
+      nextTiredIncreaseMicro = 1_000_000L,
+      characterArea = StoryActions.Data.InitialCharacterArea,
+      stats = Stats.initial,
+      skills = SkillsState.initial,
+      inventory = InventoryState.initial.addMultipleItems(StoryActions.Data.InitialInventory),
+      currentAction = None,
+      visibleNextActions = StoryActions.Data.InitialActions.map(_.toActiveAction),
+      visibleMoveActions = StoryActions.Data.InitialMoveActions.map(_.toActiveAction),
+      selectedNextAction = None,
+      deckActions = Seq(),
+      storyActionsHistory = Seq(),
+      inProgressStoryActions = Seq(),
+      buffs = Buffs.initial,
+      preferences = Preferences.initial,
+    )
 
   object LoopCount {
 

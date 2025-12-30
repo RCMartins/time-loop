@@ -7,6 +7,7 @@ import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
 case class GameStateSaved(
     version: Int,
     seed: Long,
+    updateLastTimeEpoch: Long,
     timeElapsedMicro: Long,
     extraTimeMicro: Long = 0L,
     energyMicro: Long,
@@ -30,10 +31,11 @@ case class GameStateSaved(
     preferencesSaved: PreferencesSaved,
 ) extends GameSatedSavedVersion {
 
-  def toGameState: GameState =
+  def toGameState(currentTimeMillis: Long): GameState =
     GameState(
       version = version,
       seed = seed,
+      updateLastTimeEpoch = updateLastTimeEpoch,
       timeElapsedMicro = timeElapsedMicro,
       timeElapsedMicroLastSave = timeElapsedMicro,
       extraTimeMicro = extraTimeMicro,
@@ -67,6 +69,7 @@ object GameStateSaved {
     GameStateSaved(
       version = gameState.version,
       seed = gameState.seed,
+      updateLastTimeEpoch = gameState.updateLastTimeEpoch,
       timeElapsedMicro = gameState.timeElapsedMicro,
       extraTimeMicro = gameState.extraTimeMicro,
       energyMicro = gameState.energyMicro,
