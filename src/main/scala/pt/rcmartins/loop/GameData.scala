@@ -18,6 +18,8 @@ class GameData(
 
   val timeElapsedMicro: Signal[Long] = gameState.map(_.timeElapsedMicro).distinct
   val timeElapsedLong: Signal[Long] = timeElapsedMicro.map(_ / 1_000_000L).distinct
+  val extraTimeMicro: Signal[Long] = gameState.map(_.extraTimeMicro).distinct
+  val extraTimeLong: Signal[Long] = extraTimeMicro.map(_ / 1_000_000L).distinct
   private val globalTimeElapsedMicro: Signal[Long] =
     gameState.map(_.stats.totalElapedTimeMicro).distinct
 

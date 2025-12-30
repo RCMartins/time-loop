@@ -250,6 +250,13 @@ class UI(
           child.text <-- globalTimeElapsedLong.map(secondsToPrettyStr)
         )
       ),
+      div(
+        cls := "flex justify-between",
+        span("Time Saved"),
+        span(
+          child.text <-- extraTimeLong.map(secondsToPrettyStr)
+        ),
+      ),
       child.maybe <--
         loopNumber.map(_ > 1).distinct.map {
           case false =>
