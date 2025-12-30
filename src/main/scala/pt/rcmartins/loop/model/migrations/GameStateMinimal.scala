@@ -22,6 +22,7 @@ case class GameStateMinimal(
       seed = seed,
       timeElapsedMicro = 0L,
       timeElapsedMicroLastSave = 0L,
+      extraTimeMicro = 0L,
       energyMicro = maxEnergyInt * 1_000_000L,
       maxEnergyInt = maxEnergyInt,
       initialTiredSecond = initialTiredSecond,

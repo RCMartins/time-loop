@@ -431,7 +431,8 @@ class UI(
     val owner: Owner = new OneTimeOwner(() => println("Debug view owner disposed"))
     val addEnergyBus: EventBus[Int] = new EventBus[Int]()
     val multiplyAllSkillsBus: EventBus[Double] = new EventBus[Double]()
-    val multiplySpeedBus: EventBus[Double] = new EventBus[Double]()
+    val plusExtraTimeBus: EventBus[Long] = new EventBus[Long]()
+    val speedSettingBus: EventBus[Int] = new EventBus[Int]()
     val exportSaveStringToClipboard: EventBus[Unit] = new EventBus[Unit]()
     val importStringFromClipboard: EventBus[Unit] = new EventBus[Unit]()
 
@@ -466,15 +467,25 @@ class UI(
         gameData.loadGameState(newState)
       }(owner)
 
-    multiplySpeedBus.events
+    plusExtraTimeBus.events
+      .withCurrentValueOf(gameData.gameState)
+      .foreach { case (extraTimeMicro, state) =>
+        val newState: GameState =
+          state
+            .modify(_.extraTimeMicro)
+            .using(_ + extraTimeMicro)
+            .modify(_.stats.usedCheats)
+            .setTo(true)
+        gameData.loadGameState(newState)
+      }(owner)
+
+    speedSettingBus.events
       .withCurrentValueOf(gameData.gameState)
       .foreach { case (multiplier, state) =>
         val newState: GameState =
           state
-            .modify(_.skills.globalGameSpeed)
+            .modify(_.preferences.speedMultiplier)
             .setTo(multiplier)
-            .modify(_.stats.usedCheats)
-            .setTo(true)
         gameData.loadGameState(newState)
       }(owner)
 
@@ -514,23 +525,28 @@ class UI(
       ),
       button(
         cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",
+        "+1 hour extra time",
+        onClick --> { _ => plusExtraTimeBus.writer.onNext(3600_000_000L) }
+      ),
+      button(
+        cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",
         "x1 Speed",
-        onClick --> { _ => multiplySpeedBus.writer.onNext(1.0) }
+        onClick --> { _ => speedSettingBus.writer.onNext(1) }
       ),
       button(
         cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",
         "x2 Speed",
-        onClick --> { _ => multiplySpeedBus.writer.onNext(2.0) }
+        onClick --> { _ => speedSettingBus.writer.onNext(2) }
       ),
       button(
         cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",
         "x10 Speed",
-        onClick --> { _ => multiplySpeedBus.writer.onNext(10.0) }
+        onClick --> { _ => speedSettingBus.writer.onNext(10) }
       ),
       button(
         cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",
         "x100 Speed",
-        onClick --> { _ => multiplySpeedBus.writer.onNext(100.0) }
+        onClick --> { _ => speedSettingBus.writer.onNext(100) }
       ),
       button(
         cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",

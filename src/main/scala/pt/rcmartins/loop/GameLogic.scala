@@ -16,17 +16,31 @@ class GameLogic(
     private val saveload: SaveLoad,
 ) {
 
-  private val MaxTimeJump = 3600_000_000L // 1 hour in microseconds
-  private val SaveIntervalMicro = 5_000_000L // 5 seconds in microseconds
+  private val MaxTimeJump = 30 * 24 * 3600_000_000L // 30 days
+  private val SaveIntervalMicro = 10_000_000L // 10 seconds
 
   def update(initialGameState: GameState, currentTimeMicro: Long): GameState = {
     val elapsedTimeMicro = Math.max(0, Math.min(MaxTimeJump, currentTimeMicro - lastTimeMicro))
     lastTimeMicro = currentTimeMicro
-    val savedState: GameState = checkIfCanBeSaved(initialGameState)
-    auxUpdateTotalTime(
-      savedState,
-      (elapsedTimeMicro * savedState.skills.globalGameSpeed).toLong
-    )
+    val (updatedGameState, timeToUse) =
+      if (
+        initialGameState.preferences.speedMultiplier > 1 &&
+          initialGameState.extraTimeMicro > 0L
+      ) {
+        val extraTimeToUse: Long =
+          Math.min(
+            initialGameState.extraTimeMicro,
+            elapsedTimeMicro * (initialGameState.preferences.speedMultiplier - 1)
+          )
+        (
+          initialGameState.modify(_.extraTimeMicro).using(_ - extraTimeToUse),
+          elapsedTimeMicro + extraTimeToUse
+        )
+      } else {
+        (initialGameState, elapsedTimeMicro)
+      }
+
+    checkIfCanBeSaved(auxUpdateTotalTime(updatedGameState, timeToUse))
   }
 
   @inline
@@ -60,7 +74,7 @@ class GameLogic(
       newState
     else if (actualTickElapsedTime == 0L)
       if (lastHasZeroElapsed)
-        newState
+        newState.modify(_.extraTimeMicro).using(_ + (totalElapsedTimeMicro - actualTickElapsedTime))
       else
         auxUpdateTotalTime(newState, totalElapsedTimeMicro, lastHasZeroElapsed = true)
     else
