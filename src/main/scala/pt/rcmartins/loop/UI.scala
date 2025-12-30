@@ -16,6 +16,7 @@ import scala.scalajs.js.timers.setInterval
 
 class UI(
     gameData: GameData,
+    saveLoad: SaveLoad,
 ) {
 
   // TODO Hide map until first move action is available
@@ -480,7 +481,7 @@ class UI(
     exportSaveStringToClipboard.events
       .withCurrentValueOf(gameData.gameState)
       .foreach { state =>
-        dom.window.navigator.clipboard.writeText(SaveLoad.saveString(state))
+        dom.window.navigator.clipboard.writeText(saveLoad.saveString(state))
         gameData.utils.showToast("Copied to clipboard!")
       }(owner)
 
@@ -489,9 +490,9 @@ class UI(
         .readText()
         .toFuture
         .foreach { str =>
-          SaveLoad.loadString(str).foreach { loadedState =>
+          saveLoad.loadString(str).foreach { loadedState =>
             gameData.loadGameState(loadedState)
-            SaveLoad.saveToLocalStorage(loadedState)
+            saveLoad.saveToLocalStorage(loadedState)
             gameData.utils.showToast("Game loaded!")
           }
         }(scala.scalajs.concurrent.JSExecutionContext.queue)
@@ -503,7 +504,7 @@ class UI(
         cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",
         "Loop Now!",
         onClick --> { _ =>
-          gameData.DebugLoopNow()
+          gameData.DebugLoopNow(saveLoad)
         }
       ),
       button(
@@ -569,7 +570,7 @@ class UI(
         cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",
         "Hard Reset!",
         onClick --> { _ =>
-          gameData.DebugHardReset()
+          gameData.DebugHardReset(saveLoad)
         }
       )
     )

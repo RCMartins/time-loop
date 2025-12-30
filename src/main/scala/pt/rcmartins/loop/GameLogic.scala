@@ -13,6 +13,7 @@ import scala.util.chaining.scalaUtilChainingOps
 class GameLogic(
     private var lastTimeMicro: Long,
     private val gameUtils: GameUtils,
+    private val saveload: SaveLoad,
 ) {
 
   private val MaxTimeJump = 3600_000_000L // 1 hour in microseconds
@@ -21,9 +22,10 @@ class GameLogic(
   def update(initialGameState: GameState, currentTimeMicro: Long): GameState = {
     val elapsedTimeMicro = Math.max(0, Math.min(MaxTimeJump, currentTimeMicro - lastTimeMicro))
     lastTimeMicro = currentTimeMicro
+    val savedState: GameState = checkIfCanBeSaved(initialGameState)
     auxUpdateTotalTime(
-      initialGameState,
-      (elapsedTimeMicro * initialGameState.skills.globalGameSpeed).toLong
+      savedState,
+      (elapsedTimeMicro * savedState.skills.globalGameSpeed).toLong
     )
   }
 
@@ -120,16 +122,15 @@ class GameLogic(
               false,
             )
           case None =>
-            val savedState: GameState = checkIfCanBeSaved(initialGameState)
-            savedState.selectedNextAction.flatMap { case (id, limit) =>
-              savedState.visibleNextActions
+            initialGameState.selectedNextAction.flatMap { case (id, limit) =>
+              initialGameState.visibleNextActions
                 .find(_.id == id)
                 .map((_, limit))
-                .orElse(savedState.visibleMoveActions.find(_.id == id).map((_, limit)))
+                .orElse(initialGameState.visibleMoveActions.find(_.id == id).map((_, limit)))
             } match {
               case Some((nextAction, limit)) =>
                 (
-                  savedState
+                  initialGameState
                     .modify(_.selectedNextAction)
                     .setTo(None)
                     .modify(_.currentAction)
@@ -142,7 +143,7 @@ class GameLogic(
                   false,
                 )
               case None =>
-                (savedState, 0L, true)
+                (initialGameState, 0L, true)
             }
         }
       case Some(currentAction) =>
@@ -244,7 +245,9 @@ class GameLogic(
         val stateWithHistory: GameState =
           initialState
             .modifyAll(_.stats.loopActionCount, _.stats.globalActionCount)
-            .using(_.updatedWith(currentAction.data.actionDataType.id)(_.map(_ + 1).orElse(Some(1))))
+            .using(
+              _.updatedWith(currentAction.data.actionDataType.id)(_.map(_ + 1).orElse(Some(1)))
+            )
 
         val currentLoopCompletions: Int =
           stateWithHistory.stats.getLoopCount(currentAction.data.actionDataType.id)
@@ -550,7 +553,7 @@ class GameLogic(
 
   private def checkIfCanBeSaved(state: GameState): GameState =
     if (state.timeElapsedMicroLastSave + SaveIntervalMicro < state.timeElapsedMicro) {
-      SaveLoad.saveToLocalStorage(state) match {
+      saveload.saveToLocalStorage(state) match {
         case Left(_) =>
           state
         case Right(_) =>
@@ -563,7 +566,7 @@ class GameLogic(
   private def checkDeathDueToTiredness(state: GameState): GameState =
     if (state.energyMicro == 0L) {
       val resetState: GameState = state.resetForNewLoop
-      SaveLoad.saveToLocalStorage(resetState) match {
+      saveload.saveToLocalStorage(resetState) match {
         case Left(_) =>
           resetState
         case Right(_) =>

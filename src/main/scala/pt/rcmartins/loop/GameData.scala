@@ -88,20 +88,20 @@ class GameData(
     }
   }
 
-  def DebugLoopNow(): Unit = {
+  def DebugLoopNow(saveload: SaveLoad): Unit = {
     gameStateVar.update { state =>
       val newState: GameState =
         state.resetForNewLoop
           .modify(_.stats.usedCheats)
           .setTo(true)
-      SaveLoad.saveToLocalStorage(newState)
+      saveload.saveToLocalStorage(newState)
       newState
     }
   }
 
-  def DebugHardReset(): Unit = {
+  def DebugHardReset(saveload: SaveLoad): Unit = {
     val newState = GameState.initial
-    SaveLoad.saveToLocalStorage(newState)
+    saveload.saveToLocalStorage(newState)
     gameStateVar.set(newState)
   }
 

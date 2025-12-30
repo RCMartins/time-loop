@@ -24,6 +24,7 @@ case class GameStateSaved(
     visibleMoveActions: Seq[ActiveActionData],
     deckActions: Seq[ActiveActionData],
     storyActionsHistory: Seq[String],
+    inProgressStoryActions: Seq[RunTimeStoryAction],
     buffs: Buffs,
     preferencesSaved: PreferencesSaved,
 ) extends GameSatedSavedVersion {
@@ -51,7 +52,7 @@ case class GameStateSaved(
       selectedNextAction = None,
       deckActions = deckActions,
       storyActionsHistory = storyActionsHistory.map(StoryLineHistory.apply),
-      inProgressStoryActions = Seq.empty,
+      inProgressStoryActions = inProgressStoryActions,
       buffs = buffs,
       preferences = preferencesSaved.toPreferences,
     )
@@ -81,6 +82,7 @@ object GameStateSaved {
       visibleMoveActions = gameState.visibleMoveActions,
       deckActions = gameState.deckActions,
       storyActionsHistory = gameState.storyActionsHistory.map(_.line),
+      inProgressStoryActions = gameState.inProgressStoryActions,
       buffs = gameState.buffs,
       preferencesSaved = PreferencesSaved.fromPreferences(gameState.preferences),
     )
