@@ -5,7 +5,7 @@ import com.raquo.laminar.api.L._
 import com.raquo.laminar.nodes.ReactiveHtmlElement
 import com.softwaremill.quicklens.ModifyPimp
 import org.scalajs.dom
-import org.scalajs.dom.{HTMLDivElement, HTMLUListElement}
+import org.scalajs.dom.HTMLDivElement
 import pt.rcmartins.loop.data.StoryActions
 import pt.rcmartins.loop.model._
 
@@ -153,6 +153,10 @@ object Util {
       vm.map(_.map(_.targetTimeSec).getOrElse(0L)).distinct
     val microLeft: Signal[Long] =
       vm.map(_.map(a => a.targetTimeMicro - a.microSoFar).getOrElse(0L)).distinct
+    val amountOfActionsSignal: Signal[AmountOfActions] =
+      vm.map(_.map(_.amountOfActionsLeft).getOrElse(AmountOfActions.Standard(0))).distinct
+    val limitOfActionsSignal: Signal[Option[Int]] =
+      vm.map(_.flatMap(_.limitOfActions)).distinct
 
     div(
       cls := "min-h-32 max-h-32 w-full",
@@ -204,7 +208,8 @@ object Util {
                   f"$currentTime%.1f s"
               },
             ),
-          )
+          ),
+          amountOfActionsMobileTooltip(amountOfActionsSignal, limitOfActionsSignal)
         ),
       )
     )
@@ -502,6 +507,20 @@ object Util {
         case AmountOfActions.Unlimited        => "∞"
       },
       cls("opacity-100") <-- amountOfActionsSignal.map(_.moreThanOne)
+    )
+
+  private def amountOfActionsMobileTooltip(
+      amountOfActionsSignal: Signal[AmountOfActions],
+      limitOfActionsSignal: Signal[Option[Int]],
+  ): HtmlElement =
+    div(
+      cls := "absolute inset-0 flex items-center justify-end font-semibold text-slate-100 px-2",
+      child.text <-- amountOfActionsSignal.combineWith(limitOfActionsSignal).map {
+        case (AmountOfActions.Standard(amount), None)        => s"$amount"
+        case (AmountOfActions.Standard(amount), Some(limit)) => s"$limit / $amount"
+        case (AmountOfActions.Unlimited, None)               => "∞"
+        case (AmountOfActions.Unlimited, Some(limit))        => s"$limit / ∞"
+      },
     )
 
   private def selectAmountOfActionsOverlay(
