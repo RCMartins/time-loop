@@ -7,7 +7,9 @@ import zio.json.{DeriveJsonDecoder, DeriveJsonEncoder, JsonDecoder, JsonEncoder}
 case class GameStateSaved(
     version: Int,
     seed: Long,
+    updateLastTimeEpoch: Long,
     timeElapsedMicro: Long,
+    extraTimeMicro: Long,
     energyMicro: Long,
     maxEnergyInt: Int,
     initialTiredSecond: Double,
@@ -24,16 +26,19 @@ case class GameStateSaved(
     visibleMoveActions: Seq[ActiveActionData],
     deckActions: Seq[ActiveActionData],
     storyActionsHistory: Seq[String],
+    inProgressStoryActions: Seq[RunTimeStoryAction],
     buffs: Buffs,
     preferencesSaved: PreferencesSaved,
 ) extends GameSatedSavedVersion {
 
-  def toGameState: GameState =
+  def toGameState(currentTimeMillis: Long): GameState =
     GameState(
       version = version,
       seed = seed,
+      updateLastTimeEpoch = updateLastTimeEpoch,
       timeElapsedMicro = timeElapsedMicro,
       timeElapsedMicroLastSave = timeElapsedMicro,
+      extraTimeMicro = extraTimeMicro,
       energyMicro = energyMicro,
       maxEnergyInt = maxEnergyInt,
       initialTiredSecond = initialTiredSecond,
@@ -51,7 +56,7 @@ case class GameStateSaved(
       selectedNextAction = None,
       deckActions = deckActions,
       storyActionsHistory = storyActionsHistory.map(StoryLineHistory.apply),
-      inProgressStoryActions = Seq.empty,
+      inProgressStoryActions = inProgressStoryActions,
       buffs = buffs,
       preferences = preferencesSaved.toPreferences,
     )
@@ -64,7 +69,9 @@ object GameStateSaved {
     GameStateSaved(
       version = gameState.version,
       seed = gameState.seed,
+      updateLastTimeEpoch = gameState.updateLastTimeEpoch,
       timeElapsedMicro = gameState.timeElapsedMicro,
+      extraTimeMicro = gameState.extraTimeMicro,
       energyMicro = gameState.energyMicro,
       maxEnergyInt = gameState.maxEnergyInt,
       initialTiredSecond = gameState.initialTiredSecond,
@@ -81,6 +88,7 @@ object GameStateSaved {
       visibleMoveActions = gameState.visibleMoveActions,
       deckActions = gameState.deckActions,
       storyActionsHistory = gameState.storyActionsHistory.map(_.line),
+      inProgressStoryActions = gameState.inProgressStoryActions,
       buffs = gameState.buffs,
       preferencesSaved = PreferencesSaved.fromPreferences(gameState.preferences),
     )

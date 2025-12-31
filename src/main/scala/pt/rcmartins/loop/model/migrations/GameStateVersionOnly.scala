@@ -8,11 +8,13 @@ case class GameStateVersionOnly(
     seed: Long,
 ) extends GameSatedSavedVersion {
 
-  def toGameState: GameState =
-    GameState.initial.copy(
-      version = version,
-      seed = seed,
-    )
+  def toGameState(currentTimeMillis: Long): GameState =
+    GameState
+      .initial(currentTimeMillis)
+      .copy(
+        version = version,
+        seed = seed,
+      )
 
 }
 

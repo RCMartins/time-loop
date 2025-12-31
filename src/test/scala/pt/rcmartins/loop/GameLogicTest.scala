@@ -8,13 +8,17 @@ import zio.test.{assertTrue, Spec, ZIOSpecDefault}
 
 object GameLogicTest extends ZIOSpecDefault {
 
-  private def GameStateEmpty: GameState = GameState.initial.copy(
-    visibleNextActions = Seq(),
-    visibleMoveActions = Seq(),
-  )
+  private def GameStateEmpty: GameState =
+    GameState
+      .initial(0L)
+      .copy(
+        visibleNextActions = Seq(),
+        visibleMoveActions = Seq(),
+      )
 
-  private def GameUtils = new GameUtils()
-  private def GameLogicBasic = new GameLogic(0L, GameUtils)
+  private def gameUtils = new GameUtils()
+  private def saveLoad = new SaveLoadMock()
+  private def GameLogicBasic = new GameLogic(gameUtils, saveLoad)
 
   private val DummyWakeUpAction: ActionData = ActionData(
     actionDataType = Arc1DataType.WakeUp,
@@ -49,7 +53,7 @@ object GameLogicTest extends ZIOSpecDefault {
           val res: GameState =
             GameLogicBasic.update(
               GameStateEmpty.copy(currentAction = Some(DummyWakeUpAction.toActiveAction)),
-              5_000_000L,
+              5_000L,
             )
           assertTrue(
             res.stats.loopActionCount.get(Arc1DataType.WakeUp.id).contains(1),
@@ -62,7 +66,7 @@ object GameLogicTest extends ZIOSpecDefault {
               GameStateEmpty.copy(currentAction =
                 Some(DummyWakeUpAction.copy(actionTime = ActionTime.Standard(10)).toActiveAction)
               ),
-              12_000_000L,
+              12_000L,
             )
           assertTrue(
             res.timeElapsedMicro == 10_000_000L,
@@ -76,7 +80,7 @@ object GameLogicTest extends ZIOSpecDefault {
               GameStateEmpty.copy(currentAction =
                 Some(DummyWakeUpAction.copy(actionTime = ActionTime.Standard(15)).toActiveAction)
               ),
-              15_000_000L,
+              15_000L,
             )
           val actualExpectedtimePassed: Long =
             10_000_000 + // time to complete while at level 0
@@ -110,7 +114,7 @@ object GameLogicTest extends ZIOSpecDefault {
                   )
                 )
               ),
-              5_000_000L,
+              5_000L,
             )
           assertTrue(
             res.currentAction.isEmpty,
@@ -127,7 +131,7 @@ object GameLogicTest extends ZIOSpecDefault {
                 maxEnergyInt = 1000,
                 energyMicro = 900_000_000L,
               ),
-              105_000_000L,
+              105_000L,
             )
           assertTrue(
             res.inventory.items == Seq((ItemType.Rice, 0, 105_000_000L))
@@ -147,7 +151,7 @@ object GameLogicTest extends ZIOSpecDefault {
                 selectedNextAction = Some(ActionId(44L) -> None),
                 inventory = InventoryState(5, Seq.empty),
               ),
-              5_000_000L,
+              5_000L,
             )
           assertTrue(
             res.visibleNextActions.map(_.id) == Seq(ActionId(44L))

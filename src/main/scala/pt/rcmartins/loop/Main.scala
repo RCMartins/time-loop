@@ -33,9 +33,11 @@ object Main {
     val _ = ItemType.Coins.id
     val _ = StoryActions.Data.InitialActions.map(_.actionDataType.id)
 
+    val saveLoad: SaveLoad = new SaveLoadImpl()
+
     val currentGameState: GameState =
-      SaveLoad.loadFromLocalStorage() match {
-        case None       => GameState.initial
+      saveLoad.loadFromLocalStorage() match {
+        case None       => GameState.initial(System.currentTimeMillis())
         case Some(save) => save
       }
 
@@ -44,7 +46,7 @@ object Main {
       new GameData(
         constructorGameState = currentGameState,
         // TODO add some kind of offline progress ?
-        gameLogic = new GameLogic(System.currentTimeMillis(), gameUtils),
+        gameLogic = new GameLogic(gameUtils, saveLoad),
         utils = gameUtils,
       )
     }
@@ -53,7 +55,7 @@ object Main {
 
     render(
       dom.document.getElementById("main-div"),
-      new UI(gameData).run()
+      new UI(gameData, saveLoad).run()
     )
   }
 

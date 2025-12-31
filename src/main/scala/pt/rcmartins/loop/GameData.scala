@@ -18,6 +18,8 @@ class GameData(
 
   val timeElapsedMicro: Signal[Long] = gameState.map(_.timeElapsedMicro).distinct
   val timeElapsedLong: Signal[Long] = timeElapsedMicro.map(_ / 1_000_000L).distinct
+  val extraTimeMicro: Signal[Long] = gameState.map(_.extraTimeMicro).distinct
+  val extraTimeLong: Signal[Long] = extraTimeMicro.map(_ / 1_000_000L).distinct
   private val globalTimeElapsedMicro: Signal[Long] =
     gameState.map(_.stats.totalElapedTimeMicro).distinct
 
@@ -61,8 +63,8 @@ class GameData(
 
   def runUpdateGameState(): Unit = {
     val initialGameState = gameStateVar.now()
-    val currentTimeMicro = System.nanoTime() / 1000L
-    val newState = gameLogic.update(initialGameState, currentTimeMicro)
+    val currentTimeEpoch = System.currentTimeMillis()
+    val newState = gameLogic.update(initialGameState, currentTimeEpoch)
     gameStateVar.set(newState)
   }
 
@@ -88,20 +90,20 @@ class GameData(
     }
   }
 
-  def DebugLoopNow(): Unit = {
+  def DebugLoopNow(saveload: SaveLoad): Unit = {
     gameStateVar.update { state =>
       val newState: GameState =
         state.resetForNewLoop
           .modify(_.stats.usedCheats)
           .setTo(true)
-      SaveLoad.saveToLocalStorage(newState)
+      saveload.saveToLocalStorage(newState)
       newState
     }
   }
 
-  def DebugHardReset(): Unit = {
-    val newState = GameState.initial
-    SaveLoad.saveToLocalStorage(newState)
+  def DebugHardReset(saveload: SaveLoad): Unit = {
+    val newState = GameState.initial(System.currentTimeMillis())
+    saveload.saveToLocalStorage(newState)
     gameStateVar.set(newState)
   }
 

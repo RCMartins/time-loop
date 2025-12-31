@@ -4,6 +4,6 @@ import pt.rcmartins.loop.model.GameState
 
 trait GameSatedSavedVersion {
 
-  def toGameState: GameState
+  def toGameState(currentTimeMillis: Long): GameState
 
 }
