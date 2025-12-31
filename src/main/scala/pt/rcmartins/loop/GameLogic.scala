@@ -15,14 +15,14 @@ class GameLogic(
     private val saveload: SaveLoad,
 ) {
 
-  private val MaxTimeJump = 30 * 24 * 3600_000_000L // 30 days
+  private val MaxExtraTime = 30 * 24 * 3600_000_000L // 30 days
   private val SaveIntervalMicro = 10_000_000L // 10 seconds
 
   def update(initialGameState: GameState, currentTimeEpoch: Long): GameState = {
     val elapsedTimeMicro: Long =
       Math.max(
         0,
-        Math.min(MaxTimeJump, (currentTimeEpoch - initialGameState.updateLastTimeEpoch) * 1000)
+        (currentTimeEpoch - initialGameState.updateLastTimeEpoch) * 1000
       )
     val (updatedGameState, timeToUse) =
       if (
@@ -61,11 +61,11 @@ class GameLogic(
         .filter(_._3 > initialGameState.timeElapsedMicro)
         .map { case (_, _, cooldown) => cooldown - initialGameState.timeElapsedMicro }
         .minOption
-        .getOrElse(MaxTimeJump)
+        .getOrElse(MaxExtraTime)
     val maxTimeBuff: Long =
       initialGameState.buffs.temporary.headOption
         .map(_._1 - initialGameState.timeElapsedMicro)
-        .getOrElse(MaxTimeJump)
+        .getOrElse(MaxExtraTime)
     val maxTimeTirednessIncrease: Long =
       initialGameState.nextTiredIncreaseMicro - initialGameState.timeElapsedMicro
 
@@ -80,7 +80,14 @@ class GameLogic(
       newState
     else if (actualTickElapsedTime == 0L)
       if (lastHasZeroElapsed)
-        newState.modify(_.extraTimeMicro).using(_ + (totalElapsedTimeMicro - actualTickElapsedTime))
+        newState
+          .modify(_.extraTimeMicro)
+          .using(currentExtraTime =>
+            Math.min(
+              MaxExtraTime,
+              currentExtraTime + (totalElapsedTimeMicro - actualTickElapsedTime),
+            )
+          )
       else
         auxUpdateTotalTime(newState, totalElapsedTimeMicro, lastHasZeroElapsed = true)
     else
