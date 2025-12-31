@@ -157,6 +157,8 @@ object Util {
       vm.map(_.map(_.amountOfActionsLeft).getOrElse(AmountOfActions.Standard(0))).distinct
     val limitOfActionsSignal: Signal[Option[Int]] =
       vm.map(_.flatMap(_.limitOfActions)).distinct
+    val currentActionSuccessChanceSignal: Signal[Double] =
+      vm.map(_.map(_.currentActionSuccessChance).getOrElse(0.0)).distinct
 
     div(
       cls := "min-h-32 max-h-32 w-full",
@@ -172,6 +174,32 @@ object Util {
             cls := "text-base font-semibold tracking-tight",
             child.text <-- title,
           ),
+          child.maybe <--
+            data.map(_.actionSuccessType).distinct.map {
+              case ActionSuccessType.WithFailure(baseChance, increase) =>
+                Some(
+                  div(
+                    cls := "relative group ml-2",
+                    span(
+                      cls := "px-2 py-0.5 text-xs rounded-full bg-slate-700/70 ring-1 ring-slate-600",
+                      "\u00A0",
+                      child.text <--
+                        currentActionSuccessChanceSignal.map { currentActionSuccessChance =>
+                          f"${(currentActionSuccessChance * 100).toInt}%02d%%"
+                        },
+                      "\u00A0",
+                    ),
+                    div(
+                      cls := "absolute left-1/2 -translate-x-1/2 top-full mt-1 px-2 py-1 z-20 " +
+                        "text-xs bg-slate-900 text-white rounded shadow-lg whitespace-nowrap " +
+                        "opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none",
+                      f"This action has a base ${(baseChance * 100).toInt}%d%% of success + ${(increase * 100).toInt}%d%% for every failure"
+                    )
+                  )
+                )
+              case _ =>
+                None
+            }
         ),
         div(
           cls := "mt-1 mb-1 relative",
