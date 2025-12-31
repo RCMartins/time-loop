@@ -9,7 +9,7 @@ case class GameStateSaved(
     seed: Long,
     updateLastTimeEpoch: Long,
     timeElapsedMicro: Long,
-    extraTimeMicro: Long = 0L,
+    extraTimeMicro: Long,
     energyMicro: Long,
     maxEnergyInt: Int,
     initialTiredSecond: Double,
