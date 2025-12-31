@@ -5,6 +5,9 @@ import com.raquo.laminar.nodes.ReactiveHtmlElement
 import org.scalajs.dom.HTMLDivElement
 import pt.rcmartins.loop.MobileUI.MobileTab
 import pt.rcmartins.loop.Util.{actionCard, secondsToPrettyStr, skillRow}
+import pt.rcmartins.loop.model.StoryLineHistory
+
+import scala.scalajs.js.timers
 
 class MobileUI(
     gameData: GameData,
@@ -26,6 +29,7 @@ class MobileUI(
           case MobileTab.Map       => mapView()
           case MobileTab.Inventory => inventoryView()
           case MobileTab.Skills    => skillsView()
+          case MobileTab.Story     => storyView()
           case MobileTab.Settings  => settingsView()
         }
       ),
@@ -62,6 +66,30 @@ class MobileUI(
     div(
       cls := "space-y-2",
       children <-- skills.map(_.allHigherThan0).split(_.kind) { case (_, _, s) => skillRow(s) }
+    )
+  }
+
+  private def storyView(): ReactiveHtmlElement[HTMLDivElement] = {
+    div(
+      cls := "overflow-y-auto min-h-32 max-h-32",
+      children <--
+        storyActionsHistory.split(_.id) { case (_, StoryLineHistory(_, line), _) =>
+          p(
+            cls("animate-fade-in"),
+            span(line),
+          )
+        },
+      onMountCallback { ctx =>
+        implicit val owner: Owner = ctx.owner
+        val box = ctx.thisNode.ref
+
+        def moveToBottom(): Unit =
+          timers.setTimeout(0) {
+            box.scrollTop = box.scrollHeight
+          }
+        storyActionsHistory.changes.foreach { _ => moveToBottom() }
+        moveToBottom()
+      },
     )
   }
 
@@ -166,6 +194,7 @@ class MobileUI(
       tabButton(MobileTab.Map, "Map", "🧭"),
       tabButton(MobileTab.Inventory, "Inventory", "🎒"),
       tabButton(MobileTab.Skills, "Skills", "📈"),
+      tabButton(MobileTab.Story, "Story", "📖"),
       tabButton(MobileTab.Settings, "Settings", "⚙️"),
     )
   }
@@ -181,6 +210,7 @@ object MobileUI {
     case object Map extends MobileTab
     case object Inventory extends MobileTab
     case object Skills extends MobileTab
+    case object Story extends MobileTab
     case object Settings extends MobileTab
   }
 
