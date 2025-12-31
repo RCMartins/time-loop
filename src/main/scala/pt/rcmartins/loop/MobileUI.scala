@@ -4,11 +4,11 @@ import com.raquo.laminar.api.L._
 import com.raquo.laminar.nodes.ReactiveHtmlElement
 import org.scalajs.dom.HTMLDivElement
 import pt.rcmartins.loop.MobileUI.MobileTab
-import pt.rcmartins.loop.Util.{actionCard, activeActionCard}
-import pt.rcmartins.loop.data.StoryActions
+import pt.rcmartins.loop.Util.{actionCard, secondsToPrettyStr, skillRow}
 
 class MobileUI(
-    gameData: GameData
+    gameData: GameData,
+    saveLoad: SaveLoad,
 ) {
 
   import gameData._
@@ -16,36 +16,19 @@ class MobileUI(
   private val tabVar: Var[MobileTab] = Var(MobileTab.Actions)
 
   def run(): ReactiveHtmlElement[HTMLDivElement] = {
-    mobileShell(
-      actionsView = actionsView(),
-      mapView = div(),
-      skillsView = div(),
-      inventoryView = div(),
-    )
-  }
-
-  private def mobileShell(
-      actionsView: ReactiveHtmlElement[HTMLDivElement],
-      mapView: ReactiveHtmlElement[HTMLDivElement],
-      skillsView: ReactiveHtmlElement[HTMLDivElement],
-      inventoryView: ReactiveHtmlElement[HTMLDivElement],
-  ): ReactiveHtmlElement[HTMLDivElement] = {
-
     div(
-      cls := "h-[100dvh] flex flex-col bg-slate-950 text-slate-100",
-
-      // Main content (no scrolling)
+      cls := "h-[100dvh] flex flex-col bg-slate-900 text-slate-100",
+      topFixed(),
       div(
-        cls := "flex-1 overflow-hidden p-3",
+        cls := "flex-1 overflow-auto p-3",
         child <-- tabVar.signal.map {
-          case MobileTab.Actions   => actionsView
-          case MobileTab.Map       => mapView
-          case MobileTab.Skills    => skillsView
-          case MobileTab.Inventory => inventoryView
+          case MobileTab.Actions   => actionsView()
+          case MobileTab.Map       => mapView()
+          case MobileTab.Inventory => inventoryView()
+          case MobileTab.Skills    => skillsView()
+          case MobileTab.Settings  => settingsView()
         }
       ),
-
-      // Bottom tabs
       bottomTabs(tabVar)
     )
   }
@@ -56,31 +39,110 @@ class MobileUI(
   private def actionsView(): ReactiveHtmlElement[HTMLDivElement] = {
     div(
       div(
-        cls := "space-y-3 min-h-32 max-h-32",
-        div(
-          cls := "flex items-start gap-3",
-          child.maybe <--
-            currentActionIsDefined.map {
-              case false =>
-                None
-              case true =>
-                Some(
-                  mobileCurrentAction(
-                    currentAction,
-                    skills,
-                  )
-                )
-            }
-        )
-      ),
-      div(
-        cls := "grid gap-5 sm:grid-cols-2",
+        cls := "grid gap-1 sm:grid-cols-2",
         children <-- nextActions.split(_.id) { case (_, _, action) =>
           actionCard(action, gameData)
         }
       )
     )
   }
+
+  private def mapView(): ReactiveHtmlElement[HTMLDivElement] = {
+    div(
+      cls := "flex items-center justify-center",
+      Util worldMiniMap (
+        characterArea,
+        nextMoveActions,
+        area => gameData.selectNextMoveAction(area),
+      )
+    )
+  }
+
+  private def skillsView(): ReactiveHtmlElement[HTMLDivElement] = {
+    div(
+      cls := "space-y-2",
+      children <-- skills.map(_.allHigherThan0).split(_.kind) { case (_, _, s) => skillRow(s) }
+    )
+  }
+
+  private def settingsView(): ReactiveHtmlElement[HTMLDivElement] = {
+    Util.debugView(gameData, saveLoad)
+  }
+
+  private def inventoryView(): ReactiveHtmlElement[HTMLDivElement] = {
+    div(
+//      child.text <-- inventory.map(inv => s" (max size: ${inv.maximumSize})"),
+      Util.inventoryView(
+        inventory,
+        timeElapsedMicro,
+      )
+    )
+  }
+
+  private def topFixed(): ReactiveHtmlElement[HTMLDivElement] =
+    div(
+      cls := "space-y-1 min-h-32 max-h-32 p-0.5",
+      div(
+        cls := "relative", // allow absolute positioning inside
+        // progress background
+        div(
+          cls := "h-4 rounded-full bg-slate-700/60 overflow-hidden",
+          div(
+            cls := "h-4 rounded-full bg-green-600 origin-left will-change-transform",
+            transform <-- energyRatio.map { ratio =>
+              val clamped = ratio.max(0.0).min(1.0)
+              s"scaleX($clamped)"
+            }
+          )
+        ),
+        // centered label
+        div(
+          cls := "absolute inset-0 flex items-center justify-center text-[11px] font-semibold text-slate-100",
+          child.text <-- energyLong.combineWith(maxEnergyInt).map { case (energy, maxEnergy) =>
+            f"$energy%d / $maxEnergy%d"
+          }
+        )
+      ),
+      div(
+        cls := "flex justify-between px-2",
+        span("Time Elapsed"),
+        span(
+          child.text <-- timeElapsedLong.map(secondsToPrettyStr)
+        ),
+
+        // Global elapsed time tooltip
+        cls := "relative inline-block group",
+        div(
+          cls := "absolute left-0 top-full mt-1 px-2 py-1 z-20 " +
+            "text-xs bg-slate-900 text-white rounded shadow-lg whitespace-nowrap " +
+            "hidden group-hover:block pointer-events-none z-10",
+          "Total Elapsed Time: ",
+          child.text <-- globalTimeElapsedLong.map(secondsToPrettyStr)
+        )
+      ),
+      div(
+        cls := "flex justify-between px-2",
+        span("Time Saved"),
+        span(
+          child.text <-- extraTimeLong.map(secondsToPrettyStr)
+        ),
+      ),
+      div(
+        cls := "flex w-full items-start gap-3",
+        child.maybe <--
+          currentActionIsDefined.map {
+            case false =>
+              None
+            case true =>
+              Some(
+                Util.mobileCurrentAction(
+                  currentAction,
+                  skills,
+                )
+              )
+          }
+      )
+    )
 
   private def bottomTabs(tabVar: Var[MobileTab]): HtmlElement = {
     def tabButton(tab: MobileTab, label: String, icon: String): HtmlElement =
@@ -102,8 +164,9 @@ class MobileUI(
         "backdrop-blur flex items-stretch",
       tabButton(MobileTab.Actions, "Actions", "⚡"),
       tabButton(MobileTab.Map, "Map", "🧭"),
+      tabButton(MobileTab.Inventory, "Inventory", "🎒"),
       tabButton(MobileTab.Skills, "Skills", "📈"),
-      tabButton(MobileTab.Inventory, "Inventory", "🎒")
+      tabButton(MobileTab.Settings, "Settings", "⚙️"),
     )
   }
 
@@ -118,6 +181,7 @@ object MobileUI {
     case object Map extends MobileTab
     case object Inventory extends MobileTab
     case object Skills extends MobileTab
+    case object Settings extends MobileTab
   }
 
 }

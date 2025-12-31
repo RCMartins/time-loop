@@ -66,10 +66,17 @@ object Main {
       gameData.utils.toastsVar.update(_ :+ toast)
     }(owner)
 
+    val ui = new UI(gameData, saveLoad).run()
+    val mobileUI = new MobileUI(gameData, saveLoad).run()
+
     render(
       dom.document.getElementById("main-div"),
-//      new UI(gameData, saveLoad).run()
-      new MobileUI(gameData, saveLoad).run()
+      div(
+        child <-- MobileUtils.isMobileSignal.map {
+          case false => ui
+          case true  => mobileUI
+        },
+      )
     )
   }
 
