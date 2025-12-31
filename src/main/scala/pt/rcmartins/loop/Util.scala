@@ -516,10 +516,10 @@ object Util {
     div(
       cls := "absolute inset-0 flex items-center justify-end font-semibold text-slate-100 px-2",
       child.text <-- amountOfActionsSignal.combineWith(limitOfActionsSignal).map {
-        case (AmountOfActions.Standard(amount), None)        => s"$amount"
-        case (AmountOfActions.Standard(amount), Some(limit)) => s"$limit / $amount"
+        case (AmountOfActions.Standard(amount), None)        => s"x$amount"
+        case (AmountOfActions.Standard(amount), Some(limit)) => s"x $limit/$amount"
         case (AmountOfActions.Unlimited, None)               => "∞"
-        case (AmountOfActions.Unlimited, Some(limit))        => s"$limit / ∞"
+        case (AmountOfActions.Unlimited, Some(limit))        => s"x $limit/∞"
       },
     )
 
