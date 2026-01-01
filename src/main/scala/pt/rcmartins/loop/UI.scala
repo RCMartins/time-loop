@@ -12,29 +12,17 @@ import pt.rcmartins.loop.data.StoryActions
 import pt.rcmartins.loop.model._
 
 import scala.scalajs.js.timers
-import scala.scalajs.js.timers.setInterval
 
 class UI(
     gameData: GameData,
     saveLoad: SaveLoad,
 ) {
 
-  // TODO Hide map until first move action is available
-
-  private val owner = new Owner {}
   private val DEBUG_MODE: Boolean = true
 
   import gameData._
 
   def run(): ReactiveHtmlElement[HTMLDivElement] = {
-    setInterval(25) {
-      gameData.runUpdateGameState()
-    }
-
-    gameData.utils.toastBus.events.foreach { toast =>
-      gameData.utils.toastsVar.update(_ :+ toast)
-    }(owner)
-
     div(
       // page padding & responsive grid
       cls := "min-h-dvh p-4 md:py-6 md:px-20 bg-slate-900 text-slate-100",
@@ -103,130 +91,9 @@ class UI(
       cls := "flex items-center justify-center",
       worldMiniMap(
         characterArea,
-        area => gameData.selectNextMoveAction(area)
+        nextMoveActions,
+        area => gameData.selectNextMoveAction(area),
       )
-    )
-
-  private def worldMiniMap(
-      currentArea: Signal[CharacterArea],
-      onMove: CharacterArea => Unit
-  ): ReactiveHtmlElement[HTMLDivElement] = {
-
-    // Center (current location)
-    def cellCenter(): HtmlElement =
-      div(
-        cls := "flex items-center justify-center w-32 h-10",
-        div(
-          cls := "px-3 py-1 rounded-full text-[11px] font-semibold " +
-            "bg-emerald-600 text-white shadow whitespace-nowrap",
-          div(
-            cls := "w-5 h-5 inline-block mr-1 align-middle",
-            Constants.Icons.CreateIconElement(currentArea.map(_.iconPath), Val("")),
-          ),
-          child.text <-- currentArea.map(_.name),
-        )
-      )
-
-    // Neighbor cell in a given direction
-    def cellDir(dir: CharacterArea => Option[CharacterArea]): HtmlElement =
-      div(
-        cls := "flex items-center justify-center w-32 h-10",
-        child.maybe <-- currentArea.combineWith(nextMoveActions).map { case (loc, moveActions) =>
-          val targetAreaOpt: Option[CharacterArea] = dir(loc)
-          moveActions
-            .find(_.data.moveToArea == targetAreaOpt)
-            .flatMap(action => action.data.moveToArea.map(_ -> action))
-            .map { case (targetArea, action) =>
-              button(
-                tpe := "button",
-                cls := "px-3 py-1 rounded-full text-[11px] " +
-                  "border border-slate-600 bg-slate-800/80 text-slate-200 " +
-                  "hover:bg-slate-700/80 hover:text-white transition " +
-                  "whitespace-nowrap",
-                onClick --> { _ => onMove(targetArea) },
-                div(
-                  cls := "w-5 h-5 inline-block mr-1 align-middle",
-                  Constants.Icons.CreateIconElement(Val(targetArea.iconPath), Val("")),
-                ),
-                div(
-                  span(targetArea.name),
-                  " (",
-                  s"${action.targetTimeSec}",
-                  ")",
-                )
-              )
-            }
-        }
-      )
-
-    div(
-      cls := "relative inline-block p-2 rounded-2xl bg-slate-900/80 " +
-        "ring-1 ring-slate-700 shadow",
-
-      // The 3x3 grid
-      div(
-        cls := "grid grid-cols-3 grid-rows-3 gap-1",
-        // top row
-        cellDir(_.connection(Dir8.TopLeft)),
-        cellDir(_.connection(Dir8.Top)),
-        cellDir(_.connection(Dir8.TopRight)),
-        // middle row
-        cellDir(_.connection(Dir8.Left)),
-        cellCenter(),
-        cellDir(_.connection(Dir8.Right)),
-        // bottom row
-        cellDir(_.connection(Dir8.BottomLeft)),
-        cellDir(_.connection(Dir8.Bottom)),
-        cellDir(_.connection(Dir8.BottomRight)),
-      ),
-    )
-  }
-
-  private val inventoryView: ReactiveHtmlElement[HTMLUListElement] =
-    ul(
-      cls := "space-y-2",
-      children <-- inventory.map(_.items.filter(_._2 > 0)).split(_._1) {
-        case (_, (item, _, _), itemSignal) =>
-          li(
-            cls := "rounded-lg p-2 bg-slate-800/60 ring-1 ring-slate-700 flex items-center m-1",
-
-            // ICON (10%)
-            div(
-              cls := "w-[10%] flex justify-center",
-              Constants.Icons.CreateIconElement(
-                itemSignal.map(_._1.iconPath),
-                itemSignal.map(_._1.iconColor),
-              )
-            ),
-
-            // QTY (20%)
-            div(
-              cls := "w-[20%] text-xs font-mono text-right",
-              child.text <-- itemSignal.map(_._2).distinct.map(qty => item.amountFormatInv(qty)),
-            ),
-
-            // NAME (50%)
-            div(
-              cls := "w-[50%] text-xs pl-2 truncate",
-              item.name
-            ),
-
-            // COOLDOWN (20%)
-            div(
-              cls := "w-[20%] text-xs text-right",
-              child.text <-- itemSignal.map(_._3).distinct.combineWith(timeElapsedMicro).map {
-                case (cooldownTimeMicro, elapsed) =>
-                  if (elapsed > cooldownTimeMicro)
-                    ""
-                  else {
-                    val remainingSec = (cooldownTimeMicro - elapsed).toDouble / 1e6
-                    f"$remainingSec%.1f"
-                  }
-              }
-            )
-          )
-
-      }
     )
 
   // Misc info (stats / timers)
@@ -419,7 +286,10 @@ class UI(
           "Inventory",
           child.text <-- inventory.map(inv => s" (max size: ${inv.maximumSize})"),
         ),
-        div(cls := "space-y-2 pb-1 max-h-[40dvh] overflow-auto", inventoryView)
+        div(
+          cls := "space-y-2 pb-1 max-h-[40dvh] overflow-auto",
+          inventoryView(inventory, timeElapsedMicro)
+        )
       ),
       panelCard(
         span("Notes / Info"),
@@ -428,176 +298,14 @@ class UI(
       if (DEBUG_MODE)
         panelCard(
           span("Debug Actions"),
-          div(cls := "space-y-2 max-h-[30dvh] overflow-auto", debugView)
+          div(
+            cls := "space-y-2 max-h-[30dvh] overflow-auto",
+            debugView(gameData, saveLoad),
+          )
         )
       else
         emptyNode
     )
-
-  private def debugView: HtmlElement = {
-    val owner: Owner = new OneTimeOwner(() => println("Debug view owner disposed"))
-    val addEnergyBus: EventBus[Int] = new EventBus[Int]()
-    val multiplyAllSkillsBus: EventBus[Double] = new EventBus[Double]()
-    val plusExtraTimeBus: EventBus[Long] = new EventBus[Long]()
-    val speedSettingBus: EventBus[Int] = new EventBus[Int]()
-    val exportSaveStringToClipboard: EventBus[Unit] = new EventBus[Unit]()
-    val importStringFromClipboard: EventBus[Unit] = new EventBus[Unit]()
-
-    addEnergyBus.events
-      .withCurrentValueOf(gameData.gameState)
-      .foreach { case (amount, state) =>
-        val newEnergy = state.energyMicro + amount.toLong * 1_000_000L
-        val cappedEnergy = Math.min(newEnergy, state.maxEnergyMicro)
-        val newState: GameState =
-          state
-            .modify(_.energyMicro)
-            .setTo(cappedEnergy)
-            .modify(_.stats.usedCheats)
-            .setTo(true)
-        gameData.loadGameState(newState)
-      }(owner)
-
-    multiplyAllSkillsBus.events
-      .withCurrentValueOf(gameData.gameState)
-      .foreach { case (multiplier, state) =>
-        val newState: GameState =
-          state
-            .modify(_.skills)
-            .using(
-              _.mapSkills {
-                _.modifyAll(_.initialBonusMultiplier, _.currentBonusMultiplier)
-                  .setTo(multiplier)
-              }
-            )
-            .modify(_.stats.usedCheats)
-            .setTo(true)
-        gameData.loadGameState(newState)
-      }(owner)
-
-    plusExtraTimeBus.events
-      .withCurrentValueOf(gameData.gameState)
-      .foreach { case (extraTimeMicro, state) =>
-        val newState: GameState =
-          state
-            .modify(_.extraTimeMicro)
-            .using(_ + extraTimeMicro)
-            .modify(_.stats.usedCheats)
-            .setTo(true)
-        gameData.loadGameState(newState)
-      }(owner)
-
-    speedSettingBus.events
-      .withCurrentValueOf(gameData.gameState)
-      .foreach { case (multiplier, state) =>
-        val newState: GameState =
-          state
-            .modify(_.preferences.speedMultiplier)
-            .setTo(multiplier)
-        gameData.loadGameState(newState)
-      }(owner)
-
-    exportSaveStringToClipboard.events
-      .withCurrentValueOf(gameData.gameState)
-      .foreach { state =>
-        dom.window.navigator.clipboard.writeText(saveLoad.saveString(state))
-        gameData.utils.showToast("Copied to clipboard!")
-      }(owner)
-
-    importStringFromClipboard.events.foreach { _ =>
-      dom.window.navigator.clipboard
-        .readText()
-        .toFuture
-        .foreach { str =>
-          saveLoad.loadString(str).foreach { loadedState =>
-            gameData.loadGameState(loadedState)
-            saveLoad.saveToLocalStorage(loadedState)
-            gameData.utils.showToast("Game loaded!")
-          }
-        }(scala.scalajs.concurrent.JSExecutionContext.queue)
-    }(owner)
-
-    div(
-      cls := "flex flex-col gap-2",
-      button(
-        cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",
-        "Loop Now!",
-        onClick --> { _ =>
-          gameData.DebugLoopNow(saveLoad)
-        }
-      ),
-      button(
-        cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",
-        "Add 100 Energy",
-        onClick --> { _ => addEnergyBus.writer.onNext(100) }
-      ),
-      button(
-        cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",
-        "+1 hour extra time",
-        onClick --> { _ => plusExtraTimeBus.writer.onNext(3600_000_000L) }
-      ),
-      button(
-        cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",
-        "x1 Speed",
-        onClick --> { _ => speedSettingBus.writer.onNext(1) }
-      ),
-      button(
-        cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",
-        "x2 Speed",
-        onClick --> { _ => speedSettingBus.writer.onNext(2) }
-      ),
-      button(
-        cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",
-        "x10 Speed",
-        onClick --> { _ => speedSettingBus.writer.onNext(10) }
-      ),
-      button(
-        cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",
-        "x100 Speed",
-        onClick --> { _ => speedSettingBus.writer.onNext(100) }
-      ),
-      button(
-        cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",
-        "x1 Skills",
-        onClick --> { _ => multiplyAllSkillsBus.writer.onNext(1.0) }
-      ),
-      button(
-        cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",
-        "x2 Skills",
-        onClick --> { _ => multiplyAllSkillsBus.writer.onNext(2.0) }
-      ),
-      button(
-        cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",
-        "x5 Skills",
-        onClick --> { _ => multiplyAllSkillsBus.writer.onNext(5.0) }
-      ),
-      button(
-        cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",
-        "x10 Skills",
-        onClick --> { _ => multiplyAllSkillsBus.writer.onNext(10.0) }
-      ),
-      button(
-        cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",
-        "Export",
-        onClick --> { _ =>
-          exportSaveStringToClipboard.writer.onNext(())
-        }
-      ),
-      button(
-        cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",
-        "Import",
-        onClick --> { _ =>
-          importStringFromClipboard.writer.onNext(())
-        }
-      ),
-      button(
-        cls := "px-3 py-1 bg-slate-700 rounded hover:bg-slate-600",
-        "Hard Reset!",
-        onClick --> { _ =>
-          gameData.DebugHardReset(saveLoad)
-        }
-      )
-    )
-  }
 
   private def toastContainer: ReactiveHtmlElement[HTMLDivElement] =
     div(

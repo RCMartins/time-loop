@@ -29,6 +29,9 @@ case class ActiveActionData(
   def isInvalid(state: GameState): Boolean =
     ActiveActionData.isInvalid(state, data)
 
+  val progressRatio: Double =
+    microSoFar.toDouble / targetTimeMicro.toDouble
+
 }
 
 object ActiveActionData {
@@ -43,7 +46,7 @@ object ActiveActionData {
     action.map(action => action.targetTimeMicro - action.microSoFar)
 
   def progressRatio(action: Signal[ActiveActionData]): Signal[Double] =
-    action.map(action => action.microSoFar.toDouble / action.targetTimeMicro.toDouble)
+    action.map(_.progressRatio)
 
   def areaIsValid(state: GameState, data: ActionData): Boolean =
     data

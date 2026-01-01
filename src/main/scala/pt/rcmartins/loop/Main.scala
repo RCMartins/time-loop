@@ -1,10 +1,13 @@
 package pt.rcmartins.loop
 
 import com.raquo.airstream.core.AirstreamError.CombinedError
+import com.raquo.airstream.ownership.OneTimeOwner
 import com.raquo.laminar.api.L._
 import org.scalajs.dom
 import pt.rcmartins.loop.data.StoryActions
 import pt.rcmartins.loop.model.{GameState, ItemType}
+
+import scala.scalajs.js.timers.setInterval
 
 object Main {
 
@@ -53,9 +56,27 @@ object Main {
 
     MobileUtils.setupMobileLogic()
 
+    setInterval(25) {
+      gameData.runUpdateGameState()
+    }
+
+    val owner: Owner = new OneTimeOwner(() => println("Main owner disposed"))
+
+    gameData.utils.toastBus.events.foreach { toast =>
+      gameData.utils.toastsVar.update(_ :+ toast)
+    }(owner)
+
+    val ui = new UI(gameData, saveLoad).run()
+    val mobileUI = new MobileUI(gameData, saveLoad).run()
+
     render(
       dom.document.getElementById("main-div"),
-      new UI(gameData, saveLoad).run()
+      div(
+        child <-- MobileUtils.isMobileSignal.map {
+          case false => ui
+          case true  => mobileUI
+        },
+      )
     )
   }
 
