@@ -25,8 +25,8 @@ class MobileUI(
       div(
         cls := "flex-1 overflow-auto p-3",
         child <-- tabVar.signal.map {
-          case MobileTab.Actions   => actionsView()
-          case MobileTab.Map       => mapView()
+          case MobileTab.Actions => actionsView()
+//          case MobileTab.Map       => mapView()
           case MobileTab.Inventory => inventoryView()
           case MobileTab.Skills    => skillsView()
           case MobileTab.Story     => storyView()
@@ -42,25 +42,40 @@ class MobileUI(
 
   private def actionsView(): ReactiveHtmlElement[HTMLDivElement] = {
     div(
+      cls := "h-full flex flex-col",
       div(
-        cls := "grid gap-1 sm:grid-cols-2",
-        children <-- nextActions.split(_.id) { case (_, _, action) =>
-          actionCard(action, gameData)
-        }
+        cls := "flex-1 overflow-y-auto",
+        div(
+          cls := "grid gap-1 sm:grid-cols-2 p-2",
+          children <-- nextActions.split(_.id) { case (_, _, action) =>
+            actionCard(action, gameData)
+          }
+        )
+      ),
+      div(
+        cls := "shrink-0",
+        div(
+          cls := "flex items-center justify-center p-2",
+          Util.worldMiniMap(
+            characterArea,
+            nextMoveActions,
+            area => gameData.selectNextMoveAction(area),
+          )
+        )
       )
     )
   }
 
-  private def mapView(): ReactiveHtmlElement[HTMLDivElement] = {
-    div(
-      cls := "flex items-center justify-center",
-      Util worldMiniMap (
-        characterArea,
-        nextMoveActions,
-        area => gameData.selectNextMoveAction(area),
-      )
-    )
-  }
+//  private def mapView(): ReactiveHtmlElement[HTMLDivElement] = {
+//    div(
+//      cls := "flex items-center justify-center",
+//      Util.worldMiniMap(
+//        characterArea,
+//        nextMoveActions,
+//        area => gameData.selectNextMoveAction(area),
+//      )
+//    )
+//  }
 
   private def skillsView(): ReactiveHtmlElement[HTMLDivElement] = {
     div(
@@ -71,7 +86,7 @@ class MobileUI(
 
   private def storyView(): ReactiveHtmlElement[HTMLDivElement] = {
     div(
-      cls := "overflow-y-auto min-h-32 max-h-32",
+      cls := "overflow-y-auto",
       children <--
         storyActionsHistory.split(_.id) { case (_, StoryLineHistory(_, line), _) =>
           p(
@@ -99,7 +114,6 @@ class MobileUI(
 
   private def inventoryView(): ReactiveHtmlElement[HTMLDivElement] = {
     div(
-//      child.text <-- inventory.map(inv => s" (max size: ${inv.maximumSize})"),
       Util.inventoryView(
         inventory,
         timeElapsedMicro,
@@ -191,10 +205,10 @@ class MobileUI(
       cls := "h-16 bg-slate-900/80 ring-1 ring-slate-800 " +
         "backdrop-blur flex items-stretch",
       tabButton(MobileTab.Actions, "Actions", "⚡"),
-      tabButton(MobileTab.Map, "Map", "🧭"),
+//      tabButton(MobileTab.Map, "Map", "🧭"),
       tabButton(MobileTab.Inventory, "Inventory", "🎒"),
-      tabButton(MobileTab.Skills, "Skills", "📈"),
       tabButton(MobileTab.Story, "Story", "📖"),
+      tabButton(MobileTab.Skills, "Skills", "📈"),
       tabButton(MobileTab.Settings, "Settings", "⚙️"),
     )
   }
@@ -207,7 +221,7 @@ object MobileUI {
 
   object MobileTab {
     case object Actions extends MobileTab
-    case object Map extends MobileTab
+//    case object Map extends MobileTab
     case object Inventory extends MobileTab
     case object Skills extends MobileTab
     case object Story extends MobileTab

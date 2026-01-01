@@ -661,7 +661,7 @@ object StoryActions {
         title = "Follow hard to find footprints path",
         effectLabel = EffectLabel.Explore,
         kind = ActionKind.Exploring,
-        actionTime = ActionTime.Standard(60),
+        actionTime = ActionTime.Standard(200),
         initialAmountOfActions = AmountOfActions.Standard(1),
         difficultyModifier = ActionDifficultyModifier(increaseTirednessAbsoluteMicro = 5_000_000)
       )
